@@ -1,0 +1,195 @@
+---
+import { PersistentPlayer } from "../components/react/PersistentPlayer";
+export interface Props {
+	title: string;
+	lang?: string;
+	description?: string;
+	image?: string;
+}
+
+const {
+	title,
+	lang = "es",
+	description = "Biblioteca acústica de fauna amazónica - Fonoteca",
+	image = "/og-image.jpg",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={image} />
+		<title>{title}</title>
+
+		<script is:inline>
+			// Immediate theme application to prevent flash
+			const applyTheme = () => {
+				const theme = (() => {
+					if (
+						typeof localStorage !== "undefined" &&
+						localStorage.getItem("theme")
+					) {
+						return localStorage.getItem("theme");
+					}
+					return "light";
+				})();
+
+				if (theme === "dark") {
+					document.documentElement.classList.add("dark");
+				} else {
+					document.documentElement.classList.remove("dark");
+				}
+			};
+
+			applyTheme();
+			document.addEventListener("astro:after-swap", applyTheme);
+		</script>
+	</head>
+	<body
+		class="bg-light-bg dark:bg-[#0c141d] font-sans text-primary-dark dark:text-white antialiased"
+	>
+		<!-- Splash Screen Overlay -->
+		<div
+			id="splash-screen"
+			class="fixed inset-0 z-[9999] bg-[#0c141d] flex flex-col items-center justify-center transition-opacity duration-700 ease-out"
+		>
+			<div
+				class="text-white text-4xl md:text-5xl font-sans font-light tracking-[0.1em] relative select-none animate-fade-in-up text-center px-4"
+			>
+				BIBLIOTECA ACÚSTICA DE FAUNA AMAZÓNICA - FONOTECA
+				<div
+					class="absolute -bottom-2 inset-x-0 h-1 bg-accent-green translate-x-[-100%] animate-slide-border"
+				>
+				</div>
+			</div>
+			<div
+				class="mt-4 text-gray-400 text-xs md:text-sm tracking-[0.4em] text-center max-w-md px-4 uppercase font-light animate-fade-in delay-300"
+			>
+				Instituto de Investigaciones de la Amazonía Peruana
+			</div>
+		</div>
+
+		<slot />
+		<PersistentPlayer client:load />
+
+		<script is:inline>
+			// Splash Screen Logic
+			document.addEventListener("DOMContentLoaded", () => {
+				const splash = document.getElementById("splash-screen");
+				if (splash) {
+					// Don't replay on every navigation in the same session
+					if (sessionStorage.getItem("splash") === "true") {
+						splash.style.display = "none";
+						return;
+					}
+
+					setTimeout(() => {
+						splash.style.opacity = "0";
+						setTimeout(() => {
+							splash.style.display = "none";
+							sessionStorage.setItem("splash", "true");
+						}, 700);
+					}, 2000); // 2 seconds display
+				}
+			});
+
+			// Replay splash on explicit page visits if navigation triggers didn't trigger DOMContentloaded
+			document.addEventListener("astro:page-load", () => {
+				const splash = document.getElementById("splash-screen");
+				if (splash && sessionStorage.getItem("splash") !== "true") {
+					splash.style.display = "flex";
+				}
+			});
+		</script>
+
+		<style>
+			@keyframes fadeInUp {
+				from {
+					opacity: 0;
+					transform: translateY(20px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+			@keyframes slideBorder {
+				0% {
+					transform: translateX(-100%);
+				}
+				100% {
+					transform: translateX(100%);
+				}
+			}
+			.animate-fade-in-up {
+				animation: fadeInUp 0.8s ease-out forwards;
+			}
+			.animate-fade-in {
+				opacity: 0;
+				animation: fadeIn 1s ease-out 0.4s forwards;
+			}
+			.delay-300 {
+				animation-delay: 0.4s;
+			}
+			.animate-slide-border {
+				animation: slideBorder 1.5s ease-in-out infinite;
+			}
+		</style>
+	</body>
+</html>
+
+<script>
+	import "../styles/global.css";
+	import "@fontsource/inter";
+
+	// Global Scroll Observer
+	const observerOptions = {
+		root: null,
+		rootMargin: "0px",
+		threshold: 0.1,
+	};
+
+	const observer = new IntersectionObserver((entries) => {
+		entries.forEach((entry) => {
+			if (entry.isIntersecting) {
+				entry.target.classList.add("opacity-100", "translate-y-0");
+				entry.target.classList.remove("opacity-0", "translate-y-10");
+			}
+		});
+	}, observerOptions);
+
+	document.addEventListener("astro:page-load", () => {
+		// Setup for View Transitions if used, or just DOMContentLoaded
+		setupAnimations();
+	});
+
+	document.addEventListener("DOMContentLoaded", setupAnimations);
+
+	function setupAnimations() {
+		document.querySelectorAll(".reveal-on-scroll").forEach((el) => {
+			el.classList.add(
+				"opacity-0",
+				"translate-y-10",
+				"transition-all",
+				"duration-1000",
+				"ease-out",
+			);
+			observer.observe(el);
+		});
+	}
+</script>

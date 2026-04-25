@@ -1,0 +1,54 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Header } from "../../components/react/Header";
+import { Footer } from "../../components/react/Footer";
+import { PageBanner } from "../../components/react/PageBanner";
+import { StatsExplorer } from "../../components/react/StatsExplorer";
+import { translations, LANGUAGES } from "../../i18n/data";
+import { getRealStats, getSpeciesByClass } from "../../data/stats";
+import logoIiap from "../../assets/logo_iiap.png";
+import { landingImages } from "../../config/landingImages";
+
+export function getStaticPaths() {
+    return LANGUAGES.map((lang) => ({
+        params: { lang },
+    }));
+}
+
+const { lang } = Astro.params;
+const content = translations[lang as keyof typeof translations];
+
+// Fetch real data for stats
+const realStats = await getRealStats();
+const speciesByClassData = await getSpeciesByClass();
+
+const statsData = {
+    totalRecordings: realStats.recordings,
+    totalSpecies: realStats.species,
+    totalFamilies: realStats.families,
+    speciesByClass: speciesByClassData
+};
+---
+
+<Layout
+    title={`${content.nav.stats} - ${content.nav.library}`}
+    lang={lang}
+    description="Estadísticas de la Biblioteca Acústica"
+>
+    <Header
+        client:load
+        content={content.nav}
+        logoSrc={logoIiap.src}
+        lang={lang}
+    />
+    <main class="bg-white dark:bg-[#0c141d]">
+        <PageBanner
+            title={content.nav.stats}
+            subtitle={lang === 'es' ? 'Datos y métricas de nuestra colección bioacústica' : lang === 'pt' ? 'Dados e métricas de nossa coleção bioacústica' : 'Data and metrics from our bioacoustic collection'}
+            image={landingImages.pageBanner.default}
+        />
+        
+        <StatsExplorer client:load data={statsData} lang={lang as string} translations={content.stats} chartTranslations={content.chart} />
+    </main>
+    <Footer content={content.footer} logoSrc={logoIiap.src} />
+</Layout>

@@ -1,0 +1,83 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Header } from "../../components/react/Header";
+import { Footer } from "../../components/react/Footer";
+import { Hero } from "../../components/react/Hero";
+import { StatsChart } from "../../components/react/StatsChart";
+import { PlaylistCarousel } from "../../components/react/PlaylistCarousel";
+import { getAllSpecies } from "../../data/species";
+import { translations, LANGUAGES } from "../../i18n/data";
+import logoIiap from "../../assets/logo_iiap.png";
+
+export function getStaticPaths() {
+    return LANGUAGES.map((lang) => ({
+        params: { lang },
+    }));
+}
+
+const { lang } = Astro.params;
+const content = translations[lang as keyof typeof translations];
+const { species: allSpecies } = await getAllSpecies();
+
+// Shuffle species so "Especies de la colección" shows a random subset
+const randomSpecies = [...allSpecies].sort(() => 0.5 - Math.random());
+
+// Fetch real stats from Supabase
+import { getRealStats } from "../../data/stats";
+const realStats = await getRealStats();
+
+// Update content with real values
+const statsContent = {
+    s1: { ...content.stats.s1, count: realStats.recordings.toString() },
+    s2: { ...content.stats.s2, count: realStats.species.toString() },
+    s3: { ...content.stats.s3, count: realStats.families.toString() },
+};
+---
+
+<Layout title="Biblioteca acústica de fauna amazónica | Fonoteca" lang={lang}>
+    <Header
+        client:load
+        content={content.nav}
+        logoSrc={logoIiap.src}
+        lang={lang}
+    />
+    <main>
+        <Hero client:load content={content.hero} lang={lang as string} stats={realStats} />
+        
+        {/* Audio Archive Section - Últimas Colecciones */}
+        <section
+            id="library"
+            class="py-20 bg-white dark:bg-[#0c141d] scroll-mt-20"
+        >
+            <div class="w-full container mx-auto px-6 mb-12">
+                <PlaylistCarousel
+                    client:load
+                    allSpecies={allSpecies}
+                    lang={lang as "es" | "en" | "pt"}
+                    title={content.nav.library}
+                />
+            </div>
+        </section>
+
+        <section class="bg-gray-50 dark:bg-[#0c141d]">
+            <StatsChart client:visible statsContent={statsContent} chartContent={content.chart} lang={lang as string} />
+        </section>
+
+        {/* Especies de la colección */}
+        <section
+            id="species"
+            class="py-20 bg-gray-50 dark:bg-[#04070a] scroll-mt-20 border-y border-gray-100 dark:border-gray-800"
+        >
+            <div class="w-full container mx-auto px-6 mb-12">
+                <PlaylistCarousel
+                    client:load
+                    allSpecies={randomSpecies}
+                    lang={lang as "es" | "en" | "pt"}
+                    title={lang === 'es' ? 'Especies de la Colección' : lang === 'pt' ? 'Espécies da Coleção' : 'Collection Species'}
+                    linkToFilter={true}
+                />
+            </div>
+        </section>
+    </main>
+    <Footer content={content.footer} logoSrc={logoIiap.src} />
+</Layout>

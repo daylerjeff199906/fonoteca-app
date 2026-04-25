@@ -1,0 +1,85 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Header } from "../../components/react/Header";
+import { Footer } from "../../components/react/Footer";
+import { PageBanner } from "../../components/react/PageBanner";
+import { translations, LANGUAGES } from "../../i18n/data";
+import logoIiap from "../../assets/logo_iiap.png";
+import { landingImages } from "../../config/landingImages";
+
+export function getStaticPaths() {
+    return LANGUAGES.map((lang) => ({
+        params: { lang },
+    }));
+}
+
+const { lang } = Astro.params;
+const content = translations[lang as keyof typeof translations];
+---
+
+<Layout
+    title={`${content.nav.contact} - ${content.nav.library}`}
+    lang={lang}
+    description="Contáctanos"
+>
+    <Header
+        client:load
+        content={content.nav}
+        logoSrc={logoIiap.src}
+        lang={lang}
+    />
+    <main>
+        <PageBanner
+            title={content.nav.contact}
+            subtitle="Estamos aquí para ayudarte"
+            image={landingImages.pageBanner.default}
+        />
+        <section class="py-24 bg-white">
+            <div class="container mx-auto px-6 max-w-4xl">
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Nombre</label
+                            >
+                            <input
+                                type="text"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent-green focus:border-transparent outline-none transition-all"
+                                placeholder="Tu nombre"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Email</label
+                            >
+                            <input
+                                type="email"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent-green focus:border-transparent outline-none transition-all"
+                                placeholder="tucorreo@ejemplo.com"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                            >Mensaje</label
+                        >
+                        <textarea
+                            rows="4"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent-green focus:border-transparent outline-none transition-all"
+                            placeholder="¿En qué podemos ayudarte?"></textarea>
+                    </div>
+                    <button
+                        type="button"
+                        class="bg-accent-green text-primary-dark font-bold py-3 px-8 rounded-full hover:brightness-110 transition-all"
+                    >
+                        Enviar Mensaje
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+    <Footer content={content.footer} logoSrc={logoIiap.src} />
+</Layout>

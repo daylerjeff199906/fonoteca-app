@@ -1,0 +1,7 @@
+﻿{
+  "mcpServers": {
+    "supabase-fonoteca": {
+      "serverUrl": "https://mcp.supabase.com/mcp?project_ref=jljqwtrcytyuvsackdkm"
+    }
+  }
+}

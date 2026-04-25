@@ -1,0 +1,37 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import { Header } from "../../../components/react/Header";
+import { Footer } from "../../../components/react/Footer";
+import { SpeciesDetailClient } from "../../../components/react/SpeciesDetailClient";
+import { translations, LANGUAGES } from "../../../i18n/data";
+import { getAllSpecies } from "../../../data/species";
+import logoIiap from "../../../assets/logo_iiap.png";
+
+export async function getStaticPaths() {
+    const { species } = await getAllSpecies({ limit: 1000 });
+
+    return LANGUAGES.flatMap((lang) =>
+        species.map((s) => ({
+            params: { lang, id: s.id },
+        })),
+    );
+}
+
+const { lang, id } = Astro.params;
+const content = translations[lang as keyof typeof translations];
+---
+
+<Layout title={content.nav.library} lang={lang}>
+    <Header
+        client:load
+        content={content.nav}
+        logoSrc={logoIiap.src}
+        lang={lang}
+    />
+
+    <div class="min-h-screen">
+        <SpeciesDetailClient client:only="react" id={id!} lang={lang} />
+    </div>
+
+    <Footer content={content.footer} logoSrc={logoIiap.src} />
+</Layout>
