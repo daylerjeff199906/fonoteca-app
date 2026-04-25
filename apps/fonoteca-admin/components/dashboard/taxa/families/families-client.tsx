@@ -80,9 +80,10 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
                         <Edit className="h-4 w-4" />
                       </Button>
                       <DeleteButtonWithConfirm 
-                        onConfirm={() => deleteFamily(family.id)} 
-                        title="¿Eliminar familia?" 
-                        description={`Estás a punto de eliminar la familia ${family.name}. Esto podría fallar si tiene géneros asociados.`} 
+                        id={family.id}
+                        onConfirm={deleteFamily} 
+                        itemName={`familia ${family.name}`} 
+                        requiredText="eliminar"
                       />
                     </div>
                   </TableCell>

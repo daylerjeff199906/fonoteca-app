@@ -76,9 +76,10 @@ export function GeneraClient({ data, count }: { data: Genus[]; count: number }) 
                         <Edit className="h-4 w-4" />
                       </Button>
                       <DeleteButtonWithConfirm 
-                        onConfirm={() => deleteGenus(genus.id)} 
-                        title="¿Eliminar género?" 
-                        description={`Estás a punto de eliminar el género ${genus.name}. Esto podría fallar si tiene especies (taxones) asociados.`} 
+                        id={genus.id}
+                        onConfirm={deleteGenus} 
+                        itemName={`género ${genus.name}`} 
+                        requiredText="eliminar"
                       />
                     </div>
                   </TableCell>
