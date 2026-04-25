@@ -14,6 +14,7 @@ export async function getOccurrences({
   taxonId = "",
   hasImage = "all", // "all", "yes", "no"
   hasAudio = "all", // "all", "yes", "no"
+  eventId = "",
 }: {
   page?: number;
   limit?: number;

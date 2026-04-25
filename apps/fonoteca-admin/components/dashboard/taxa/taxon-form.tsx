@@ -15,7 +15,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: () => void }) {
+export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id?: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [genera, setGenera] = useState<any[]>([]);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -73,7 +73,7 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: () 
 
     if (resp.success) {
       toast.success(id ? "Taxón actualizado" : "Taxón registrado");
-      onSuccess();
+      onSuccess(resp.data?.id);
     } else {
       toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
     }

@@ -12,8 +12,10 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Taxon } from "@/types/fonoteca";
-import { FileText, FolderTree, Calendar, Building, Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { FileText, FolderTree, Calendar, Building, Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { TaxonForm } from "@/components/dashboard/taxa/taxon-form";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -36,6 +38,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [taxa, setTaxa] = useState<Taxon[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [openTaxon, setOpenTaxon] = useState(false);
+  const [isTaxonFormOpen, setIsTaxonFormOpen] = useState(false);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<OccurrenceInput>({
     resolver: zodResolver(occurrenceSchema) as any,
@@ -134,6 +137,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full max-w-7xl">
       {/* 1. Datos Básicos */}
       <div className="space-y-4">
@@ -226,6 +230,20 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                             ))}
                           </CommandGroup>
                         </CommandList>
+                        <div className="p-2 border-t border-muted/20">
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                            onClick={() => {
+                              setOpenTaxon(false);
+                              setIsTaxonFormOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Crear Nuevo Taxón
+                          </Button>
+                        </div>
                       </Command>
                     </PopoverContent>
                   </Popover>
@@ -385,7 +403,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t border-muted/20 mt-6">
-        <Button variant="outline" asChild>
+        <Button variant="outline" type="button" asChild>
           <Link href="/dashboard/occurrences">Cancelar</Link>
         </Button>
         <Button type="submit" disabled={loading} className="min-w-[120px]">
@@ -393,5 +411,32 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         </Button>
       </div>
     </form>
+
+    <Sheet open={isTaxonFormOpen} onOpenChange={setIsTaxonFormOpen}>
+      <SheetContent className="overflow-y-auto md:min-w-[60vw] max-w-5xl">
+        <SheetHeader className="pb-0">
+          <SheetTitle>Registrar Taxón</SheetTitle>
+        </SheetHeader>
+        <div className="px-4 py-4 min-w-5xl">
+          <TaxonForm 
+            id={null} 
+            onSuccess={async (newTaxonId) => {
+              setIsTaxonFormOpen(false);
+              // Refresh taxa list
+              const taxaResp = await getTaxa({ limit: 100 });
+              if (taxaResp.data) {
+                setTaxa(taxaResp.data);
+                // Select the new taxon if ID is provided
+                if (newTaxonId) {
+                  control._defaultValues.taxon_id = newTaxonId; // For react-hook-form to recognize it
+                  reset({ ...control._formValues, taxon_id: newTaxonId } as any);
+                }
+              }
+            }} 
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
