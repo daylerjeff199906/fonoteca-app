@@ -1,6 +1,6 @@
 import { EventForm } from "@/components/dashboard/events/event-form";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
-import { Breadcrumbs } from "@/components/dashboard/breadcrumbs";
+import { Breadcrumbs } from "../../../../components/panel-admin/breadcrumbs";
 
 export default function NewEventPage() {
   return (

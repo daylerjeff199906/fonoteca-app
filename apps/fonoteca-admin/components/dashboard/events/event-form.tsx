@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Event } from "@/types/fonoteca";
-import { FileText, MapPin, Calendar, User, Clock, Settings, Loader2 } from "lucide-react";
+import { FileText, MapPin, Calendar, User, Clock, Settings, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function EventForm({ id }: { id?: string }) {
