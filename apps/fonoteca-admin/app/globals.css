@@ -138,11 +138,12 @@
     --chart-4: oklch(0.83 0.17 81.03);
     --chart-5: oklch(0.77 0.17 65.36);
     --sidebar: 210 100% 8%;
-    --sidebar-foreground: 199 15% 52%;
+    --sidebar-background: 210 100% 8%;
+    --sidebar-foreground: 210 20% 90%;
     --sidebar-primary: 210 100% 12%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 100% 12%;
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-accent: 210 100% 15%;
+    --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 210 100% 12%;
     --sidebar-ring: 217.2 91.2% 59.8%;
     ;
@@ -189,6 +190,7 @@
     --chart-4: oklch(0.62 0.26 305.32);
     --chart-5: oklch(0.64 0.25 16.51);
     --sidebar-background: 210 100% 8%;
+    --sidebar: 210 100% 8%;
   }
 
 }
@@ -227,35 +229,13 @@
   }
 }
 
-:root {
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-
-.dark {
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-
 @theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
 }
