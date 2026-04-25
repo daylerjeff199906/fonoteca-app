@@ -16,6 +16,7 @@ import { FileText, FolderTree, Calendar, Building, Check, ChevronsUpDown, Loader
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TaxonForm } from "@/components/dashboard/taxa/taxon-form";
+import { FormFooter } from "@/components/panel-admin/form-footer";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -148,13 +149,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
-            <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.occurrenceID && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceID.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Basis of Record *</label>
-            <Input {...register("basisOfRecord")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("basisOfRecord")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.basisOfRecord && <p className="text-[10px] text-red-500 mt-1">{errors.basisOfRecord.message}</p>}
           </div>
         </div>
@@ -178,7 +179,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                     <button
                       type="button"
                       className={cn(
-                        "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+                        "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -245,7 +246,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
             <select
               {...register("location_id")}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
             >
               <option value="">Seleccionar Ubicación...</option>
               {locations.map(l => (
@@ -266,12 +267,12 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
-            <Input {...register("identificationMethod")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("identificationMethod")} className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Confianza (0-1)</label>
-            <Input type="number" step="0.01" {...register("identificationConfidence")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input type="number" step="0.01" {...register("identificationConfidence")} className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
 
           <div className="flex flex-col gap-2 lg:col-span-2">
@@ -281,17 +282,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               name="verification_status"
               render={({ field }) => (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "pending" && "border-amber-500 bg-amber-500/5")}>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "pending" && "border-amber-500 bg-amber-500/5")}>
                     <input type="radio" value="pending" checked={field.value === "pending"} onChange={field.onChange} className="sr-only" />
                     <span className="text-sm font-bold text-amber-600">Pendiente</span>
                     <span className="text-xs text-muted-foreground mt-1">Requiere revisión por un experto.</span>
                   </label>
-                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "verified" && "border-emerald-500 bg-emerald-500/5")}>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "verified" && "border-emerald-500 bg-emerald-500/5")}>
                     <input type="radio" value="verified" checked={field.value === "verified"} onChange={field.onChange} className="sr-only" />
                     <span className="text-sm font-bold text-emerald-600">Verificado</span>
                     <span className="text-xs text-muted-foreground mt-1">La identidad ha sido confirmada.</span>
                   </label>
-                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "rejected" && "border-red-500 bg-red-500/5")}>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "rejected" && "border-red-500 bg-red-500/5")}>
                     <input type="radio" value="rejected" checked={field.value === "rejected"} onChange={field.onChange} className="sr-only" />
                     <span className="text-sm font-bold text-red-600">Rechazado</span>
                     <span className="text-xs text-muted-foreground mt-1">La identificación no es válida.</span>
@@ -312,13 +313,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
-            <Input {...register("recordedBy")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("recordedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.recordedBy && <p className="text-[10px] text-red-500 mt-1">{errors.recordedBy.message}</p>}
           </div>
           
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
-            <Input {...register("identifiedBy")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("identifiedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
         </div>
       </div>
@@ -332,13 +333,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Institución</label>
-            <Input {...register("institutionCode")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("institutionCode")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.institutionCode && <p className="text-[10px] text-red-500 mt-1">{errors.institutionCode.message}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Colección</label>
-            <Input {...register("collectionCode")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("collectionCode")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.collectionCode && <p className="text-[10px] text-red-500 mt-1">{errors.collectionCode.message}</p>}
           </div>
         </div>
@@ -349,7 +350,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Observaciones</label>
-            <Input {...register("occurrenceRemarks")} placeholder="Detalles extra del avistamiento..." className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            <Input {...register("occurrenceRemarks")} placeholder="Detalles extra del avistamiento..." className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
           </div>
 
@@ -360,17 +361,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               name="record_status"
               render={({ field }) => (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
                     <input type="radio" value="draft" checked={field.value === "draft"} onChange={field.onChange} className="sr-only" />
                     <span className="text-sm font-bold text-amber-600">Borrador</span>
                     <span className="text-xs text-muted-foreground mt-1">Oculto del portal público.</span>
                   </label>
-                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
                     <input type="radio" value="published" checked={field.value === "published"} onChange={field.onChange} className="sr-only" />
                     <span className="text-sm font-bold text-emerald-600">Publicado</span>
                     <span className="text-xs text-muted-foreground mt-1">Visible para todos en la web.</span>
                   </label>
-                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
                     <input type="radio" value="deleted" checked={field.value === "deleted"} onChange={field.onChange} className="sr-only" />
                     <span className="text-sm font-bold text-red-600">Eliminado</span>
                     <span className="text-xs text-muted-foreground mt-1">Archivado, no disponible.</span>
@@ -382,14 +383,14 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4 border-t border-muted/20 mt-6">
+      <FormFooter>
         <Button variant="outline" type="button" asChild>
           <Link href="/dashboard/occurrences">Cancelar</Link>
         </Button>
         <Button type="submit" disabled={loading} className="min-w-[120px]">
           {loading ? "Guardando..." : id ? "Guardar Cambios" : "Registrar"}
         </Button>
-      </div>
+      </FormFooter>
     </form>
 
     <Sheet open={isTaxonFormOpen} onOpenChange={setIsTaxonFormOpen}>

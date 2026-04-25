@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Location, Event } from "@/types/fonoteca";
 import { FileText, MapPin, Calendar, User, Clock, Settings, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FormFooter } from "@/components/panel-admin/form-footer";
 
 export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: string }) {
   const router = useRouter();
@@ -257,14 +258,14 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4 border-t border-muted/20 mt-6">
+      <FormFooter>
         <Button variant="outline" asChild>
           <Link href="/dashboard/events">Cancelar</Link>
         </Button>
         <Button type="submit" disabled={loading} className="min-w-[120px]">
           {loading ? "Guardando..." : id ? "Guardar Cambios" : "Registrar"}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   );
 }

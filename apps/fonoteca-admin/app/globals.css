@@ -52,6 +52,14 @@
   --color-iiap-dark: #0F2531;
   --color-iiap-green: #8DC63F;
 
+  /* Shadows - Global override to remove shadows */
+  --shadow-sm: 0 0 0 transparent;
+  --shadow: 0 0 0 transparent;
+  --shadow-md: 0 0 0 transparent;
+  --shadow-lg: 0 0 0 transparent;
+  --shadow-xl: 0 0 0 transparent;
+  --shadow-2xl: 0 0 0 transparent;
+
   /* Spacing/Radius */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -152,7 +160,7 @@
     --font-serif: "Geist", "Geist Fallback", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-    --radius: 1.2rem;
+    --radius: 0.5rem;
 
     --shadow-2xs: 0 1px 3px 0px oklch(0.00 0 0 / 0.00);
     --shadow-xs: 0 1px 3px 0px oklch(0.00 0 0 / 0.00);

@@ -7,6 +7,7 @@ import { multimediaSchema, MultimediaInput } from "@/lib/validations/fonoteca";
 import { createMultimedia, updateMultimedia, getMultimedia } from "@/actions/multimedia";
 import { getOccurrences } from "@/actions/occurrences";
 import { Button } from "@/components/ui/button";
+import { FormFooter } from "@/components/panel-admin/form-footer";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -200,14 +201,14 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
         </label>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
+      <FormFooter>
         <Button variant="outline" type="button" onClick={() => router.push("/dashboard/multimedia")}>
           Cancelar
         </Button>
         <Button type="submit" disabled={loading}>
           {loading ? "Guardando..." : id ? "Guardar Cambios" : "Registrar"}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   );
 }
