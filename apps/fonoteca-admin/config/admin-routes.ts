@@ -23,6 +23,14 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
       icon: Layers,
       items: [
         {
+          title: "Clases",
+          url: `/dashboard/taxa/classes`,
+        },
+        {
+          title: "Órdenes",
+          url: `/dashboard/taxa/orders`,
+        },
+        {
           title: "Familias",
           url: `/dashboard/taxa/families`,
         },

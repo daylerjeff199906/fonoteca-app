@@ -16,6 +16,24 @@ export interface Location {
   created_at: string;
 }
 
+export interface Class {
+  id: string;
+  kingdom: string;
+  phylum: string | null;
+  name: string;
+  created_at: string;
+}
+
+export interface Order {
+  id: string;
+  class_id: string;
+  name: string;
+  created_at: string;
+  
+  // Joined
+  class?: Class;
+}
+
 export interface Family {
   id: string;
   kingdom: string;
@@ -23,7 +41,11 @@ export interface Family {
   class: string;
   order: string;
   name: string;
+  order_id?: string | null; // New relation
   created_at: string;
+
+  // Joined
+  order_ref?: Order;
 }
 
 export interface Genus {

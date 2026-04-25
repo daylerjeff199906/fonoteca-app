@@ -6,6 +6,25 @@ const numberOrNull = z.preprocess(
   z.coerce.number().nullable().optional()
 );
 
+// --- Classes ---
+export const classSchema = z.object({
+  id: z.string().uuid().optional(),
+  kingdom: z.string().default("Animalia"),
+  phylum: z.string().default("Chordata"),
+  name: z.string().min(1, "Class name is required"),
+});
+
+export type ClassInput = z.infer<typeof classSchema>;
+
+// --- Orders ---
+export const orderSchema = z.object({
+  id: z.string().uuid().optional(),
+  class_id: z.string().uuid("Invalid Class ID"),
+  name: z.string().min(1, "Order name is required"),
+});
+
+export type OrderInput = z.infer<typeof orderSchema>;
+
 // --- Families ---
 export const familySchema = z.object({
   id: z.string().uuid().optional(),
@@ -14,6 +33,7 @@ export const familySchema = z.object({
   class: z.string().min(1, "Class is required"),
   order: z.string().min(1, "Order is required"),
   name: z.string().min(1, "Family name is required"),
+  order_id: z.string().uuid("Invalid Order ID").optional().nullable(),
 });
 
 export type FamilyInput = z.infer<typeof familySchema>;
