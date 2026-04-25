@@ -82,7 +82,7 @@ export function GenusForm({
         </div>
       </div>
 
-      <FormFooter>
+      <FormFooter variant="sticky">
         <Button variant="outline" type="button" onClick={() => onSuccess?.()}>Cancelar</Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Guardando..." : id ? "Guardar Cambios" : "Registrar Género"}
