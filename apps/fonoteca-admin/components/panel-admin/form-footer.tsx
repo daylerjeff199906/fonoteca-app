@@ -15,7 +15,9 @@ export function FormFooter({ children, className, ...props }: FormFooterProps) {
         )}
         {...props}
       >
-        {children}
+        <div className="flex justify-end w-full">
+          {children}
+        </div>
       </div>
     </>
   );
