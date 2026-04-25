@@ -23,7 +23,15 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
       icon: Layers,
       items: [
         {
-          title: "Catálogo de Taxones",
+          title: "Familias",
+          url: `/dashboard/taxa/families`,
+        },
+        {
+          title: "Géneros",
+          url: `/dashboard/taxa/genera`,
+        },
+        {
+          title: "Catálogo de Especies",
           url: `/dashboard/taxa`,
         },
       ],
