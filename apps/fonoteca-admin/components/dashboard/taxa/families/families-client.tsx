@@ -39,11 +39,6 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
       <PageHeader 
         title="Familias Taxonómicas" 
         description="Gestiona las familias registradas en el catálogo"
-        breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Taxonomía", href: "/dashboard/taxa" },
-          { label: "Familias", href: "/dashboard/taxa/families", active: true },
-        ]}
       />
 
       <div className="flex items-center justify-between">

@@ -39,11 +39,6 @@ export function GeneraClient({ data, count }: { data: Genus[]; count: number }) 
       <PageHeader 
         title="Géneros Taxonómicos" 
         description="Gestiona los géneros registrados en el catálogo"
-        breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Taxonomía", href: "/dashboard/taxa" },
-          { label: "Géneros", href: "/dashboard/taxa/genera", active: true },
-        ]}
       />
 
       <div className="flex items-center justify-between">
