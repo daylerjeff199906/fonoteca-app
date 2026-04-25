@@ -48,6 +48,10 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
           title: "Lista de Ocurrencias",
           url: `/dashboard/occurrences`,
         },
+        {
+          title: "Eventos de Muestreo",
+          url: `/dashboard/events`,
+        },
       ],
     },
     {
