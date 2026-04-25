@@ -15,7 +15,7 @@ import { Location, Event } from "@/types/fonoteca";
 import { FileText, MapPin, Calendar, User, Clock, Settings, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function EventForm({ id }: { id?: string }) {
+export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
@@ -81,7 +81,13 @@ export function EventForm({ id }: { id?: string }) {
 
     if (resp.success) {
       toast.success(id ? "Evento actualizado" : "Evento registrado");
-      router.push("/dashboard/events");
+      if (redirectUrl && resp.data?.id) {
+        // Replace [id] with actual event id if present in the redirectUrl
+        const finalUrl = redirectUrl.replace('[id]', resp.data.id);
+        router.push(finalUrl);
+      } else {
+        router.push("/dashboard/events");
+      }
     } else {
       toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
     }

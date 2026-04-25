@@ -21,6 +21,7 @@ export async function getOccurrences({
   taxonId?: string;
   hasImage?: string;
   hasAudio?: string;
+  eventId?: string;
 }) {
   const cookieStore = await cookies();
   const supabase = await createFonotecaServer(cookieStore);
@@ -38,6 +39,10 @@ export async function getOccurrences({
 
   if (taxonId) {
     query = query.eq("taxon_id", taxonId);
+  }
+
+  if (eventId) {
+    query = query.eq("event_id", eventId);
   }
 
   // Media filtering

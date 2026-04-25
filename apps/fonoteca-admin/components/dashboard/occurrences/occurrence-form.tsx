@@ -29,7 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export function OccurrenceForm({ id }: { id?: string }) {
+export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: string, redirectUrl?: string, defaultEventId?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
@@ -45,7 +45,8 @@ export function OccurrenceForm({ id }: { id?: string }) {
       collectionCode: "Fonoteca",
       identificationMethod: "Manual",
       verification_status: "pending",
-      record_status: "draft"
+      record_status: "draft",
+      event_id: defaultEventId || undefined,
     }
   });
 
@@ -107,7 +108,12 @@ export function OccurrenceForm({ id }: { id?: string }) {
           <span className="text-xs opacity-90">{id ? "La ocurrencia se actualizó correctamente." : "La ocurrencia se registró correctamente en el sistema."}</span>
         </div>
       );
-      router.push("/dashboard/occurrences");
+      if (redirectUrl && resp.data?.id) {
+        const finalUrl = redirectUrl.replace('[id]', resp.data.id);
+        router.push(finalUrl);
+      } else {
+        router.push("/dashboard/occurrences");
+      }
     } else {
       toast.error(
         <div className="flex flex-col gap-0.5">

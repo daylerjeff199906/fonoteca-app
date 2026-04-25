@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Occurrence } from "@/types/fonoteca";
 
-export function MultimediaForm({ id }: { id?: string }) {
+export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: string, redirectUrl?: string, defaultOccurrenceId?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
@@ -28,7 +28,8 @@ export function MultimediaForm({ id }: { id?: string }) {
       order_index: 0,
       record_status: "draft",
       is_public: true,
-      guano_metadata: {}
+      guano_metadata: {},
+      occurrence_id: defaultOccurrenceId || undefined,
     }
   });
 
@@ -61,7 +62,12 @@ export function MultimediaForm({ id }: { id?: string }) {
 
     if (resp.success) {
       toast.success(id ? "Archivo actualizado" : "Archivo registrado");
-      router.push("/dashboard/multimedia");
+      if (redirectUrl && resp.data?.id) {
+        const finalUrl = redirectUrl.replace('[id]', resp.data.id);
+        router.push(finalUrl);
+      } else {
+        router.push("/dashboard/multimedia");
+      }
     } else {
       toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
     }

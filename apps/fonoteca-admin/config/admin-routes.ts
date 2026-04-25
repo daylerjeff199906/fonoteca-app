@@ -45,6 +45,10 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
       icon: ClipboardList,
       items: [
         {
+          title: "Registrar Colección",
+          url: `/dashboard/collections/new`,
+        },
+        {
           title: "Lista de Ocurrencias",
           url: `/dashboard/occurrences`,
         },
