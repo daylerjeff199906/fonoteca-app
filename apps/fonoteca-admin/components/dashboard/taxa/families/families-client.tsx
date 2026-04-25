@@ -103,7 +103,10 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
           </SheetHeader>
           <FamilyForm 
             id={currentFamily?.id || null} 
-            defaultValues={currentFamily || undefined} 
+            defaultValues={currentFamily ? {
+              ...currentFamily,
+              phylum: currentFamily.phylum ?? undefined
+            } : undefined} 
             onSuccess={() => setIsFormOpen(false)} 
           />
         </SheetContent>
