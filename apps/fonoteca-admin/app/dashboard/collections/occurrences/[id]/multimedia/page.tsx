@@ -32,7 +32,7 @@ export default async function OccurrenceMultimediaPage({
 
   return (
     <LayoutWrapper sectionTitle={`Último Paso: Multimedia de Ocurrencia`}>
-      <div className="space-y-6 max-w-7xl">
+      <div className="space-y-6">
         <Breadcrumbs
           items={[
             { label: "Monitoreo", href: "/dashboard/occurrences" },

@@ -30,7 +30,7 @@ export default async function EventOccurrencesPage({
 
   return (
     <LayoutWrapper sectionTitle={`Paso 2: Ocurrencias del Evento ${event.eventID}`}>
-      <div className="space-y-6 max-w-7xl">
+      <div className="space-y-6">
         <Breadcrumbs
           items={[
             { label: "Monitoreo", href: "/dashboard/occurrences" },
@@ -91,7 +91,7 @@ export default async function EventOccurrencesPage({
                         <div>
                           <p className="text-sm font-bold">{occ.occurrenceID || "Sin ID"}</p>
                           <p className="text-xs text-muted-foreground italic">
-                            {occ.taxa?.scientificName || "Taxón no especificado"}
+                            {occ.taxon?.scientificName || "Taxón no especificado"}
                           </p>
                         </div>
                         <Button variant="ghost" size="icon" className="h-6 w-6" asChild>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export default function NewCollectionPage() {
   return (
     <LayoutWrapper sectionTitle="Registrar Colección">
-      <div className="space-y-6 max-w-5xl">
+      <div className="space-y-6">
         <Breadcrumbs
           items={[
             { label: "Monitoreo", href: "/dashboard/occurrences" },

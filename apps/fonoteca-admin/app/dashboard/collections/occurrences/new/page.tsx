@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 export default function NewCollectionOccurrencePage() {
   return (
     <LayoutWrapper sectionTitle="Paso 1: Crear Ocurrencia">
-      <div className="space-y-6 max-w-5xl">
+      <div className="space-y-6">
         <Breadcrumbs
           items={[
             { label: "Monitoreo", href: "/dashboard/occurrences" },

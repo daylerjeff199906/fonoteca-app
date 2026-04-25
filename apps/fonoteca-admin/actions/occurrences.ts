@@ -32,7 +32,7 @@ export async function getOccurrences({
 
   let query = supabase
     .from("occurrences")
-    .select("*, taxa(*), locations(*), multimedia(*)", { count: "exact" });
+    .select("*, taxon:taxa(*), location:locations(*), multimedia(*)", { count: "exact" });
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);

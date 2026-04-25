@@ -138,7 +138,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
   return (
     <>
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full max-w-7xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
       {/* 1. Datos Básicos */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
