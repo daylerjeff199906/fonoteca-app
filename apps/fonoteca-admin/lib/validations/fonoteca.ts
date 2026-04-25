@@ -28,12 +28,8 @@ export type OrderInput = z.infer<typeof orderSchema>;
 // --- Families ---
 export const familySchema = z.object({
   id: z.string().uuid().optional(),
-  kingdom: z.string().default("Animalia"),
-  phylum: z.string().default("Chordata"),
-  class: z.string().min(1, "Class is required"),
-  order: z.string().min(1, "Order is required"),
+  order_id: z.string().uuid("Invalid Order ID"),
   name: z.string().min(1, "Family name is required"),
-  order_id: z.string().uuid("Invalid Order ID").optional().nullable(),
 });
 
 export type FamilyInput = z.infer<typeof familySchema>;

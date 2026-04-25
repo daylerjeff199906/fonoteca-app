@@ -23,10 +23,10 @@ export async function getFamiliesPaginated({
 
   let query = supabase
     .from("families")
-    .select("*", { count: "exact" });
+    .select("*, order_ref:orders(*)", { count: "exact" });
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,order.ilike.%${search}%,class.ilike.%${search}%`);
+    query = query.ilike("name", `%${search}%`);
   }
 
   const { data, count, error } = await query

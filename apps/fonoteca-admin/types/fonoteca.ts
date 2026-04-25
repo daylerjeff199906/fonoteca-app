@@ -36,12 +36,8 @@ export interface Order {
 
 export interface Family {
   id: string;
-  kingdom: string;
-  phylum: string | null;
-  class: string;
-  order: string;
   name: string;
-  order_id?: string | null; // New relation
+  order_id: string | null;
   created_at: string;
 
   // Joined

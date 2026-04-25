@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { familySchema, FamilyInput } from "@/lib/validations/fonoteca";
 import { createFamily, updateFamily } from "@/actions/families";
+import { getAllOrders } from "@/actions/orders";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
@@ -19,16 +20,20 @@ export function FamilyForm({
   defaultValues?: Partial<FamilyInput>;
   onSuccess?: () => void;
 }) {
+  const [orders, setOrders] = useState<{ id: string, name: string }[]>([]);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FamilyInput>({
     resolver: zodResolver(familySchema) as any,
     defaultValues: defaultValues || {
-      kingdom: "Animalia",
-      phylum: "Chordata",
-      class: "",
-      order: "",
-      name: ""
+      name: "",
+      order_id: ""
     }
   });
+
+  useEffect(() => {
+    getAllOrders().then(res => {
+      if (res.data) setOrders(res.data);
+    });
+  }, []);
 
   useEffect(() => {
     if (defaultValues) {
@@ -55,28 +60,22 @@ export function FamilyForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-muted-foreground uppercase">Reino *</label>
-          <Input {...register("kingdom")} className="bg-background" />
-          {errors.kingdom && <p className="text-xs text-red-500">{errors.kingdom.message}</p>}
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-muted-foreground uppercase">Filo</label>
-          <Input {...register("phylum")} className="bg-background" />
-          {errors.phylum && <p className="text-xs text-red-500">{errors.phylum.message}</p>}
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-muted-foreground uppercase">Clase *</label>
-          <Input {...register("class")} className="bg-background" />
-          {errors.class && <p className="text-xs text-red-500">{errors.class.message}</p>}
-        </div>
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label className="text-xs font-semibold text-muted-foreground uppercase">Orden *</label>
-          <Input {...register("order")} className="bg-background" />
-          {errors.order && <p className="text-xs text-red-500">{errors.order.message}</p>}
+          <select
+            {...register("order_id")}
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Seleccione un orden...</option>
+            {orders.map(o => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+          {errors.order_id && <p className="text-xs text-red-500">{errors.order_id.message}</p>}
         </div>
-        <div className="flex flex-col gap-2 md:col-span-2">
+
+        <div className="flex flex-col gap-2">
           <label className="text-xs font-semibold text-muted-foreground uppercase">Nombre de la Familia *</label>
           <Input {...register("name")} className="bg-background" />
           {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}

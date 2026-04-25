@@ -55,15 +55,13 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Orden</TableHead>
-              <TableHead>Clase</TableHead>
-              <TableHead>Reino</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                   No se encontraron familias.
                 </TableCell>
               </TableRow>
@@ -71,9 +69,7 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
               data.map((family) => (
                 <TableRow key={family.id}>
                   <TableCell className="font-semibold">{family.name}</TableCell>
-                  <TableCell>{family.order}</TableCell>
-                  <TableCell>{family.class}</TableCell>
-                  <TableCell>{family.kingdom}</TableCell>
+                  <TableCell>{family.order_ref?.name || "Sin Orden"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(family)}>
@@ -105,7 +101,7 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
             id={currentFamily?.id || null} 
             defaultValues={currentFamily ? {
               ...currentFamily,
-              phylum: currentFamily.phylum ?? undefined
+              order_id: currentFamily.order_id ?? ""
             } : undefined} 
             onSuccess={() => setIsFormOpen(false)} 
           />
