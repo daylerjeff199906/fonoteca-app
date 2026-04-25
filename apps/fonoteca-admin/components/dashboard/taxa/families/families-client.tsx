@@ -97,7 +97,7 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
       <PaginationButtons totalCount={count} />
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <SheetContent className="overflow-y-auto min-w-[30vw]">
+        <SheetContent className="overflow-y-auto min-w-[35vw] p-6">
           <SheetHeader className="pb-4">
             <SheetTitle>{currentFamily ? "Editar Familia" : "Registrar Familia"}</SheetTitle>
           </SheetHeader>
