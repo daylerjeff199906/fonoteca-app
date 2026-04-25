@@ -14,7 +14,7 @@ export default async function EventOccurrencesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  
+
   // Fetch event details and occurrences for this event
   const [eventRes, occurrencesRes] = await Promise.all([
     getEvent(id),
@@ -38,7 +38,7 @@ export default async function EventOccurrencesPage({
             { label: "Ocurrencias", href: `/dashboard/collections/events/${id}/occurrences`, active: true },
           ]}
         />
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Columna Izquierda: Formulario para añadir Ocurrencia */}
           <div className="lg:col-span-2 space-y-6">
@@ -59,11 +59,8 @@ export default async function EventOccurrencesPage({
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <OccurrenceForm 
-                  defaultEventId={id} 
-                  // In this guided mode, we can stay on the same page after creating, to allow adding more.
-                  // The form will show a success toast. The user can click "Add multimedia" on the right panel.
-                  // So we leave redirectUrl empty to just refresh, OR redirect back to same page to refresh data.
+                <OccurrenceForm
+                  defaultEventId={id}
                   redirectUrl={`/dashboard/collections/events/${id}/occurrences`}
                 />
               </CardContent>
@@ -100,7 +97,7 @@ export default async function EventOccurrencesPage({
                           </Link>
                         </Button>
                       </div>
-                      
+
                       <Button asChild size="sm" variant="secondary" className="w-full h-8 text-xs gap-1.5 mt-2 bg-primary/10 hover:bg-primary/20 text-primary">
                         <Link href={`/dashboard/collections/occurrences/${occ.id}/multimedia`}>
                           <FileAudio className="h-3 w-3" />

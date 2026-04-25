@@ -140,264 +140,244 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
       {/* 1. Datos Básicos */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <FileText className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Datos Básicos</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.occurrenceID && <p className="text-xs text-red-500 mt-1 px-2">{errors.occurrenceID.message}</p>}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
+            <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            {errors.occurrenceID && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceID.message}</p>}
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Basis of Record *</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("basisOfRecord")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.basisOfRecord && <p className="text-xs text-red-500 mt-1 px-2">{errors.basisOfRecord.message}</p>}
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Basis of Record *</label>
+            <Input {...register("basisOfRecord")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            {errors.basisOfRecord && <p className="text-[10px] text-red-500 mt-1">{errors.basisOfRecord.message}</p>}
           </div>
         </div>
       </div>
 
       {/* 2. Taxonomía y Ubicación */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <FolderTree className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Taxonomía y Ubicación</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Taxón *</label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1 max-w-xl md:min-w-[74%]">
-              <Controller
-                control={control}
-                name="taxon_id"
-                render={({ field }) => (
-                  <Popover open={openTaxon} onOpenChange={setOpenTaxon}>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className={cn(
-                          "flex h-8 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <span className="truncate">
-                          {field.value
-                            ? (() => {
-                              const t = taxa.find((t) => t.id === field.value);
-                              return t ? `${t.scientificName} (${t.vernacularName || "-"})` : "Seleccionar Taxón...";
-                            })()
-                            : "Seleccionar Taxón..."}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar taxón..." />
-                        <CommandList>
-                          <CommandEmpty>No se encontró taxón.</CommandEmpty>
-                          <CommandGroup>
-                            {taxa.map((t) => (
-                              <CommandItem
-                                key={t.id}
-                                value={`${t.scientificName} ${t.vernacularName || ""}`}
-                                onSelect={() => {
-                                  field.onChange(t.id);
-                                  setOpenTaxon(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4 shrink-0",
-                                    t.id === field.value ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {t.scientificName} ({t.vernacularName || "-"})
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                        <div className="p-2 border-t border-muted/20">
-                          <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                            onClick={() => {
-                              setOpenTaxon(false);
-                              setIsTaxonFormOpen(true);
-                            }}
-                          >
-                            <Plus className="h-3 w-3" />
-                            Crear Nuevo Taxón
-                          </Button>
-                        </div>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-              {errors.taxon_id && <p className="text-xs text-red-500 px-2">{errors.taxon_id.message}</p>}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Taxón *</label>
+            <Controller
+              control={control}
+              name="taxon_id"
+              render={({ field }) => (
+                <Popover open={openTaxon} onOpenChange={setOpenTaxon}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      <span className="truncate">
+                        {field.value
+                          ? (() => {
+                            const t = taxa.find((t) => t.id === field.value);
+                            return t ? `${t.scientificName} (${t.vernacularName || "-"})` : "Seleccionar Taxón...";
+                          })()
+                          : "Seleccionar Taxón..."}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar taxón..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontró taxón.</CommandEmpty>
+                        <CommandGroup>
+                          {taxa.map((t) => (
+                            <CommandItem
+                              key={t.id}
+                              value={`${t.scientificName} ${t.vernacularName || ""}`}
+                              onSelect={() => {
+                                field.onChange(t.id);
+                                setOpenTaxon(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4 shrink-0",
+                                  t.id === field.value ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {t.scientificName} ({t.vernacularName || "-"})
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                      <div className="p-2 border-t border-muted/20">
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                          onClick={() => {
+                            setOpenTaxon(false);
+                            setIsTaxonFormOpen(true);
+                          }}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Crear Nuevo Taxón
+                        </Button>
+                      </div>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            />
+            {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
-            </div>
-            <div className="w-3/4">
-              <select
-                {...register("location_id")}
-                className="flex h-8 w-full max-w-xl rounded-md border-none bg-transparent px-2 text-sm shadow-none font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-              >
-                <option value="">Seleccionar Ubicación...</option>
-                {locations.map(l => (
-                  <option key={l.id} value={l.id}>{l.locality} ({l.stateProvince || l.country})</option>
-                ))}
-              </select>
-              {errors.location_id && <p className="text-xs text-red-500 mt-1 px-2">{errors.location_id.message}</p>}
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
+            <select
+              {...register("location_id")}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
+            >
+              <option value="">Seleccionar Ubicación...</option>
+              {locations.map(l => (
+                <option key={l.id} value={l.id}>{l.locality} ({l.stateProvince || l.country})</option>
+              ))}
+            </select>
+            {errors.location_id && <p className="text-[10px] text-red-500 mt-1">{errors.location_id.message}</p>}
           </div>
         </div>
       </div>
 
       {/* 3. Identificación y Verificación */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <Check className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Identificación y Verificación</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("identificationMethod")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
+            <Input {...register("identificationMethod")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Confianza (0-1)</label>
-            </div>
-            <div className="w-3/4">
-              <Input type="number" step="0.01" {...register("identificationConfidence")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Confianza (0-1)</label>
+            <Input type="number" step="0.01" {...register("identificationConfidence")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Estado de Verificación</label>
-            </div>
-            <div className="w-3/4">
-              <select
-                {...register("verification_status")}
-                className="flex h-8 w-full max-w-xl rounded-md border-none bg-transparent px-2 text-sm shadow-none font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-              >
-                <option value="pending">Pendiente</option>
-                <option value="verified">Verificado</option>
-                <option value="rejected">Rechazado</option>
-              </select>
-            </div>
+          <div className="flex flex-col gap-2 lg:col-span-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Estado de Verificación</label>
+            <Controller
+              control={control}
+              name="verification_status"
+              render={({ field }) => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "pending" && "border-amber-500 bg-amber-500/5")}>
+                    <input type="radio" value="pending" checked={field.value === "pending"} onChange={field.onChange} className="sr-only" />
+                    <span className="text-sm font-bold text-amber-600">Pendiente</span>
+                    <span className="text-xs text-muted-foreground mt-1">Requiere revisión por un experto.</span>
+                  </label>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "verified" && "border-emerald-500 bg-emerald-500/5")}>
+                    <input type="radio" value="verified" checked={field.value === "verified"} onChange={field.onChange} className="sr-only" />
+                    <span className="text-sm font-bold text-emerald-600">Verificado</span>
+                    <span className="text-xs text-muted-foreground mt-1">La identidad ha sido confirmada.</span>
+                  </label>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "rejected" && "border-red-500 bg-red-500/5")}>
+                    <input type="radio" value="rejected" checked={field.value === "rejected"} onChange={field.onChange} className="sr-only" />
+                    <span className="text-sm font-bold text-red-600">Rechazado</span>
+                    <span className="text-xs text-muted-foreground mt-1">La identificación no es válida.</span>
+                  </label>
+                </div>
+              )}
+            />
           </div>
         </div>
       </div>
 
       {/* 4. Temporalidad y Monitoreo */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <Calendar className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Monitoreo</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("recordedBy")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.recordedBy && <p className="text-xs text-red-500 mt-1 px-2">{errors.recordedBy.message}</p>}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
+            <Input {...register("recordedBy")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            {errors.recordedBy && <p className="text-[10px] text-red-500 mt-1">{errors.recordedBy.message}</p>}
           </div>
           
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("identifiedBy")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
+            <Input {...register("identifiedBy")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
           </div>
         </div>
       </div>
 
-      {/* 4. Institución */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
+      {/* 5. Institución */}
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <Building className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Institución y Colección</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Institución</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("institutionCode")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.institutionCode && <p className="text-xs text-red-500 mt-1 px-2">{errors.institutionCode.message}</p>}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Institución</label>
+            <Input {...register("institutionCode")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            {errors.institutionCode && <p className="text-[10px] text-red-500 mt-1">{errors.institutionCode.message}</p>}
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Colección</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("collectionCode")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.collectionCode && <p className="text-xs text-red-500 mt-1 px-2">{errors.collectionCode.message}</p>}
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Colección</label>
+            <Input {...register("collectionCode")} className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            {errors.collectionCode && <p className="text-[10px] text-red-500 mt-1">{errors.collectionCode.message}</p>}
           </div>
         </div>
       </div>
 
-      {/* 6. Estado del Registro */}
-      <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-        <div className="flex items-center justify-between gap-4 py-3">
-          <div className="w-1/4 flex items-center">
+      {/* 6. Observaciones y Estado del Registro */}
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Observaciones</label>
+            <Input {...register("occurrenceRemarks")} placeholder="Detalles extra del avistamiento..." className="bg-background shadow-sm h-9 focus-visible:ring-primary/20" />
+            {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
           </div>
-          <div className="w-3/4">
-            <Input {...register("occurrenceRemarks")} placeholder="Detalles extra del avistamiento..." className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-            {errors.occurrenceRemarks && <p className="text-xs text-red-500 mt-1 px-2">{errors.occurrenceRemarks.message}</p>}
-          </div>
-        </div>
 
-        <div className="flex items-center justify-between gap-4 py-3">
-          <div className="w-1/4 flex items-center">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Estado del Registro</label>
-          </div>
-          <div className="w-3/4">
-            <select
-              {...register("record_status")}
-              className="flex h-8 w-full max-w-xl rounded-md border-none bg-transparent px-2 text-sm shadow-none font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-            >
-              <option value="draft">Borrador</option>
-              <option value="published">Publicado</option>
-              <option value="deleted">Eliminado</option>
-            </select>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Estado del Registro Público</label>
+            <Controller
+              control={control}
+              name="record_status"
+              render={({ field }) => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
+                    <input type="radio" value="draft" checked={field.value === "draft"} onChange={field.onChange} className="sr-only" />
+                    <span className="text-sm font-bold text-amber-600">Borrador</span>
+                    <span className="text-xs text-muted-foreground mt-1">Oculto del portal público.</span>
+                  </label>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
+                    <input type="radio" value="published" checked={field.value === "published"} onChange={field.onChange} className="sr-only" />
+                    <span className="text-sm font-bold text-emerald-600">Publicado</span>
+                    <span className="text-xs text-muted-foreground mt-1">Visible para todos en la web.</span>
+                  </label>
+                  <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 shadow-sm hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
+                    <input type="radio" value="deleted" checked={field.value === "deleted"} onChange={field.onChange} className="sr-only" />
+                    <span className="text-sm font-bold text-red-600">Eliminado</span>
+                    <span className="text-xs text-muted-foreground mt-1">Archivado, no disponible.</span>
+                  </label>
+                </div>
+              )}
+            />
           </div>
         </div>
       </div>
