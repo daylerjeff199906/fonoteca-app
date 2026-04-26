@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Play, Pause, Music, Eye, MoreVertical, X, Info } from "lucide-react";
+import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2 } from "lucide-react";
 import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { R2_PUBLIC_URL } from "@/lib/r2";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,39 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+const BaseSheet = ({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer
+}: {
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+  title: string,
+  description: string,
+  children: React.ReactNode,
+  footer?: React.ReactNode
+}) => (
+  <Sheet open={open} onOpenChange={onOpenChange}>
+    <SheetContent className="lg:min-w-[45vw] lg:max-w-[60vw] lg:w-1/2 flex flex-col h-full overflow-hidden p-0 border-l shadow-2xl">
+      <SheetHeader className="p-6 border-b">
+        <SheetTitle className="text-lg font-bold">{title}</SheetTitle>
+        <SheetDescription className="text-xs">{description}</SheetDescription>
+      </SheetHeader>
+      <div className="flex-1 overflow-y-auto p-6 bg-muted/5">
+        {children}
+      </div>
+      {footer && (
+        <div className="p-6 border-t bg-background flex justify-end gap-3 shadow-inner">
+          {footer}
+        </div>
+      )}
+    </SheetContent>
+  </Sheet>
+);
 
 const getAudioUrl = (url: string) => {
   if (!url) return "";
@@ -94,6 +128,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const [urlCreator, setUrlCreator] = useState("Dashboard");
   const [urlRightsHolder, setUrlRightsHolder] = useState("Instituto de Investigaciones de la Amazonía Peruana (IIAP)");
   const [urlLicense, setUrlLicense] = useState("http://creativecommons.org/licenses/by-nc/4.0/");
+  const [urlRecordStatus, setUrlRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
 
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
@@ -103,12 +138,24 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const [editTag, setEditTag] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editRecordStatus, setEditRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
+  const [editType, setEditType] = useState<MediaType>(MEDIA_TYPE.SOUND);
+  const [editFormat, setEditFormat] = useState("");
   const [editGuanoMetadata, setEditGuanoMetadata] = useState<Record<string, any>>({});
   const [showMetadataConfig, setShowMetadataConfig] = useState(false);
 
   // Library States
   const [libItems, setLibItems] = useState<Multimedia[]>([]);
   const [libLoading, setLibLoading] = useState(false);
+
+  // Batch Upload Metadata States
+  const [batchCreator, setBatchCreator] = useState("Dashboard");
+  const [batchRightsHolder, setBatchRightsHolder] = useState("Instituto de Investigaciones de la Amazonía Peruana (IIAP)");
+  const [batchLicense, setBatchLicense] = useState("http://creativecommons.org/licenses/by-nc/4.0/");
+  const [batchRecordStatus, setBatchRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
+  const [batchIsPublic, setBatchIsPublic] = useState(true);
+  const [batchGuanoMetadata, setBatchGuanoMetadata] = useState<Record<string, any>>({});
+  const [showBatchConfig, setShowBatchConfig] = useState(false);
 
   const supabase = createFonotecaClient();
 
@@ -184,14 +231,19 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         const createResp = await createMultimedia({
           occurrence_id: occurrenceId,
           identifier: publicUrl,
+          originalFilename: file.name,
           type: type as any,
           format: file.type,
           title: file.name,
-          creator: "Dashboard",
+          description: "",
+          creator: batchCreator,
           order_index: items.length + successCount,
-          rightsHolder: "Instituto de Investigaciones de la Amazonía Peruana (IIAP)",
-          license: "http://creativecommons.org/licenses/by-nc/4.0/",
+          rightsHolder: batchRightsHolder,
+          license: batchLicense,
           tag: type === MEDIA_TYPE.SOUND ? MEDIA_TAG.MAIN_AUDIO : MEDIA_TAG.GALLERY,
+          record_status: batchRecordStatus,
+          is_public: batchIsPublic,
+          guano_metadata: batchGuanoMetadata,
         });
 
         if (createResp.error) {
@@ -235,15 +287,20 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       await createMultimedia({
         occurrence_id: occurrenceId,
         identifier: urlInput,
+        originalFilename: "url_source",
         type: isSpectro ? MEDIA_TYPE.STILL : (activeUploadType as any),
         format: isSpectro ? "image/jpeg" : (activeUploadType === MEDIA_TYPE.SOUND ? "audio/mpeg" : "image/jpeg"),
         title: urlTitle || (isSpectro ? `Histograma de ${items.find(i => i.id === activeParentItemId)?.title || "Audio"}` : "Enlace URL"),
+        description: "",
         creator: urlCreator || "Dashboard",
         order_index: isSpectro ? items.filter(it => it.parent_multimedia_id === activeParentItemId).length : items.length,
         rightsHolder: urlRightsHolder || "Instituto de Investigaciones de la Amazonía Peruana (IIAP)",
         license: urlLicense || "http://creativecommons.org/licenses/by-nc/4.0/",
         tag: isSpectro ? MEDIA_TAG.SPECTROGRAM : (activeUploadType === MEDIA_TYPE.SOUND ? MEDIA_TAG.MAIN_AUDIO : MEDIA_TAG.GALLERY),
         parent_multimedia_id: activeParentItemId || undefined,
+        record_status: urlRecordStatus,
+        is_public: true,
+        guano_metadata: {},
       });
 
       toast.success(
@@ -300,6 +357,13 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
     setEditRightsHolder(item.rightsHolder || "Instituto de Investigaciones de la Amazonía Peruana (IIAP)");
     setEditLicense(item.license || "http://creativecommons.org/licenses/by-nc/4.0/");
     setEditTag(item.tag || "");
+    setEditDescription(item.description || "");
+    setEditIsPublic(item.is_public ?? true);
+    setEditRecordStatus(item.record_status || "draft");
+    setEditType(item.type);
+    setEditFormat(item.format);
+    setEditGuanoMetadata(item.guano_metadata || {});
+    setShowMetadataConfig(false);
     setEditSheetOpen(true);
   };
 
@@ -309,17 +373,19 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
 
     try {
       const resp = await updateMultimedia(editingItem.id, {
-        occurrence_id: editingItem.occurrence_id,
+        ...editingItem,
         identifier: editUrl,
-        type: editingItem.type,
-        format: editingItem.format,
         title: editTitle,
         creator: editCreator,
-        order_index: editingItem.order_index,
         rightsHolder: editRightsHolder,
         license: editLicense,
         tag: editTag,
-        parent_multimedia_id: editingItem.parent_multimedia_id
+        description: editDescription,
+        is_public: editIsPublic,
+        record_status: editRecordStatus,
+        type: editType as any,
+        format: editFormat,
+        guano_metadata: editGuanoMetadata,
       });
 
       if (resp.error) {
@@ -374,15 +440,20 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       const createResp = await createMultimedia({
         occurrence_id: occurrenceId,
         identifier: publicUrl,
+        originalFilename: file.name,
         type: MEDIA_TYPE.STILL,
         format: file.type,
         title: `Histograma de ${items.find(i => i.id === itemId)?.title || itemId}`,
+        description: "",
         creator: "Dashboard",
         order_index: items.filter(it => it.parent_multimedia_id === itemId).length,
         rightsHolder: "Instituto de Investigaciones de la Amazonía Peruana (IIAP)",
         license: "http://creativecommons.org/licenses/by-nc/4.0/",
         tag: MEDIA_TAG.SPECTROGRAM,
         parent_multimedia_id: itemId,
+        record_status: "draft",
+        is_public: true,
+        guano_metadata: {},
       });
 
       if (createResp.error) {
@@ -405,19 +476,6 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
     }
   };
 
-  const handleSpectrogramUpload = async (e: React.ChangeEvent<HTMLInputElement>, itemId: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (await uploadSpectrogramFile(file, itemId)) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Histograma Registrado</span>
-          <span className="text-xs opacity-90">El histograma se guardó exitosamente y se vinculó al audio.</span>
-        </div>
-      );
-      loadMultimedia();
-    }
-  };
 
   const handleDragStart = (item: Multimedia) => {
     setDraggedItem(item);
@@ -812,389 +870,495 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       )}
 
       {/* --- Dialog: URL --- */}
-      <Sheet open={urlSheetOpen} onOpenChange={(open) => { setUrlSheetOpen(open); if (!open) setActiveParentItemId(null); }}>
-        <SheetContent className="sm:max-w-xl pb-0">
-          <SheetHeader>
-            <SheetTitle>Agregar desde URL</SheetTitle>
-            <SheetDescription>Inserta un enlace externo del audio o imagen.</SheetDescription>
-          </SheetHeader>
-          <div className="space-y-4 border-t mt-4 p-2 md:p-4 flex-1 overflow-y-auto max-h-[80vh]">
+      <BaseSheet
+        open={urlSheetOpen}
+        onOpenChange={(open) => { setUrlSheetOpen(open); if (!open) setActiveParentItemId(null); }}
+        title="Agregar desde URL"
+        description="Inserta un enlace externo del audio o imagen."
+        footer={(
+          <div className="flex justify-end gap-3 w-full">
+            <Button variant="outline" className="text-xs rounded-xl" onClick={() => setUrlSheetOpen(false)}>Cancelar</Button>
+            <Button className="text-xs rounded-xl px-6" onClick={handleAddFromUrl} disabled={!urlInput || uploading !== null}>
+              {uploading ? "Agregando..." : "Agregar Desde URL"}
+            </Button>
+          </div>
+        )}
+      >
+        <div className="space-y-6">
+          {urlInput && (
+            <div className="aspect-video relative rounded-2xl border bg-card flex flex-col items-center justify-center overflow-hidden shadow-sm">
+              {getDriveEmbedUrl(urlInput) ? (
+                <iframe src={getDriveEmbedUrl(urlInput)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
+              ) : activeUploadType === MEDIA_TYPE.STILL ? (
+                <img src={getAudioUrl(urlInput)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
+              ) : (
+                <audio src={getAudioUrl(urlInput)} controls className="w-[90%] mt-auto mb-4" />
+              )}
+            </div>
+          )}
 
-            {/* Visualizer */}
-            {urlInput && (
-              <div className="aspect-video relative rounded-lg border bg-muted flex flex-col items-center justify-center overflow-hidden mb-4">
-                {getDriveEmbedUrl(urlInput) ? (
-                  <iframe src={getDriveEmbedUrl(urlInput)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
-                ) : activeUploadType === MEDIA_TYPE.STILL ? (
-                  <img src={getAudioUrl(urlInput)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
-                ) : (
-                  <audio src={getAudioUrl(urlInput)} controls className="w-[90%] mt-auto mb-4" />
-                )}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Título *</label>
+                <Input placeholder="p. ej. Canto de ave en MP3" value={urlTitle} onChange={(e) => setUrlTitle(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
               </div>
-            )}
-
-            <div className="rounded-md border bg-card">
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Título *</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="p. ej. Canto de ave en MP3" value={urlTitle} onChange={(e) => setUrlTitle(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">URL *</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="https://mi-servidor.com/audio.mp3" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Creador</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="p. ej. Investigador" value={urlCreator} onChange={(e) => setUrlCreator(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Derechos</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="Institución" value={urlRightsHolder} onChange={(e) => setUrlRightsHolder(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Licencia</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="http://..." value={urlLicense} onChange={(e) => setUrlLicense(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">URL del Archivo *</label>
+                <Input placeholder="https://..." value={urlInput} onChange={(e) => setUrlInput(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setUrlSheetOpen(false)}>Cancelar</Button>
-              <Button size="sm" onClick={handleAddFromUrl} disabled={!urlInput || uploading !== null}>
-                {uploading ? "Agregando..." : "Agregar Desde URL"}
+            <div className="pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg py-5"
+                onClick={() => setShowMetadataConfig(!showMetadataConfig)}
+              >
+                Configurar Metadatos
+                <MoreVertical className={cn("h-4 w-4 transition-transform", showMetadataConfig && "rotate-90")} />
               </Button>
+
+              {showMetadataConfig && (
+                <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador</label>
+                      <Input placeholder="Investigador" value={urlCreator} onChange={(e) => setUrlCreator(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Derechos</label>
+                      <Input placeholder="Institución" value={urlRightsHolder} onChange={(e) => setUrlRightsHolder(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Licencia</label>
+                      <Input placeholder="http://..." value={urlLicense} onChange={(e) => setUrlLicense(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estado de Registro</label>
+                      <select
+                        value={urlRecordStatus}
+                        onChange={(e) => setUrlRecordStatus(e.target.value as any)}
+                        className="w-full h-8 px-2 text-xs rounded-md border bg-background"
+                      >
+                        <option value="draft">Borrador (Draft)</option>
+                        <option value="published">Publicado (Published)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+      </BaseSheet>
 
       {/* --- Dialog: Library --- */}
-      <Sheet open={libSheetOpen} onOpenChange={setLibSheetOpen}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto">
-          <SheetHeader className="">
-            <SheetTitle>Biblioteca de Archivos</SheetTitle>
-            <SheetDescription>Selecciona un archivo existente en el sistema para vincularlo a esta ocurrencia.</SheetDescription>
-          </SheetHeader>
-          <div className="py-4 border-t mt-4">
-            {libLoading ? (
-              <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-            ) : libItems.filter(i => i.type === activeUploadType).length === 0 ? (
-              <div className="text-center text-xs text-muted-foreground p-4">No hay archivos de este tipo en la biblioteca.</div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {libItems.filter(i => i.type === activeUploadType).map((item) => (
-                  <div
-                    key={item.id}
-                    className="border rounded-lg p-3 hover:bg-muted/30 cursor-pointer flex flex-col items-center justify-center text-center transition-all bg-muted/10 hover"
-                    onClick={() => handleLinkFromLibrary(item)}
-                  >
-                    {item.type === MEDIA_TYPE.STILL && <FileImage className="h-10 w-10 text-blue-500 mb-1" />}
-                    {item.type === MEDIA_TYPE.SOUND && <FileAudio className="h-10 w-10 text-green-500 mb-1" />}
-                    <span className="text-xs font-semibold line-clamp-2 w-full text-foreground/80">{item.title || "Archivo"}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+      <BaseSheet
+        open={libSheetOpen}
+        onOpenChange={setLibSheetOpen}
+        title="Biblioteca de Archivos"
+        description="Selecciona un archivo existente en el sistema para vincularlo a esta ocurrencia."
+      >
+        {libLoading ? (
+          <div className="flex flex-col items-center justify-center p-12 space-y-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+            <span className="text-xs font-medium text-muted-foreground">Consultando biblioteca...</span>
           </div>
-        </SheetContent>
-      </Sheet>
+        ) : libItems.filter(i => i.type === activeUploadType).length === 0 ? (
+          <div className="text-center text-xs text-muted-foreground p-12 border-2 border-dashed rounded-3xl bg-background/50">No hay archivos de este tipo en la biblioteca.</div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {libItems.filter(i => i.type === activeUploadType).map((item) => (
+              <div
+                key={item.id}
+                className="group relative border rounded-2xl bg-card overflow-hidden hover:border-primary/50 cursor-pointer transition-all hover:shadow-md"
+                onClick={() => handleLinkFromLibrary(item)}
+              >
+                <div className="aspect-square flex flex-col items-center justify-center bg-muted/10 p-4">
+                  {item.type === MEDIA_TYPE.STILL ? (
+                    <div className="bg-blue-500/10 p-3 rounded-full text-blue-500 mb-2">
+                      <FileImage className="h-6 w-6" />
+                    </div>
+                  ) : (
+                    <div className="bg-green-500/10 p-3 rounded-full text-green-500 mb-2">
+                      <FileAudio className="h-6 w-6" />
+                    </div>
+                  )}
+                  <span className="text-[11px] font-bold text-foreground line-clamp-2 text-center">{item.title || "Sin título"}</span>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/5 to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <span className="text-[9px] font-bold text-primary uppercase bg-white px-2 py-1 rounded-md shadow-sm">Seleccionar</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </BaseSheet>
 
       {/* --- Dialog: Edit --- */}
-      <Sheet open={editSheetOpen} onOpenChange={(open) => { setEditSheetOpen(open); if (!open) setEditingItem(null); }}>
-        <SheetContent className="sm:max-w-xl p-2 md:p-4">
-          <SheetHeader>
-            <SheetTitle>Editar Elemento</SheetTitle>
-            <SheetDescription>Modifica el título o el enlace de la multimedia.</SheetDescription>
-          </SheetHeader>
-          <div className="space-y-4 py-4 border-t mt-4 flex-1 overflow-y-auto max-h-[80vh]">
+      <BaseSheet
+        open={editSheetOpen}
+        onOpenChange={(open) => { setEditSheetOpen(open); if (!open) setEditingItem(null); }}
+        title="Detalles del Elemento"
+        description="Gestiona la información y metadatos del archivo."
+        footer={(
+          <div className="flex justify-end gap-3 w-full">
+            <Button variant="outline" className="text-xs rounded-xl" onClick={() => { setEditSheetOpen(false); setEditingItem(null); }}>Cancelar</Button>
+            <Button className="text-xs rounded-xl px-6" onClick={handleSaveEdit} disabled={!editUrl || uploading !== null}>
+              {uploading === "editing" ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </div>
+        )}
+      >
+        <div className="space-y-6">
+          {/* Visualizer */}
+          {editUrl && (
+            <div className="aspect-video relative rounded-2xl border bg-card flex flex-col items-center justify-center overflow-hidden mb-4 shadow-sm">
+              {getDriveEmbedUrl(editUrl) ? (
+                <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
+              ) : editingItem?.type === MEDIA_TYPE.STILL ? (
+                <img src={getAudioUrl(editUrl)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
+              ) : (
+                <audio src={getAudioUrl(editUrl)} controls className="w-[90%] mt-auto mb-4" />
+              )}
+            </div>
+          )}
 
-            {/* Visualizer */}
-            {editUrl && (
-              <div className="aspect-video relative rounded-lg border bg-muted flex flex-col items-center justify-center overflow-hidden mb-4">
-                {getDriveEmbedUrl(editUrl) ? (
-                  <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
-                ) : editingItem?.type === MEDIA_TYPE.STILL ? (
-                  <img src={getAudioUrl(editUrl)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
-                ) : (
-                  <audio src={getAudioUrl(editUrl)} controls className="w-[90%] mt-auto mb-4" />
-                )}
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Título *</label>
+                <Input placeholder="p. ej. Canto de ave" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
               </div>
-            )}
-
-            <div className="rounded-md border bg-card">
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Título *</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="p. ej. Canto de ave" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Etiqueta</label>
+                <Input placeholder="main_audio, gallery..." value={editTag} onChange={(e) => setEditTag(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
               </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">URL *</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="https://..." value={editUrl} onChange={(e) => setEditUrl(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Creador</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="p. ej. Investigador" value={editCreator} onChange={(e) => setEditCreator(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Derechos</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="Institución" value={editRightsHolder} onChange={(e) => setEditRightsHolder(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Licencia</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="http://..." value={editLicense} onChange={(e) => setEditLicense(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0">
-                <div className="w-1/3 flex items-center">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase">Etiqueta</label>
-                </div>
-                <div className="w-2/3">
-                  <Input placeholder="p. ej. main_audio" value={editTag} onChange={(e) => setEditTag(e.target.value)} className="font-medium border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 h-8 px-2" />
-                </div>
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Descripción</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Descripción detallada..."
+                  className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
+                />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => { setEditSheetOpen(false); setEditingItem(null); }}>Cancelar</Button>
-              <Button size="sm" onClick={handleSaveEdit} disabled={!editUrl || uploading !== null}>
-                {uploading === "editing" ? "Guardando..." : "Guardar Cambios"}
+            <div className="pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg py-5"
+                onClick={() => setShowMetadataConfig(!showMetadataConfig)}
+              >
+                Ver Metadatos Avanzados
+                <MoreVertical className={cn("h-4 w-4 transition-transform", showMetadataConfig && "rotate-90")} />
               </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-      {/* --- Dialog: Local Upload --- */}
-      <Sheet open={uploadSheetOpen} onOpenChange={(open) => { if (!uploading) { setUploadSheetOpen(open); if (!open) setSelectedFiles([]); } }}>
-        <SheetContent className="sm:max-w-2xl p-0 flex flex-col h-full overflow-hidden">
-          <div className="p-6 border-b bg-gradient-to-r from-primary/5 via-background to-background">
-            <SheetHeader>
-              <SheetTitle className="flex items-center gap-3">
-                <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-primary/20">
-                  <Upload className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold tracking-tight">Centro de Carga</h2>
-                  <p className="text-xs font-medium text-muted-foreground">Sube y organiza tus archivos multimedia</p>
-                </div>
-              </SheetTitle>
-            </SheetHeader>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-muted/5">
-            {/* Drop Zone */}
-            <div
-              className={`group relative border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center transition-all duration-300 hover:bg-primary/[0.02] ${isDragOver ? "border-primary bg-primary/10 ring-8 ring-primary/5" : "border-muted-foreground/20 hover:border-primary/40"
-                } ${uploading ? "opacity-40 cursor-not-allowed pointer-events-none" : "cursor-pointer"}`}
-              onDragOver={(e) => { e.preventDefault(); if (!uploading) setIsDragOver(true); }}
-              onDragLeave={() => setIsDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragOver(false);
-                if (uploading) return;
-                if (e.dataTransfer.files) {
-                  const files = Array.from(e.dataTransfer.files);
-                  setSelectedFiles(prev => [...prev, ...files]);
-                }
-              }}
-              onClick={() => !uploading && document.getElementById("file-sheet-upload")?.click()}
-            >
-              <div className="bg-background rounded-2xl p-5 mb-4 border border-muted/50">
-                <Upload className={`h-8 w-8 ${isDragOver ? "text-primary animate-bounce" : "text-muted-foreground"}`} />
-              </div>
-              <h3 className="text-sm font-bold text-foreground">Seleccionar archivos para subir</h3>
-              <p className="text-[11px] text-muted-foreground mt-1 max-w-[200px] text-center">Formato permitido: Audios, Imágenes y Espectrogramas</p>
-
-              <Input
-                id="file-sheet-upload"
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    const files = Array.from(e.target.files);
-                    setSelectedFiles(prev => [...prev, ...files]);
-                  }
-                }}
-              />
-            </div>
-
-            {/* Selected Files Grid */}
-            {selectedFiles.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                  <span className="text-[11px] font-bold uppercase text-muted-foreground tracking-widest">Cola de carga ({selectedFiles.length})</span>
-                  {uploading && <div className="flex items-center gap-2 text-primary font-bold text-[11px] animate-pulse"><Loader2 className="h-3 w-3 animate-spin" /> Procesando...</div>}
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {selectedFiles.map((f, i) => {
-                    const progress = uploadProgress[f.name];
-                    const isUploading = progress !== undefined && progress < 100;
-                    const isDone = progress === 100;
-                    const isImage = f.type.startsWith("image/");
-                    const thumbUrl = isImage ? URL.createObjectURL(f) : null;
-
-                    return (
-                      <div
-                        key={i}
-                        draggable={!uploading}
-                        onDragStart={(e) => { e.dataTransfer.setData("sourceIndex", i.toString()); }}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          const sourceIdx = parseInt(e.dataTransfer.getData("sourceIndex"));
-                          if (isNaN(sourceIdx) || sourceIdx === i) return;
-                          const newFiles = [...selectedFiles];
-                          const [moved] = newFiles.splice(sourceIdx, 1);
-                          if (moved) {
-                            newFiles.splice(i, 0, moved);
-                            setSelectedFiles(newFiles);
-                          }
-                        }}
-                        className={`group relative aspect-square rounded-2xl border bg-card overflow-hidden transition-all duration-300 ${isUploading ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"}`}
+              {showMetadataConfig && (
+                <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 pb-8">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador</label>
+                      <Input value={editCreator} onChange={(e) => setEditCreator(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Derechos</label>
+                      <Input value={editRightsHolder} onChange={(e) => setEditRightsHolder(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Licencia</label>
+                      <Input value={editLicense} onChange={(e) => setEditLicense(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estado Registro</label>
+                      <select
+                        value={editRecordStatus}
+                        onChange={(e) => setEditRecordStatus(e.target.value as any)}
+                        className="w-full h-8 px-2 text-xs rounded-md border bg-background"
                       >
-                        {isImage ? (
-                          <img src={thumbUrl!} className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                        ) : (
-                          <div className="h-full w-full flex flex-col items-center justify-center bg-muted/20">
-                            <div className="bg-white p-3 rounded-full text-primary mb-2">
-                              <FileAudio className="h-6 w-6" />
-                            </div>
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground">{f.name.split('.').pop()}</span>
-                          </div>
-                        )}
-
-                        {/* Progress Overlay */}
-                        {(isUploading || isDone || uploading) && (
-                          <div className="absolute inset-x-2 bottom-2 z-10 bg-white/95 backdrop-blur-sm p-2 rounded-xl border border-muted/50">
-                            <div className="flex items-center justify-between mb-1.5 px-0.5">
-                              <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground">{isDone ? "Completado" : "Subiendo"}</span>
-                              <span className="text-[9px] font-bold text-primary">{progress || 0}%</span>
-                            </div>
-                            <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
-                              <div
-                                className={`h-full transition-all duration-300 ${isDone ? "bg-green-500" : "bg-primary"}`}
-                                style={{ width: `${progress || 0}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Delete Button */}
-                        {!uploading && (
-                          <button
-                            className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-destructive hover:text-white text-muted-foreground rounded-lg border border-muted/50 opacity-0 group-hover:opacity-100 transition-all transform hover:scale-110"
-                            onClick={(e) => { e.stopPropagation(); setSelectedFiles(selectedFiles.filter((_, idx) => idx !== i)) }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-
-                        {!uploading && (
-                          <div className="absolute top-2 left-2 p-1 bg-white/80 rounded-md border border-muted cursor-move opacity-0 group-hover:opacity-100">
-                            <GripVertical className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                        )}
-
-                        {/* File Name Tip */}
-                        <div className="absolute inset-x-0 top-0 p-2 bg-gradient-to-b from-black/20 to-transparent pointer-events-none">
-                          <span className="text-[10px] font-medium text-white truncate drop">{f.name}</span>
-                        </div>
+                        <option value="draft">Borrador</option>
+                        <option value="published">Publicado</option>
+                        <option value="deleted">Eliminado (Lógico)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Multimedia</label>
+                      <select
+                        value={editType}
+                        onChange={(e) => setEditType(e.target.value as any)}
+                        className="w-full h-8 px-2 text-xs rounded-md border bg-background"
+                      >
+                        {Object.entries(MEDIA_TYPE).map(([key, val]) => (
+                          <option key={key} value={val}>{key}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Formato (MIME)</label>
+                      <Input value={editFormat} onChange={(e) => setEditFormat(e.target.value)} className="text-xs h-8 bg-background" />
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Público</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold">{editIsPublic ? 'SÍ' : 'NO'}</span>
+                        <input type="checkbox" checked={editIsPublic} onChange={(e) => setEditIsPublic(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+                    </div>
+                  </div>
 
-          <div className="p-6 border-t bg-background flex items-center justify-between gap-4 shadow-inner">
-            <div className="hidden sm:block">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total preparado:</p>
-              <p className="text-sm font-bold">{(selectedFiles.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(1)} MB</p>
+                  {/* GUANO Section */}
+                  <div className="pt-6 border-t mt-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-1 w-1 rounded-full bg-primary" />
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO</h4>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {[
+                        "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
+                        "Timestamp", "Loc Position", "Loc Elevation", "Length",
+                        "Samplerate", "TE", "Filter HP", "Species Manual ID",
+                        "Species Auto ID", "Note"
+                      ].map((key) => (
+                        <div key={key} className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
+                          <Input
+                            value={editGuanoMetadata[key] || ""}
+                            placeholder={`Valor de ${key}...`}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                            }}
+                            className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t mt-4">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Archivo Original</p>
+                    <p className="text-[10px] font-mono bg-muted/30 p-2 rounded break-all border">{editingItem?.originalFilename || "Desconocido"}</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button variant="ghost" className="flex-1 sm:flex-none text-xs rounded-xl" disabled={!!uploading} onClick={() => { setUploadSheetOpen(false); setSelectedFiles([]); setActiveParentItemId(null); }}>
+          </div>
+        </div>
+      </BaseSheet>
+
+      {/* --- Dialog: Local Upload --- */}
+      <BaseSheet
+        open={uploadSheetOpen}
+        onOpenChange={(open) => { if (!uploading) { setUploadSheetOpen(open); if (!open) setSelectedFiles([]); } }}
+        title="Subida de Archivos"
+        description="Sube y gestiona multimedia para esta ocurrencia."
+        footer={(
+          <div className="flex items-center justify-between w-full">
+            <div className="hidden sm:block">
+              <p className="text-[9px] font-bold text-muted-foreground uppercase">Tamaño total:</p>
+              <p className="text-xs font-bold">{(selectedFiles.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(1)} MB</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" className="text-xs rounded-xl" disabled={!!uploading} onClick={() => { setUploadSheetOpen(false); setSelectedFiles([]); }}>
                 Cancelar
               </Button>
-              <Button size="default" className="flex-1 sm:flex-none h-11 px-8 rounded-xl  shadow-primary/20 transition-all hover:scale-105 active:scale-95" disabled={selectedFiles.length === 0 || !!uploading} onClick={async () => {
+              <Button className="text-xs rounded-xl px-8" disabled={selectedFiles.length === 0 || !!uploading} onClick={async () => {
                 if (activeParentItemId) {
-                  let count = 0;
-                  for (const file of selectedFiles) {
-                    if (await uploadSpectrogramFile(file, activeParentItemId)) count++;
-                  }
-                  if (count > 0) {
-                    toast.success(`${count} histogramas registrados`);
-                    loadMultimedia();
-                  }
+                  for (const file of selectedFiles) await uploadSpectrogramFile(file, activeParentItemId);
                 } else {
                   await handleFileUpload(selectedFiles, activeUploadType!);
                 }
                 setSelectedFiles([]);
                 setUploadSheetOpen(false);
-                setActiveParentItemId(null);
               }}>
-                {uploading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Procesando...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
-                    <span>Iniciar Carga</span>
-                  </div>
-                )}
+                {uploading ? "Subiendo..." : "Iniciar Carga"}
               </Button>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        )}
+      >
+        <div className="space-y-6">
+          {/* Drop Zone with Grid Inside */}
+          <div
+            className={cn(
+              "group relative border-2 border-dashed rounded-3xl transition-all duration-300 min-h-[200px] flex flex-col items-center justify-center",
+              isDragOver ? "border-primary bg-primary/10 ring-8 ring-primary/5" : "border-muted-foreground/20 hover:border-primary/40",
+              uploading ? "opacity-40 cursor-not-allowed pointer-events-none" : "cursor-pointer",
+              selectedFiles.length > 0 ? "p-4 justify-start" : "p-12"
+            )}
+            onDragOver={(e) => { e.preventDefault(); if (!uploading) setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+              if (uploading) return;
+              if (e.dataTransfer.files) {
+                const files = Array.from(e.dataTransfer.files);
+                setSelectedFiles(prev => [...prev, ...files]);
+              }
+            }}
+            onClick={(e) => {
+              if (uploading) return;
+              // Only trigger if click is on the container, not on items
+              if (e.target === e.currentTarget) document.getElementById("file-sheet-upload")?.click();
+            }}
+          >
+            {selectedFiles.length === 0 ? (
+              <>
+                <Upload className={`h-8 w-8 mb-2 ${isDragOver ? "text-primary animate-bounce" : "text-muted-foreground"}`} />
+                <h3 className="text-xs font-bold text-foreground text-center">Seleccionar archivos</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5 text-center">Audios e Imágenes</p>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
+                {selectedFiles.map((f, i) => {
+                  const progress = uploadProgress[f.name];
+                  const isUploading = progress !== undefined && progress < 100;
+                  const isDone = progress === 100;
+                  const isImage = f.type.startsWith("image/");
+                  const thumbUrl = isImage ? URL.createObjectURL(f) : null;
+
+                  return (
+                    <div key={i} className="group/item relative aspect-square rounded-2xl border bg-card overflow-hidden shadow-sm">
+                      {isImage ? (
+                        <img src={thumbUrl!} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex flex-col items-center justify-center bg-muted/10 p-2">
+                          <FileAudio className="h-6 w-6 text-primary/60 mb-1" />
+                          <span className="text-[8px] font-bold text-muted-foreground truncate w-full text-center px-2">{f.name}</span>
+                        </div>
+                      )}
+
+                      {(isUploading || isDone) && (
+                        <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm p-1">
+                          <div className="w-full bg-white/20 h-0.5 rounded-full overflow-hidden">
+                            <div className={`h-full transition-all ${isDone ? "bg-green-500" : "bg-primary"}`} style={{ width: `${progress || 0}%` }} />
+                          </div>
+                        </div>
+                      )}
+
+                      {!uploading && (
+                        <button
+                          className="absolute top-1 right-1 p-1 bg-background/90 hover:bg-destructive hover:text-white text-muted-foreground rounded-lg border opacity-0 group-hover/item:opacity-100 transition-all"
+                          onClick={(e) => { e.stopPropagation(); setSelectedFiles(selectedFiles.filter((_, idx) => idx !== i)) }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Add More Square */}
+                {!uploading && (
+                  <button
+                    className="aspect-square rounded-2xl border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center transition-all group/add"
+                    onClick={(e) => { e.stopPropagation(); document.getElementById("file-sheet-upload")?.click(); }}
+                  >
+                    <Plus className="h-6 w-6 text-muted-foreground/50 group-hover/add:text-primary group-hover/add:scale-110 transition-all" />
+                    <span className="text-[9px] font-bold text-muted-foreground/50 mt-1 uppercase">Añadir</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            <Input
+              id="file-sheet-upload"
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) {
+                  const files = Array.from(e.target.files);
+                  setSelectedFiles(prev => [...prev, ...files]);
+                }
+              }}
+            />
+          </div>
+
+          {/* Batch Metadata Configuration */}
+          <div className="pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-between text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg py-5"
+              onClick={() => setShowBatchConfig(!showBatchConfig)}
+            >
+              Configurar Metadatos para la carga ({selectedFiles.length} archivos)
+              <Settings2 className={cn("h-4 w-4 transition-transform", showBatchConfig && "rotate-90")} />
+            </Button>
+
+            {showBatchConfig && (
+              <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 pb-8">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador Común</label>
+                    <Input value={batchCreator} onChange={(e) => setBatchCreator(e.target.value)} className="text-xs h-8 bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Derechos</label>
+                    <Input value={batchRightsHolder} onChange={(e) => setBatchRightsHolder(e.target.value)} className="text-xs h-8 bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Licencia</label>
+                    <Input value={batchLicense} onChange={(e) => setBatchLicense(e.target.value)} className="text-xs h-8 bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estado Inicial</label>
+                    <select
+                      value={batchRecordStatus}
+                      onChange={(e) => setBatchRecordStatus(e.target.value as any)}
+                      className="w-full h-8 px-2 text-xs rounded-md border bg-background"
+                    >
+                      <option value="draft">Borrador (Recomendado)</option>
+                      <option value="published">Publicado</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Visibilidad Pública</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold">{batchIsPublic ? 'SÍ' : 'NO'}</span>
+                      <input type="checkbox" checked={batchIsPublic} onChange={(e) => setBatchIsPublic(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Batch GUANO Section */}
+                <div className="pt-6 border-t mt-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-1 w-1 rounded-full bg-primary" />
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO Comunes</h4>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {[
+                      "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
+                      "Timestamp", "Loc Position", "Loc Elevation", "Length",
+                      "Samplerate", "TE", "Filter HP", "Species Manual ID",
+                      "Species Auto ID", "Note"
+                    ].map((key) => (
+                      <div key={key} className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
+                        <Input
+                          value={batchGuanoMetadata[key] || ""}
+                          placeholder={`Valor de ${key}...`}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                          }}
+                          className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </BaseSheet>
 
       {/* --- Confirm Delete Dialog (AlertDialog) --- */}
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
