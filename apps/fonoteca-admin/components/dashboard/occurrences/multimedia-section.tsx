@@ -101,6 +101,10 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const [editRightsHolder, setEditRightsHolder] = useState("");
   const [editLicense, setEditLicense] = useState("");
   const [editTag, setEditTag] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editGuanoMetadata, setEditGuanoMetadata] = useState<Record<string, any>>({});
+  const [showMetadataConfig, setShowMetadataConfig] = useState(false);
 
   // Library States
   const [libItems, setLibItems] = useState<Multimedia[]>([]);
