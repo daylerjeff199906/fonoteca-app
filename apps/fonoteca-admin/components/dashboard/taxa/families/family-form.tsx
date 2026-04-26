@@ -21,6 +21,7 @@ export function FamilyForm({
   onSuccess?: () => void;
 }) {
   const [orders, setOrders] = useState<{ id: string, name: string }[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FamilyInput>({
     resolver: zodResolver(familySchema) as any,
     defaultValues: defaultValues || {
@@ -30,8 +31,10 @@ export function FamilyForm({
   });
 
   useEffect(() => {
+    setIsLoadingOrders(true);
     getAllOrders().then(res => {
       if (res.data) setOrders(res.data);
+      setIsLoadingOrders(false);
     });
   }, []);
 
@@ -39,7 +42,7 @@ export function FamilyForm({
     if (defaultValues) {
       reset(defaultValues);
     }
-  }, [defaultValues, reset]);
+  }, [defaultValues, reset, orders]);
 
   const onSubmit = async (data: FamilyInput) => {
     let resp;
@@ -65,9 +68,10 @@ export function FamilyForm({
           <label className="text-xs font-semibold text-muted-foreground uppercase">Orden *</label>
           <select
             {...register("order_id")}
+            disabled={isLoadingOrders}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">Seleccione un orden...</option>
+            <option value="">{isLoadingOrders ? "Cargando órdenes..." : "Seleccione un orden..."}</option>
             {orders.map(o => (
               <option key={o.id} value={o.id}>{o.name}</option>
             ))}

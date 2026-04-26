@@ -21,6 +21,7 @@ export function OrderForm({
   onSuccess?: () => void;
 }) {
   const [classes, setClasses] = useState<{ id: string, name: string }[]>([]);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<OrderInput>({
     resolver: zodResolver(orderSchema) as any,
     defaultValues: defaultValues || {
@@ -30,8 +31,10 @@ export function OrderForm({
   });
 
   useEffect(() => {
+    setIsLoadingClasses(true);
     getAllClasses().then(res => {
       if (res.data) setClasses(res.data);
+      setIsLoadingClasses(false);
     });
   }, []);
 
@@ -39,7 +42,7 @@ export function OrderForm({
     if (defaultValues) {
       reset(defaultValues);
     }
-  }, [defaultValues, reset]);
+  }, [defaultValues, reset, classes]);
 
   const onSubmit = async (data: OrderInput) => {
     let resp;
@@ -65,9 +68,10 @@ export function OrderForm({
           <label className="text-xs font-semibold text-muted-foreground uppercase">Clase *</label>
           <select
             {...register("class_id")}
+            disabled={isLoadingClasses}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">Seleccione una clase...</option>
+            <option value="">{isLoadingClasses ? "Cargando clases..." : "Seleccione una clase..."}</option>
             {classes.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}

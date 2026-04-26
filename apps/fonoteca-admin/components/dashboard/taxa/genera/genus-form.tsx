@@ -21,6 +21,7 @@ export function GenusForm({
   onSuccess?: () => void;
 }) {
   const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
+  const [isLoadingFamilies, setIsLoadingFamilies] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<GenusInput>({
     resolver: zodResolver(genusSchema) as any,
     defaultValues: defaultValues || {
@@ -30,8 +31,10 @@ export function GenusForm({
   });
 
   useEffect(() => {
+    setIsLoadingFamilies(true);
     getFamilies().then(res => {
       if (res.data) setFamilies(res.data);
+      setIsLoadingFamilies(false);
     });
   }, []);
 
@@ -39,7 +42,7 @@ export function GenusForm({
     if (defaultValues) {
       reset(defaultValues);
     }
-  }, [defaultValues, reset]);
+  }, [defaultValues, reset, families]);
 
   const onSubmit = async (data: GenusInput) => {
     let resp;
@@ -65,9 +68,10 @@ export function GenusForm({
           <label className="text-xs font-semibold text-muted-foreground uppercase">Familia *</label>
           <select
             {...register("family_id")}
+            disabled={isLoadingFamilies}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">Seleccione una familia...</option>
+            <option value="">{isLoadingFamilies ? "Cargando familias..." : "Seleccione una familia..."}</option>
             {families.map(f => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
