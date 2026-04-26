@@ -11,7 +11,7 @@ interface FormFooterProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function FormFooter({ children, className, style, variant = "fixed", ...props }: FormFooterProps) {
   const { state, isMobile } = useSidebar();
-  
+
   if (variant === "sticky") {
     return (
       <div
@@ -28,15 +28,14 @@ export function FormFooter({ children, className, style, variant = "fixed", ...p
     );
   }
 
-  const leftMargin = isMobile 
-    ? "0px" 
-    : state === "collapsed" 
-      ? "var(--sidebar-width-icon)" 
+  const leftMargin = isMobile
+    ? "0px"
+    : state === "collapsed"
+      ? "var(--sidebar-width-icon)"
       : "var(--sidebar-width)";
 
   return (
     <>
-      <div className="h-24 w-full" aria-hidden="true" />
       <div
         className={cn(
           "fixed bottom-0 right-0 z-[9] flex items-center justify-end gap-2 border-t bg-background/80 px-4 py-4 backdrop-blur-md sm:px-8 transition-[left] duration-200 ease-linear",
