@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2 } from "lucide-react";
+import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight } from "lucide-react";
 import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
@@ -145,6 +145,11 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const [editFormat, setEditFormat] = useState("");
   const [editGuanoMetadata, setEditGuanoMetadata] = useState<Record<string, any>>({});
   const [showMetadataConfig, setShowMetadataConfig] = useState(false);
+
+  // Slider Preview States
+  const [sliderOpen, setSliderOpen] = useState(false);
+  const [sliderIndex, setSliderIndex] = useState(0);
+  const [sliderItems, setSliderItems] = useState<Multimedia[]>([]);
 
   // Library States
   const [libItems, setLibItems] = useState<Multimedia[]>([]);
@@ -628,6 +633,151 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const audioItems = items.filter(it => it.type === MEDIA_TYPE.SOUND && it.tag !== MEDIA_TAG.SPECTROGRAM);
   const imageItems = items.filter(it => it.type === MEDIA_TYPE.STILL && it.tag !== MEDIA_TAG.SPECTROGRAM);
 
+  const RenderList = ({ list, typeTitle }: { list: Multimedia[], typeTitle: string }) => (
+    <div className="space-y-4 mt-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-tight">{typeTitle}</h3>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/10 hover:border-primary/40 text-[11px] font-bold px-3 h-9 bg-white/50 backdrop-blur-sm text-foreground transition-colors hover:bg-white/80">
+            <Plus className="h-3.5 w-3.5" />
+            <span>Subir Audio</span>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setSelectedFiles([]); setUploadSheetOpen(true); }}>
+              <Upload className="h-4 w-4 mr-2" /> Subir Archivo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setUrlSheetOpen(true); }}>
+              <Link className="h-4 w-4 mr-2" /> Desde URL
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setLibSheetOpen(true); }}>
+              <FolderOpen className="h-4 w-4 mr-2" /> Biblioteca
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {list.length === 0 ? (
+        <div className="border border-dashed rounded-xl py-12 flex flex-col items-center justify-center bg-muted/5">
+          <div className="bg-muted/30 p-4 rounded-full mb-2">
+            <Music className="h-6 w-6 text-muted-foreground/50" />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground">No hay audios registrados</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {list.map((item) => {
+            const isPlaying = playingId === item.id;
+            const spectrograms = items.filter(it => it.parent_multimedia_id === item.id && it.tag === "spectrogram");
+            const maxThumbs = 4;
+
+            return (
+              <div
+                key={item.id}
+                draggable
+                onDragStart={() => handleDragStart(item)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, item)}
+                className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-2xl border bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-md transition-all duration-300"
+              >
+                {/* Drag Handle */}
+                <div className="hidden sm:flex p-1 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+
+                {/* Info & Player */}
+                <div className="flex-1 min-w-0 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className={`p-2.5 rounded-xl transition-all ${isPlaying ? "bg-red-500 text-white animate-pulse" : "bg-red-50 text-red-500"}`}>
+                    <Music className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-foreground truncate">{item.title || "Sin título"}</p>
+                    <p className="text-[10px] text-muted-foreground truncate uppercase tracking-widest leading-none mt-1">{item.tag || "audio"}</p>
+                  </div>
+                  <div className="w-full sm:w-auto">
+                    <audio
+                      src={getAudioUrl(item.identifier)}
+                      controls
+                      className="h-8 w-full sm:w-[180px] scale-90"
+                      onPlay={(e) => {
+                        if (currentAudio && currentAudio !== e.currentTarget) currentAudio.pause();
+                        setCurrentAudio(e.currentTarget);
+                        setPlayingId(item.id);
+                      }}
+                      onPause={() => playingId === item.id && setPlayingId(null)}
+                      onEnded={() => playingId === item.id && setPlayingId(null)}
+                    />
+                  </div>
+                </div>
+
+                {/* Spectrograms Thumbnails */}
+                <div className="flex items-center gap-1.5 px-3 border-l border-muted/50 h-10">
+                  {spectrograms.slice(0, maxThumbs).map((sp, idx) => (
+                    <div
+                      key={sp.id}
+                      className="h-9 w-9 rounded-lg border bg-white overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all shadow-sm flex-shrink-0 relative group/thumb"
+                      onClick={() => {
+                        setSliderItems(spectrograms);
+                        setSliderIndex(idx);
+                        setSliderOpen(true);
+                      }}
+                    >
+                      <img src={sp.identifier} className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                        <Info className="h-3 w-3 text-white" />
+                      </div>
+                    </div>
+                  ))}
+                  {spectrograms.length > maxThumbs && (
+                    <div
+                      className="h-9 w-9 rounded-lg border bg-muted/30 flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-all flex-shrink-0"
+                      onClick={() => {
+                        setSliderItems(spectrograms);
+                        setSliderIndex(maxThumbs);
+                        setSliderOpen(true);
+                      }}
+                    >
+                      <span className="text-[10px] font-bold">+{spectrograms.length - maxThumbs}</span>
+                    </div>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <button className="h-9 w-9 rounded-lg border border-dashed flex items-center justify-center hover:bg-primary/5 hover:border-primary/40 text-primary transition-all flex-shrink-0">
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem className="text-xs" onClick={() => { setActiveParentItemId(item.id); setActiveUploadType(MEDIA_TYPE.STILL); setSelectedFiles([]); setUploadSheetOpen(true); }}>
+                        <Upload className="h-3 w-3 mr-2" /> Subir Histograma
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-xs" onClick={() => { setActiveParentItemId(item.id); setActiveUploadType(MEDIA_TYPE.STILL); setUrlSheetOpen(true); }}>
+                        <Link className="h-3 w-3 mr-2" /> Desde URL
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 border-l border-muted/50 pl-2 h-10">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleEditClick(item)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setItemToDelete({ id: item.id, isChild: false })}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   const RenderGrid = ({ list, typeTitle, uploadType }: { list: Multimedia[], typeTitle: string, uploadType: MediaType }) => (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
@@ -639,7 +789,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         <DropdownMenu>
           <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/10 hover:border-primary/40 text-[11px] font-bold px-3 h-9 bg-white/50 backdrop-blur-sm text-foreground transition-colors hover:bg-white/80">
             <Plus className="h-3.5 w-3.5" />
-            <span>{uploadType === "Sound" ? "Subir Audio" : "Subir Imagen"}</span>
+            <span>Subir Imagen</span>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
@@ -659,157 +809,68 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       {list.length === 0 ? (
         <div className="border border-dashed rounded-xl py-12 flex flex-col items-center justify-center bg-muted/5">
           <div className="bg-muted/30 p-4 rounded-full mb-2">
-            {uploadType === "Sound" ? <Music className="h-6 w-6 text-muted-foreground/50" /> : <FileImage className="h-6 w-6 text-muted-foreground/50" />}
+            <FileImage className="h-6 w-6 text-muted-foreground/50" />
           </div>
-          <p className="text-xs font-medium text-muted-foreground">No hay archivos en esta sección</p>
+          <p className="text-xs font-medium text-muted-foreground">No hay imágenes registradas</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {list.map((item) => {
-            const isPlaying = playingId === item.id;
-            const spectrograms = items.filter(it => it.parent_multimedia_id === item.id && it.tag === "spectrogram");
-
-            return (
-              <div
-                key={item.id}
-                draggable
-                onDragStart={() => handleDragStart(item)}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, item)}
-                className="group relative rounded-2xl overflow-hidden border bg-blue-50/20 backdrop-blur-sm transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col h-full"
-              >
-                {/* Header Section (Like the image) */}
-                <div className="flex items-center justify-between p-3 bg-white/40 border-b">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {item.type === "Sound" ? (
-                      <div className="bg-red-500 rounded p-1">
-                        <Music className="h-3 w-3 text-white" />
-                      </div>
-                    ) : (
-                      <div className="bg-blue-500 rounded p-1">
-                        <FileImage className="h-3 w-3 text-white" />
-                      </div>
-                    )}
-                    <span className="text-[11px] font-bold truncate text-foreground/80">{item.title || "Sin título"}</span>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {list.map((item) => (
+            <div
+              key={item.id}
+              draggable
+              onDragStart={() => handleDragStart(item)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, item)}
+              className="group relative rounded-2xl overflow-hidden border bg-blue-50/20 backdrop-blur-sm transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col h-full"
+            >
+              {/* Header Section */}
+              <div className="flex items-center justify-between p-3 bg-white/40 border-b">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="bg-blue-500 rounded p-1">
+                    <FileImage className="h-3 w-3 text-white" />
                   </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
-                      <MoreVertical className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete({ id: item.id, isChild: false })}><Trash2 className="h-4 w-4 mr-2" /> Eliminar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <span className="text-[11px] font-bold truncate text-foreground/80">{item.title || "Sin título"}</span>
                 </div>
 
-                {/* Body Section (Square Center) */}
-                <div className="relative flex-1 bg-white flex items-center justify-center min-h-[160px] p-4 m-2 rounded-sm">
-                  {item.type === "Still" ? (
-                    <img
-                      src={getDriveThumbnailUrl(item.identifier) || item.identifier}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      alt={item.title || "Imagen"}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-4 w-full h-full min-h-[160px]">
-                      <div className={`p-6 rounded-2xl transition-all duration-500 mb-4 ${isPlaying ? "bg-red-500 text-white scale-110 shadow-lg animate-pulse" : "bg-red-50 text-red-500"}`}>
-                        <Music className="h-10 w-10" />
-                      </div>
-                      <audio
-                        src={getAudioUrl(item.identifier)}
-                        controls
-                        className="w-full h-10 scale-95 opacity-80 hover:opacity-100 transition-opacity"
-                        onPlay={(e) => {
-                          if (currentAudio && currentAudio !== e.currentTarget) {
-                            currentAudio.pause();
-                          }
-                          setCurrentAudio(e.currentTarget);
-                          setPlayingId(item.id);
-                        }}
-                        onPause={() => {
-                          if (playingId === item.id) setPlayingId(null);
-                        }}
-                        onEnded={() => {
-                          if (playingId === item.id) setPlayingId(null);
-                        }}
-                        onError={(e) => {
-                          console.error("Audio error:", e);
-                          // toast.error("Error al cargar este archivo de audio");
-                        }}
-                      />
-                    </div>
-                  )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
+                    <MoreVertical className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete({ id: item.id, isChild: false })}><Trash2 className="h-4 w-4 mr-2" /> Eliminar</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-                  {/* Tag Overlay Bottom Left */}
-                  <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
-                    <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-black/50 text-white backdrop-blur-md border border-white/10">{item.tag || "N/A"}</span>
-                  </div>
-                </div>
-
-                {/* Footer Section (Histogramas Piecera) */}
-                {item.type === "Sound" && (
-                  <div className="p-3 border-t bg-white/30 space-y-2 mt-auto">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Espectrogramas</p>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <button className="text-[10px] p-1.5 rounded-full hover:bg-white text-primary flex items-center gap-1 font-bold border border-primary/20">
-                            <Plus className="h-2.5 w-2.5" /> Agregar
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem className="text-xs" onClick={() => { setActiveParentItemId(item.id); setActiveUploadType("Still"); setSelectedFiles([]); setUploadSheetOpen(true); }}>
-                            <Upload className="h-3 w-3 mr-1" /> Subir
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-xs" onClick={() => { setActiveParentItemId(item.id); setActiveUploadType("Still"); setUrlSheetOpen(true); }}>
-                            <Link className="h-3 w-3 mr-1" /> URL
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    {spectrograms.length > 0 ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        {spectrograms.map((sp) => (
-                          <div key={sp.id} className="relative group aspect-square rounded-sm border bg-white overflow-hidden cursor-pointer" onClick={() => handleEditClick(sp)}>
-                            <img src={sp.identifier} className="h-full w-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Pencil className="h-4 w-4 text-white" />
-                            </div>
-                            <button
-                              className="absolute top-1 right-1 p-1.5 bg-destructive/90 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive shadow-sm z-10"
-                              onClick={(e) => { e.stopPropagation(); setItemToDelete({ id: sp.id, isChild: true }); }}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[10px] italic text-muted-foreground text-center py-2 bg-white/20 rounded-lg">No hay espectrogramas vinculados.</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Image Info Footer */}
-                {item.type === "Still" && (
-                  <div className="p-3 border-t bg-white/30 text-[10px] text-muted-foreground flex justify-between uppercase font-bold tracking-widest">
-                    <span>{item.creator || "Desconocido"}</span>
-                    <span>{item.license ? "CC" : "Copyright"}</span>
-                  </div>
-                )}
-
-                {/* Global Hover Drag Tool */}
-                <div className="absolute top-1/2 left-2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                  <div className="bg-white/90 p-1.5 rounded-full shadow-lg border border-muted cursor-move animate-pulse pointer-events-auto">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
+              {/* Body Section */}
+              <div className="relative flex-1 bg-white flex items-center justify-center min-h-[160px] p-4 m-2 rounded-sm cursor-pointer" onClick={() => handleEditClick(item)}>
+                <img
+                  src={getDriveThumbnailUrl(item.identifier) || item.identifier}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  alt={item.title || "Imagen"}
+                />
+                {/* Tag Overlay Bottom Left */}
+                <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-black/50 text-white backdrop-blur-md border border-white/10">{item.tag || "N/A"}</span>
                 </div>
               </div>
-            );
-          })}
+
+              {/* Image Info Footer */}
+              <div className="p-3 border-t bg-white/30 text-[10px] text-muted-foreground flex justify-between uppercase font-bold tracking-widest">
+                <span>{item.creator || "Desconocido"}</span>
+                <span>{item.license ? "CC" : "Copyright"}</span>
+              </div>
+
+              {/* Global Hover Drag Tool */}
+              <div className="absolute top-1/2 left-2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+                <div className="bg-white/90 p-1.5 rounded-full shadow-lg border border-muted cursor-move animate-pulse pointer-events-auto">
+                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -847,7 +908,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
           </div>
         ) : (
           <>
-            <RenderGrid list={audioItems} typeTitle="Audios & Espectrogramas" uploadType={MEDIA_TYPE.SOUND} />
+            <RenderList list={audioItems} typeTitle="Audios & Espectrogramas" />
             <div className="border-t border-muted/50 my-2" />
             <RenderGrid list={imageItems} typeTitle="Imágenes de la Especie" uploadType={MEDIA_TYPE.STILL} />
           </>
@@ -1127,46 +1188,48 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
                     </div>
                   </div>
 
-                  {/* GUANO Section */}
-                  <div className="pt-6 border-t mt-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-1 w-1 rounded-full bg-primary" />
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO</h4>
+                  {/* GUANO Section - Only for Sound */}
+                  {editType === MEDIA_TYPE.SOUND && (
+                    <div className="pt-6 border-t mt-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-1 w-1 rounded-full bg-primary" />
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO</h4>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {[
+                          "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
+                          "Timestamp", "Loc Position", "Loc Elevation", "Length",
+                          "Samplerate", "TE", "Filter HP", "Species Manual ID",
+                          "Species Auto ID", "Note"
+                        ].map((key) => (
+                          <div key={key} className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
+                            {key === "Note" ? (
+                              <Textarea
+                                value={editGuanoMetadata[key] || ""}
+                                placeholder={`Valor de ${key}...`}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                                }}
+                                className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
+                              />
+                            ) : (
+                              <Input
+                                value={editGuanoMetadata[key] || ""}
+                                placeholder={`Valor de ${key}...`}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                                }}
+                                className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      {[
-                        "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
-                        "Timestamp", "Loc Position", "Loc Elevation", "Length",
-                        "Samplerate", "TE", "Filter HP", "Species Manual ID",
-                        "Species Auto ID", "Note"
-                      ].map((key) => (
-                        <div key={key} className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
-                          {key === "Note" ? (
-                            <Textarea
-                              value={editGuanoMetadata[key] || ""}
-                              placeholder={`Valor de ${key}...`}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
-                              }}
-                              className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
-                            />
-                          ) : (
-                            <Input
-                              value={editGuanoMetadata[key] || ""}
-                              placeholder={`Valor de ${key}...`}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
-                              }}
-                              className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  )}
 
                   <div className="pt-6 border-t mt-4">
                     <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Archivo Original</p>
@@ -1355,46 +1418,48 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
                   </div>
                 </div>
 
-                {/* Batch GUANO Section */}
-                <div className="pt-6 border-t mt-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="h-1 w-1 rounded-full bg-primary" />
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO Comunes</h4>
+                {/* Batch GUANO Section - Only if uploading sound */}
+                {activeUploadType === MEDIA_TYPE.SOUND && (
+                  <div className="pt-6 border-t mt-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-1 w-1 rounded-full bg-primary" />
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO Comunes</h4>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {[
+                        "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
+                        "Timestamp", "Loc Position", "Loc Elevation", "Length",
+                        "Samplerate", "TE", "Filter HP", "Species Manual ID",
+                        "Species Auto ID", "Note"
+                      ].map((key) => (
+                        <div key={key} className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
+                          {key === "Note" ? (
+                            <Textarea
+                              value={batchGuanoMetadata[key] || ""}
+                              placeholder={`Valor de ${key}...`}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                              }}
+                              className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
+                            />
+                          ) : (
+                            <Input
+                              value={batchGuanoMetadata[key] || ""}
+                              placeholder={`Valor de ${key}...`}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                              }}
+                              className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    {[
-                      "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
-                      "Timestamp", "Loc Position", "Loc Elevation", "Length",
-                      "Samplerate", "TE", "Filter HP", "Species Manual ID",
-                      "Species Auto ID", "Note"
-                    ].map((key) => (
-                      <div key={key} className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
-                        {key === "Note" ? (
-                          <Textarea
-                            value={batchGuanoMetadata[key] || ""}
-                            placeholder={`Valor de ${key}...`}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
-                            }}
-                            className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
-                          />
-                        ) : (
-                          <Input
-                            value={batchGuanoMetadata[key] || ""}
-                            placeholder={`Valor de ${key}...`}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
-                            }}
-                            className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -1426,6 +1491,64 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* --- Slider Modal for Spectrogram Preview --- */}
+      <BaseSheet
+        open={sliderOpen}
+        onOpenChange={setSliderOpen}
+        title="Previsualización de Espectrogramas"
+        description={`${sliderIndex + 1} de ${sliderItems.length} archivos vinculados`}
+        footer={(
+          <div className="flex items-center justify-between w-full">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={sliderIndex === 0}
+                onClick={() => setSliderIndex(prev => prev - 1)}
+                className="rounded-full h-10 w-10"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={sliderIndex === sliderItems.length - 1}
+                onClick={() => setSliderIndex(prev => prev + 1)}
+                className="rounded-full h-10 w-10"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="text-xs rounded-xl" onClick={() => handleEditClick(sliderItems[sliderIndex])}>
+                <Pencil className="h-3.5 w-3.5 mr-2" /> Editar Metadatos
+              </Button>
+              <Button className="text-xs rounded-xl px-6" onClick={() => setSliderOpen(false)}>Cerrar</Button>
+            </div>
+          </div>
+        )}
+      >
+        <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
+          {sliderItems[sliderIndex] && (
+            <div className="w-full space-y-4">
+              <div className="aspect-square sm:aspect-video relative rounded-3xl overflow-hidden border bg-black flex items-center justify-center shadow-2xl">
+                <img
+                  src={sliderItems[sliderIndex].identifier}
+                  className="max-h-full max-w-full object-contain"
+                  alt={sliderItems[sliderIndex].title || "Spectrogram"}
+                />
+              </div>
+              <div className="bg-muted/10 p-4 rounded-2xl border border-dashed text-center">
+                <p className="text-xs font-bold text-foreground">{sliderItems[sliderIndex].title || "Sin título"}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
+                  {sliderItems[sliderIndex].creator || "Autor Desconocido"} • {sliderItems[sliderIndex].format || "image/jpeg"}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </BaseSheet>
     </div>
   );
 }
