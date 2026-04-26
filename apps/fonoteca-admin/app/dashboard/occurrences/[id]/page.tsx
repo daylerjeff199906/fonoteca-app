@@ -40,8 +40,15 @@ export default async function OccurrenceDetailPage({
         <div className="space-y-4">
           <h3 className="text-sm font-bold border-b pb-2">Datos Principales</h3>
           <p><span className="font-bold text-muted-foreground mr-2">ID Ocurrencia:</span>{occurrence.occurrenceID}</p>
-          <p><span className="font-bold text-muted-foreground mr-2">Taxón:</span><span className="italic">{occurrence.taxon?.scientificName || "Desconocido"}</span></p>
+          <p><span className="font-bold text-muted-foreground mr-2">Taxonomía:</span>
+            <span className="opacity-80">
+              {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.kingdom} / {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.phylum} / {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.name} / {occurrence.taxon?.genus?.family?.order_obj?.name} / {occurrence.taxon?.genus?.family?.name} / {occurrence.taxon?.genus?.name}
+            </span>
+          </p>
+          <p><span className="font-bold text-muted-foreground mr-2">Taxón:</span><span className="italic font-semibold text-primary">{occurrence.taxon?.scientificName || "Desconocido"}</span></p>
           <p><span className="font-bold text-muted-foreground mr-2">Ubicación:</span>{occurrence.location?.locality || "Desconocida"}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Fecha:</span>{occurrence.event?.eventDate || "-"}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Hora:</span>{occurrence.event?.eventTime || "-"}</p>
         </div>
 
         <div className="space-y-4">

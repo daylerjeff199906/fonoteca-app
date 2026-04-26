@@ -31,7 +31,7 @@ export interface Order {
   created_at: string;
   
   // Joined
-  class?: Class;
+  class_obj?: Class;
 }
 
 export interface Family {
@@ -45,7 +45,7 @@ export interface Family {
   created_at: string;
 
   // Joined
-  order_ref?: Order;
+  order_obj?: Order;
 }
 
 export interface Genus {

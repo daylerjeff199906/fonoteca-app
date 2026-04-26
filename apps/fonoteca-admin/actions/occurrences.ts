@@ -102,7 +102,24 @@ export async function getOccurrence(id: string) {
 
   const { data, error } = await supabase
     .from("occurrences")
-    .select("*, taxa(*), locations(*)")
+    .select(`
+      *, 
+      taxon:taxa(
+        *, 
+        genus:genera(
+          *, 
+          family:families(
+            *, 
+            order_obj:orders(
+              *, 
+              class_obj:classes(*)
+            )
+          )
+        )
+      ), 
+      location:locations(*), 
+      event:events(*)
+    `)
     .eq("id", id)
     .single();
 
@@ -110,13 +127,7 @@ export async function getOccurrence(id: string) {
     return { error: error.message };
   }
 
-  const formattedData = {
-    ...data,
-    taxon: data.taxa,
-    location: data.locations,
-  } as Occurrence;
-
-  return { data: formattedData };
+  return { data: data as Occurrence };
 }
 
 export async function createOccurrence(input: OccurrenceInput) {
