@@ -20,11 +20,11 @@ export function PageHeader({ title, description, backUrl, action, children }: Pa
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
             <div className="flex items-center gap-2.5">
                 {backUrl && (
-                    <Button 
+                    <Button
                         asChild
-                        variant="outline" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full shadow-none border-muted/40" 
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 shadow-none border-muted/40"
                     >
                         <Link href={backUrl}>
                             <ChevronLeft className="h-4 w-4 text-muted-foreground" />
@@ -45,7 +45,7 @@ export function PageHeader({ title, description, backUrl, action, children }: Pa
                         <Button
                             asChild
                             size="sm"
-                            className="h-8 text-xs rounded-full"
+                            className="h-8 text-xs"
                         >
                             <Link
                                 href={action.href}
@@ -58,7 +58,7 @@ export function PageHeader({ title, description, backUrl, action, children }: Pa
                     ) : action && action.onClick ? (
                         <Button
                             size="sm"
-                            className="h-8 text-xs flex items-center gap-1 rounded-full"
+                            className="h-8 text-xs flex items-center gap-1"
                             onClick={action.onClick}
                         >
                             {action.icon}

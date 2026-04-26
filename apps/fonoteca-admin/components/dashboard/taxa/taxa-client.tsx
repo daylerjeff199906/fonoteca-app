@@ -263,7 +263,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
             asChild
             variant="outline"
             size="sm"
-            className="h-8 text-xs rounded-full gap-1.5"
+            className="h-8 text-xs gap-1.5"
           >
             <Link href="/dashboard/bulk" target="_blank" rel="noopener noreferrer">
               <Upload className="h-3.5 w-3.5" />
@@ -331,7 +331,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
               <Badge
                 key={filter.key}
                 variant="secondary"
-                className="px-2 py-1 h-7 text-[11px] font-medium gap-1 rounded-full cursor-default bg-muted/60 border-muted-foreground/10"
+                className="px-2 py-1 h-7 text-[11px] font-medium gap-1 cursor-default bg-muted/60 border-muted-foreground/10"
               >
                 {filter.label}
                 <button

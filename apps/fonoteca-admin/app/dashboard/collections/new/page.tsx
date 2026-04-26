@@ -15,7 +15,7 @@ export default function NewCollectionPage() {
           ]}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           {/* Opción 1: A través de Eventos */}
           <Link href="/dashboard/collections/events/new" className="group">
             <Card className="h-full border border-muted/20 bg-background/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg hover:-translate-y-1">
@@ -24,7 +24,7 @@ export default function NewCollectionPage() {
                   <CalendarPlus className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle className="text-xl">Comencemos: Añade Colecciones al Evento</CardTitle>
-                <CardDescription className="text-sm mt-2">
+                <CardDescription className="text-xs mt-2">
                   Flujo completo. Primero registra un Evento de Muestreo (Expedición), luego añade múltiples Ocurrencias a ese evento, y finalmente adjunta contenido Multimedia a cada ocurrencia.
                 </CardDescription>
               </CardHeader>
@@ -45,7 +45,7 @@ export default function NewCollectionPage() {
                   <FileAudio className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle className="text-xl">Comencemos: Añade Multimedia a la Ocurrencia</CardTitle>
-                <CardDescription className="text-sm mt-2">
+                <CardDescription className="text-xs mt-2">
                   Flujo directo. Si no necesitas agrupar las ocurrencias bajo un evento específico, registra directamente la Ocurrencia y adjunta su contenido Multimedia.
                 </CardDescription>
               </CardHeader>

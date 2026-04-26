@@ -38,6 +38,10 @@ export interface Family {
   id: string;
   name: string;
   order_id: string | null;
+  kingdom: string | null;
+  phylum: string | null;
+  class: string | null;
+  order: string | null;
   created_at: string;
 
   // Joined
