@@ -1,7 +1,7 @@
-import { PageHeader } from "@/components/panel-admin/page-header";
 import { OccurrenceForm } from "@/components/dashboard/occurrences/occurrence-form";
 import { MultimediaSection } from "@/components/dashboard/occurrences/multimedia-section";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
+import Breadcrumbs from "@/components/panel-admin/breadcrumbs";
 
 export default async function EditOccurrencePage({
   params,
@@ -12,11 +12,13 @@ export default async function EditOccurrencePage({
 
   return (
     <LayoutWrapper sectionTitle="Editar Ocurrencia">
-      <div className="w-full max-w-5xl mx-auto space-y-4 py-4 px-4">
-        <PageHeader 
-          title="Editar Ocurrencia" 
-          description="Sube archivos y gestiona metadatos del registro." 
-          backUrl="/dashboard/occurrences" 
+      <div className="w-full space-y-4 py-4 px-4">
+        <Breadcrumbs
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Ocurrencias", href: "/dashboard/occurrences" },
+            { label: "Nueva Ocurrencia", href: "/dashboard/occurrences/create", active: true },
+          ]}
         />
         <OccurrenceForm id={id} />
         <MultimediaSection occurrenceId={id} />

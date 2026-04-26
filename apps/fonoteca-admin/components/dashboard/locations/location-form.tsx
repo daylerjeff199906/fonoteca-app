@@ -11,8 +11,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Globe, Loader2, Ruler, Mountain, AlignLeft, Info } from "lucide-react";
+import { MapPin, Globe, Loader2, Ruler, Mountain, AlignLeft, Info, FileText } from "lucide-react";
 import { CountryPicker } from "./country-picker";
+import { FormFooter } from "@/components/panel-admin/form-footer";
+import { Textarea } from "@/components/ui/textarea";
 
 // Dynamic loading of the map picker to avoid SSR issues
 const MapPicker = dynamic(() => import("./map-picker"), { 
@@ -90,167 +92,146 @@ export function LocationForm({ id }: { id?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 w-full max-w-5xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
       {/* 1. Datos Principales */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">Datos de Localidad</h3>
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+          <MapPin className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Datos de Localidad</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Location ID</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("locationID")} placeholder="Ex: LOC-001" className="bg-transparent border-none shadow-none h-9 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Location ID</label>
+            <Input {...register("locationID")} placeholder="Ex: LOC-001" className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Localidad *</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("locality")} placeholder="Ex: Río Itaya, Quebrada Tamshiyacu" className="bg-transparent border-none shadow-none h-9 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.locality && <p className="text-xs text-red-500 mt-1 px-2 font-medium">{errors.locality.message}</p>}
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Localidad *</label>
+            <Input {...register("locality")} placeholder="Ex: Río Itaya, Quebrada Tamshiyacu" className="bg-background h-9 focus-visible:ring-primary/20" />
+            {errors.locality && <p className="text-[10px] text-red-500 mt-1">{errors.locality.message}</p>}
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Provincia / Estado</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("stateProvince")} placeholder="Ex: Loreto" className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.stateProvince && <p className="text-xs text-red-500 mt-1 px-2 font-medium">{errors.stateProvince.message}</p>}
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Provincia / Estado</label>
+            <Input {...register("stateProvince")} placeholder="Ex: Loreto" className="bg-background h-9 focus-visible:ring-primary/20" />
+            {errors.stateProvince && <p className="text-[10px] text-red-500 mt-1">{errors.stateProvince.message}</p>}
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Distrito / Condado</label>
-            </div>
-            <div className="w-3/4">
-              <Input {...register("county")} placeholder="Ex: San Juan Bautista" className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 max-w-xl" />
-              {errors.county && <p className="text-xs text-red-500 mt-1 px-2 font-medium">{errors.county.message}</p>}
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Distrito / Condado</label>
+            <Input {...register("county")} placeholder="Ex: San Juan Bautista" className="bg-background h-9 focus-visible:ring-primary/20" />
+            {errors.county && <p className="text-[10px] text-red-500 mt-1">{errors.county.message}</p>}
           </div>
         </div>
       </div>
 
       {/* 2. Geografía Regional */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Globe className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">Geografía Regional</h3>
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+          <Globe className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Geografía Regional</h3>
         </div>
-        <div className="divide-y divide-muted/10 border-t border-b border-muted/10">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">País Seleccionado</label>
-            </div>
-            <div className="w-3/4">
-              <div className="max-w-xl">
-                 <Controller
-                    name="country"
-                    control={control}
-                    render={({ field }) => (
-                        <CountryPicker 
-                            value={field.value} 
-                            onChange={(c) => {
-                                field.onChange(c.name);
-                                setValue("countryCode", c.code);
-                            }} 
-                        />
-                    )}
-                 />
-              </div>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">País Seleccionado</label>
+            <Controller
+              name="country"
+              control={control}
+              render={({ field }) => (
+                <CountryPicker 
+                  value={field.value} 
+                  onChange={(c) => {
+                    field.onChange(c.name);
+                    setValue("countryCode", c.code);
+                  }} 
+                />
+              )}
+            />
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Código ISO y Continente</label>
-            </div>
-            <div className="w-3/4 flex gap-4 max-w-xl">
-              <Input {...register("countryCode")} placeholder="Code" className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 w-16" readOnly />
-              <Input {...register("continent")} className="bg-transparent border-none shadow-none h-8 font-medium focus-visible:ring-1 focus-visible:ring-primary/20 px-2 flex-grow" />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Código ISO y Continente</label>
+            <div className="flex gap-2">
+              <Input {...register("countryCode")} placeholder="Code" className="bg-muted w-16 h-9 focus-visible:ring-primary/20" readOnly />
+              <Input {...register("continent")} className="bg-background h-9 focus-visible:ring-primary/20 flex-grow" />
             </div>
           </div>
         </div>
       </div>
 
       {/* 3. Coordenadas y Mapa */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Ruler className="h-5 w-5 text-primary" />
-          <h3 className="text-base font-bold text-foreground">Coordenadas de Precisión</h3>
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+          <Ruler className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Coordenadas de Precisión</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 space-y-4">
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">Latitud</label>
-                    <Input type="number" step="any" {...register("decimalLatitude")} placeholder="-3.749" className="h-9 font-medium" />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">Longitud</label>
-                    <Input type="number" step="any" {...register("decimalLongitude")} placeholder="-73.25" className="h-9 font-medium" />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">Incertidumbre (m)</label>
-                    <Input type="number" step="any" {...register("coordinateUncertaintyInMeters")} placeholder="10" className="h-9 font-medium bg-muted/20" />
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+          <div className="lg:col-span-1 space-y-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Latitud</label>
+              <Input type="number" step="any" {...register("decimalLatitude")} placeholder="-3.749" className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
-            <div className="md:col-span-2">
-                <MapPicker 
-                    lat={decimalLat} 
-                    lng={decimalLng} 
-                    onChange={(lat, lng) => {
-                        setValue("decimalLatitude", Number(lat.toFixed(6)));
-                        setValue("decimalLongitude", Number(lng.toFixed(6)));
-                    }} 
-                />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Longitud</label>
+              <Input type="number" step="any" {...register("decimalLongitude")} placeholder="-73.25" className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Incertidumbre (m)</label>
+              <Input type="number" step="any" {...register("coordinateUncertaintyInMeters")} placeholder="10" className="bg-muted/20 h-9 focus-visible:ring-primary/20" />
+            </div>
+          </div>
+          <div className="lg:col-span-2">
+            <MapPicker 
+              lat={decimalLat} 
+              lng={decimalLng} 
+              onChange={(lat, lng) => {
+                setValue("decimalLatitude", Number(lat.toFixed(6)));
+                setValue("decimalLongitude", Number(lng.toFixed(6)));
+              }} 
+            />
+          </div>
         </div>
       </div>
 
       {/* 4. Ambiente */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center gap-2">
-            <Mountain className="h-5 w-5 text-primary" />
-            <h3 className="text-base font-bold text-foreground">Ambiente y Otros</h3>
+      <div className="space-y-4 bg-card border rounded-lg p-5">
+        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+          <Mountain className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Ambiente y Otros</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5 flex flex-col">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase px-1 flex items-center gap-1">
-                    <AlignLeft className="h-3 w-3" /> Descripción Hábitat
-                </label>
-                <Input {...register("habitat")} placeholder="Ex: Bosque de várzea inundable" className="h-9 font-medium" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div className="flex flex-col gap-1 lg:row-span-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
+              <AlignLeft className="h-3 w-3" /> Descripción Hábitat
+            </label>
+            <Textarea 
+              {...register("habitat")} 
+              placeholder="Ex: Bosque de várzea inundable..." 
+              className="bg-background focus-visible:ring-primary/20 h-[100px]" 
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Elevación (m)</label>
+              <Input type="number" step="any" {...register("elevation")} className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">Elevación (m)</label>
-                    <Input type="number" step="any" {...register("elevation")} className="h-9 font-medium" />
-                </div>
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">Precisión Elev. (m)</label>
-                    <Input type="number" step="any" {...register("elevationAccuracy")} className="h-9 font-medium" />
-                </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Precisión Elev. (m)</label>
+              <Input type="number" step="any" {...register("elevationAccuracy")} className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-6 border-t border-muted/20 mt-10">
-        <Button variant="outline" asChild className="min-w-[120px]">
+      <FormFooter>
+        <Button variant="outline" type="button" asChild>
           <Link href="/dashboard/locations">Cancelar</Link>
         </Button>
-        <Button type="submit" disabled={loading} className="min-w-[160px] font-bold">
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {id ? "Actualizar Ubicación" : "Registrar Ubicación"}
+        <Button type="submit" disabled={loading} className="min-w-[120px]">
+          {loading ? "Guardando..." : id ? "Actualizar Ubicación" : "Registrar Ubicación"}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   );
 }

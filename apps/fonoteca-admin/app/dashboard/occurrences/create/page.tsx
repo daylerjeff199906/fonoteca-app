@@ -1,15 +1,20 @@
-import { PageHeader } from "@/components/panel-admin/page-header";
+import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { OccurrenceForm } from "@/components/dashboard/occurrences/occurrence-form";
+import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 
 export default function CreateOccurrencePage() {
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4 py-6 px-4">
-      <PageHeader 
-        title="Registrar Ocurrencia" 
-        description="Monitoreo de especies avistadas en ubicaciones registradas." 
-        backUrl="/dashboard/occurrences" 
-      />
-      <OccurrenceForm />
-    </div>
+    <LayoutWrapper sectionTitle="Gestión de Ocurrencias">
+      <div className="flex flex-col gap-4">
+        <Breadcrumbs 
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Ocurrencias", href: "/dashboard/occurrences" },
+            { label: "Nueva Ocurrencia", href: "/dashboard/occurrences/create", active: true },
+          ]} 
+        />
+        <OccurrenceForm />
+      </div>
+    </LayoutWrapper>
   );
 }

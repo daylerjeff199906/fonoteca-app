@@ -1,15 +1,17 @@
 import { LocationForm } from "@/components/dashboard/locations/location-form";
-import { PageHeader } from "@/components/panel-admin/page-header";
+import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 
 export default function CreateLocationPage() {
   return (
-    <LayoutWrapper sectionTitle="Nueva Ubicación">
-      <div className="w-full max-w-5xl mx-auto space-y-4 py-4 px-4">
-        <PageHeader 
-          title="Registrar Ubicación" 
-          description="Revisa los campos para asegurar la precisión de la geografía." 
-          backUrl="/dashboard/locations" 
+    <LayoutWrapper sectionTitle="Gestión de Ubicaciones">
+      <div className="flex flex-col gap-4">
+        <Breadcrumbs 
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Ubicaciones", href: "/dashboard/locations" },
+            { label: "Registrar Ubicación", href: "/dashboard/locations/create", active: true },
+          ]} 
         />
         <LocationForm />
       </div>

@@ -31,6 +31,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 
 export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: string, redirectUrl?: string, defaultEventId?: string }) {
   const router = useRouter();
@@ -130,7 +131,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
   if (isFetching) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground w-full max-w-7xl">
+      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground w-full">
         <Loader2 className="h-8 w-8 animate-spin mb-4 text-primary" />
         <span className="text-sm font-medium">Cargando detalles de la ocurrencia...</span>
       </div>
@@ -147,13 +148,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <h3 className="text-sm font-semibold text-foreground">Datos Básicos</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
             <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.occurrenceID && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceID.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Basis of Record *</label>
             <Input {...register("basisOfRecord")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.basisOfRecord && <p className="text-[10px] text-red-500 mt-1">{errors.basisOfRecord.message}</p>}
@@ -168,7 +169,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <h3 className="text-sm font-semibold text-foreground">Taxonomía y Ubicación</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Taxón *</label>
             <Controller
               control={control}
@@ -242,7 +243,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
             <select
               {...register("location_id")}
@@ -265,17 +266,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <h3 className="text-sm font-semibold text-foreground">Identificación y Verificación</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
             <Input {...register("identificationMethod")} className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Confianza (0-1)</label>
             <Input type="number" step="0.01" {...register("identificationConfidence")} className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
 
-          <div className="flex flex-col gap-2 lg:col-span-2">
+          <div className="flex flex-col gap-1 lg:col-span-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Estado de Verificación</label>
             <Controller
               control={control}
@@ -311,13 +312,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <h3 className="text-sm font-semibold text-foreground">Monitoreo</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
             <Input {...register("recordedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.recordedBy && <p className="text-[10px] text-red-500 mt-1">{errors.recordedBy.message}</p>}
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
             <Input {...register("identifiedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
           </div>
@@ -331,13 +332,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <h3 className="text-sm font-semibold text-foreground">Institución y Colección</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Institución</label>
             <Input {...register("institutionCode")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.institutionCode && <p className="text-[10px] text-red-500 mt-1">{errors.institutionCode.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Colección</label>
             <Input {...register("collectionCode")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.collectionCode && <p className="text-[10px] text-red-500 mt-1">{errors.collectionCode.message}</p>}
@@ -348,13 +349,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       {/* 6. Observaciones y Estado del Registro */}
       <div className="space-y-4 bg-card border rounded-lg p-5">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Observaciones</label>
-            <Input {...register("occurrenceRemarks")} placeholder="Detalles extra del avistamiento..." className="bg-background h-9 focus-visible:ring-primary/20" />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Descripción de Hábitat</label>
+            <Textarea 
+              {...register("occurrenceRemarks")} 
+              placeholder="Describa el hábitat o detalles extra del avistamiento..." 
+              className="bg-background focus-visible:ring-primary/20" 
+            />
             {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Estado del Registro Público</label>
             <Controller
               control={control}
