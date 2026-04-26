@@ -11,6 +11,8 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { R2_PUBLIC_URL } from "@/lib/r2";
 import { cn } from "@/lib/utils";
+import { multimediaSchema } from "@/lib/validations/fonoteca";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -228,7 +230,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
 
         const publicUrl = `${R2_PUBLIC_URL}/${uploadPath}`;
 
-        const createResp = await createMultimedia({
+        const payload = {
           occurrence_id: occurrenceId,
           identifier: publicUrl,
           originalFilename: file.name,
@@ -244,7 +246,12 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
           record_status: batchRecordStatus,
           is_public: batchIsPublic,
           guano_metadata: batchGuanoMetadata,
-        });
+        };
+
+        // Validate with Zod
+        const validatedData = multimediaSchema.parse(payload);
+
+        const createResp = await createMultimedia(validatedData as any);
 
         if (createResp.error) {
           toast.error(`Error al registrar ${file.name} en BD`);
@@ -284,7 +291,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
     setUploading(activeParentItemId ? MEDIA_TAG.SPECTROGRAM : activeUploadType);
     try {
       const isSpectro = !!activeParentItemId;
-      await createMultimedia({
+      const payload = {
         occurrence_id: occurrenceId,
         identifier: urlInput,
         originalFilename: "url_source",
@@ -301,7 +308,12 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         record_status: urlRecordStatus,
         is_public: true,
         guano_metadata: {},
-      });
+      };
+
+      // Validate with Zod
+      const validatedData = multimediaSchema.parse(payload);
+
+      await createMultimedia(validatedData as any);
 
       toast.success(
         <div className="flex flex-col gap-0.5">
@@ -372,7 +384,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
     setUploading("editing");
 
     try {
-      const resp = await updateMultimedia(editingItem.id, {
+      const payload = {
         ...editingItem,
         identifier: editUrl,
         title: editTitle,
@@ -386,7 +398,12 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         type: editType as any,
         format: editFormat,
         guano_metadata: editGuanoMetadata,
-      });
+      };
+
+      // Validate with Zod
+      const validatedData = multimediaSchema.parse(payload);
+
+      const resp = await updateMultimedia(editingItem.id, validatedData as any);
 
       if (resp.error) {
         toast.error("Error al actualizar");
@@ -1125,15 +1142,27 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
                       ].map((key) => (
                         <div key={key} className="space-y-1.5">
                           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
-                          <Input
-                            value={editGuanoMetadata[key] || ""}
-                            placeholder={`Valor de ${key}...`}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
-                            }}
-                            className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
-                          />
+                          {key === "Note" ? (
+                            <Textarea
+                              value={editGuanoMetadata[key] || ""}
+                              placeholder={`Valor de ${key}...`}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                              }}
+                              className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
+                            />
+                          ) : (
+                            <Input
+                              value={editGuanoMetadata[key] || ""}
+                              placeholder={`Valor de ${key}...`}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                              }}
+                              className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
+                            />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1341,15 +1370,27 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
                     ].map((key) => (
                       <div key={key} className="space-y-1.5">
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
-                        <Input
-                          value={batchGuanoMetadata[key] || ""}
-                          placeholder={`Valor de ${key}...`}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
-                          }}
-                          className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
-                        />
+                        {key === "Note" ? (
+                          <Textarea
+                            value={batchGuanoMetadata[key] || ""}
+                            placeholder={`Valor de ${key}...`}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                            }}
+                            className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
+                          />
+                        ) : (
+                          <Input
+                            value={batchGuanoMetadata[key] || ""}
+                            placeholder={`Valor de ${key}...`}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setBatchGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                            }}
+                            className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
