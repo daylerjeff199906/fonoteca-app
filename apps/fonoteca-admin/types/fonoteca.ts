@@ -160,21 +160,12 @@ export interface Multimedia {
   license: string;
   guano_metadata: Record<string, any>;
   order_index: number;
-  created_at: string;
-  tag: MediaTag | null;
+  tag: string | null;
   parent_multimedia_id: string | null;
-  equipmentUsed: string | null;
-  software: string | null;
-  samplingRate: number | null;
-  bitrate: string | null;
-  audioChannel: string | null;
-  lensAperture: string | null;
-  exposureTime: string | null;
-  iso: number | null;
-  focalLength: string | null;
-  spectrogram_url: string | null;
   record_status: "draft" | "published" | "deleted";
   is_public: boolean;
+  created_at: string;
+  updated_at: string;
 
   // Joins (optional)
   occurrence?: Occurrence;

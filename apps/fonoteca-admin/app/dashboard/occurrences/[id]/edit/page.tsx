@@ -15,9 +15,9 @@ export default async function EditOccurrencePage({
       <div className="w-full space-y-4 py-4 px-4">
         <Breadcrumbs
           items={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Inicio", href: "/dashboard" },
             { label: "Ocurrencias", href: "/dashboard/occurrences" },
-            { label: "Nueva Ocurrencia", href: "/dashboard/occurrences/create", active: true },
+            { label: "Editar Ocurrencia", href: `/dashboard/occurrences/${id}/edit`, active: true },
           ]}
         />
         <OccurrenceForm id={id} />

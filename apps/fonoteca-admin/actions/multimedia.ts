@@ -253,22 +253,6 @@ export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_i
   return { success: true };
 }
 
-export async function updateMultimediaSpectrogram(id: string, spectrogram_url: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("multimedia")
-    .update({ spectrogram_url })
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidatePath("/dashboard/multimedia");
-  return { success: true };
-}
 
 export async function uploadToR2(formData: FormData) {
   const file = formData.get("file") as File;

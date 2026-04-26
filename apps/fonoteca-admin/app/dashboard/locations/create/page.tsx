@@ -8,7 +8,7 @@ export default function CreateLocationPage() {
       <div className="flex flex-col gap-4">
         <Breadcrumbs 
           items={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Inicio", href: "/dashboard" },
             { label: "Ubicaciones", href: "/dashboard/locations" },
             { label: "Registrar Ubicación", href: "/dashboard/locations/create", active: true },
           ]} 

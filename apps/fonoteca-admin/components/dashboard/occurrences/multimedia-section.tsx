@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Play, Pause, Music, Eye, MoreVertical, X } from "lucide-react";
+import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Play, Pause, Music, Eye, MoreVertical, X, Info } from "lucide-react";
 import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { R2_PUBLIC_URL } from "@/lib/r2";
@@ -507,6 +508,29 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
     setDraggedItem(null);
   };
 
+  const MultimediaSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="rounded-2xl border bg-card/50 overflow-hidden flex flex-col h-[320px]">
+          <div className="p-3 border-b flex justify-between items-center">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-4 rounded-full" />
+          </div>
+          <div className="flex-1 m-2 rounded-sm bg-muted/20 flex items-center justify-center">
+            <Skeleton className="h-12 w-12 rounded-full" />
+          </div>
+          <div className="p-3 border-t space-y-2">
+            <Skeleton className="h-3 w-16" />
+            <div className="grid grid-cols-2 gap-2">
+              <Skeleton className="h-10 w-full rounded-sm" />
+              <Skeleton className="h-10 w-full rounded-sm" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const handleDelete = async (id: string, isAudioChild = false) => {
     const resp = await deleteMultimedia(id);
     if (resp.success) {
@@ -732,9 +756,15 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
 
       <div className="grid grid-cols-1 gap-6">
         {initialLoading ? (
-          <div className="flex flex-col items-center justify-center py-10 opacity-60">
-            <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
-            <span className="text-xs">Cargando multimedia...</span>
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <Skeleton className="h-5 w-40" />
+              <MultimediaSkeleton />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-5 w-40" />
+              <MultimediaSkeleton />
+            </div>
           </div>
         ) : (
           <>

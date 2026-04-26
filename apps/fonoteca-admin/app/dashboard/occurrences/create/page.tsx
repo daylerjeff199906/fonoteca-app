@@ -8,7 +8,7 @@ export default function CreateOccurrencePage() {
       <div className="flex flex-col gap-4">
         <Breadcrumbs 
           items={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Inicio", href: "/dashboard" },
             { label: "Ocurrencias", href: "/dashboard/occurrences" },
             { label: "Nueva Ocurrencia", href: "/dashboard/occurrences/create", active: true },
           ]} 

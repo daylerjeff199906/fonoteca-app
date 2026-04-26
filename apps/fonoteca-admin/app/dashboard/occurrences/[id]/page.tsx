@@ -36,23 +36,21 @@ export default async function OccurrenceDetailPage({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-card border rounded-lg p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-card border rounded-lg p-6 text-xs">
         <div className="space-y-4">
-          <h3 className="font-semibold text-lg border-b pb-2">Datos Principales</h3>
-          <p><span className="font-semibold text-muted-foreground mr-2">ID Ocurrencia:</span>{occurrence.occurrenceID}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Taxón:</span><span className="italic">{occurrence.taxon?.scientificName || "Desconocido"}</span></p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Ubicación:</span>{occurrence.location?.locality || "Desconocida"}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Fecha:</span>{occurrence.eventDate}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Hora:</span>{occurrence.eventTime || "-"}</p>
+          <h3 className="text-sm font-bold border-b pb-2">Datos Principales</h3>
+          <p><span className="font-bold text-muted-foreground mr-2">ID Ocurrencia:</span>{occurrence.occurrenceID}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Taxón:</span><span className="italic">{occurrence.taxon?.scientificName || "Desconocido"}</span></p>
+          <p><span className="font-bold text-muted-foreground mr-2">Ubicación:</span>{occurrence.location?.locality || "Desconocida"}</p>
         </div>
 
         <div className="space-y-4">
-          <h3 className="font-semibold text-lg border-b pb-2">Información Adicional</h3>
-          <p><span className="font-semibold text-muted-foreground mr-2">Registrado Por:</span>{occurrence.recordedBy}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Identificado Por:</span>{occurrence.identifiedBy || "-"}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Institución:</span>{occurrence.institutionCode}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Colección:</span>{occurrence.collectionCode}</p>
-          <p><span className="font-semibold text-muted-foreground mr-2">Observaciones:</span>{occurrence.occurrenceRemarks || "-"}</p>
+          <h3 className="text-sm font-bold border-b pb-2">Información Adicional</h3>
+          <p><span className="font-bold text-muted-foreground mr-2">Registrado Por:</span>{occurrence.recordedBy}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Identificado Por:</span>{occurrence.identifiedBy || "-"}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Institución:</span>{occurrence.institutionCode}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Colección:</span>{occurrence.collectionCode}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Observaciones:</span>{occurrence.occurrenceRemarks || "-"}</p>
         </div>
       </div>
 

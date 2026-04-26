@@ -137,22 +137,12 @@ export const multimediaSchema = z.object({
   creator: z.string().min(1, "Creator is required"),
   rightsHolder: z.string().default("Instituto de Investigaciones de la Amazonía Peruana (IIAP)"),
   license: z.string().default("http://creativecommons.org/licenses/by-nc/4.0/"),
-  guano_metadata: z.record(z.any()).default({}),
-  order_index: z.coerce.number().default(0),
-  equipmentUsed: z.string().optional().nullable(),
-  software: z.string().optional().nullable(),
-  samplingRate: numberOrNull,
-  bitrate: z.string().optional().nullable(),
-  audioChannel: z.string().optional().nullable(),
-  lensAperture: z.string().optional().nullable(),
-  exposureTime: z.string().optional().nullable(),
-  iso: numberOrNull,
-  focalLength: z.string().optional().nullable(),
-  spectrogram_url: z.string().optional().nullable(),
+  guano_metadata: z.record(z.any()).optional().default({}),
+  order_index: z.coerce.number().optional().default(0),
   tag: z.string().optional().nullable(),
   parent_multimedia_id: z.string().uuid().optional().nullable(),
-  record_status: z.enum(["draft", "published", "deleted"]).default("draft"),
-  is_public: z.boolean().default(true),
+  record_status: z.enum(["draft", "published", "deleted"]).optional().default("draft"),
+  is_public: z.boolean().optional().default(true),
 });
 
-export type MultimediaInput = z.infer<typeof multimediaSchema>;
+export type MultimediaInput = z.input<typeof multimediaSchema>;

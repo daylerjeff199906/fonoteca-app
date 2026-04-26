@@ -141,13 +141,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   return (
     <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
-      {/* 1. Datos Básicos */}
+      {/* 1. Detalles Principales */}
       <div className="space-y-4 bg-card border rounded-lg p-5">
         <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <FileText className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Datos Básicos</h3>
+          <h3 className="text-sm font-semibold text-foreground">Detalles de la Ocurrencia</h3>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
             <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -159,16 +159,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             <Input {...register("basisOfRecord")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.basisOfRecord && <p className="text-[10px] text-red-500 mt-1">{errors.basisOfRecord.message}</p>}
           </div>
-        </div>
-      </div>
 
-      {/* 2. Taxonomía y Ubicación */}
-      <div className="space-y-4 bg-card border rounded-lg p-5">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <FolderTree className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Taxonomía y Ubicación</h3>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Taxón *</label>
             <Controller
@@ -243,7 +234,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 lg:col-span-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
             <select
               {...register("location_id")}
