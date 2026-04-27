@@ -32,10 +32,10 @@ export default async function OccurrencesPage({
   }
 
   return (
-    <OccurrencesClient 
-      data={occurrences} 
-      count={count} 
-      taxa={taxa || []} 
+    <OccurrencesClient
+      data={occurrences}
+      count={count}
+      taxa={taxa || []}
     />
   );
 }

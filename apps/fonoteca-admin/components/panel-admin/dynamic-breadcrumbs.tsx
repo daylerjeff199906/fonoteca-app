@@ -39,18 +39,18 @@ export function DynamicBreadcrumbs() {
             <React.Fragment key={href}>
               <BreadcrumbItem>
                 {isLast ? (
-                  <BreadcrumbPage className="text-[11px] font-bold text-foreground capitalize">
+                  <BreadcrumbPage className="text-xs font-semibold text-foreground capitalize">
                     {label}
                   </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link href={href} className="text-[11px] text-muted-foreground hover:text-primary transition-colors capitalize">
+                    <Link href={href} className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors capitalize">
                       {label}
                     </Link>
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator className="h-2 w-2 opacity-50" />}
+              {!isLast && <BreadcrumbSeparator className="h-3 w-3 opacity-40" />}
             </React.Fragment>
           );
         })}

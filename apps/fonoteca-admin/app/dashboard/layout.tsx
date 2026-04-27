@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { getAuthorizedTeams } from "@/actions/auth-teams"
 
 import { TeamsProvider } from "@/components/providers/teams-provider"
+import { PageHeaderProvider } from "@/components/providers/page-header-provider"
 
 export default async function AdminLayout({
   children,
@@ -99,20 +100,22 @@ export default async function AdminLayout({
 
   return (
     <TeamsProvider teams={authorizedTeams}>
-      <SidebarProvider>
-        <AppSidebar userData={userData} />
-        <SidebarInset className="max-h-svh overflow-auto">
-          <SiteHeader />
-          <main className="flex-1 p-4 lg:p-6">
-            <div className="container mx-auto space-y-6">
-              {children}
-            </div>
-          </main>
-          <footer className="p-4 md:p-6 text-[10px] text-muted-foreground text-center mt-auto opacity-50 uppercase tracking-widest font-bold">
-            &copy; {new Date().getFullYear()} IIAP. Todos los derechos reservados.
-          </footer>
-        </SidebarInset>
-      </SidebarProvider>
+      <PageHeaderProvider>
+        <SidebarProvider>
+          <AppSidebar userData={userData} />
+          <SidebarInset className="max-h-svh overflow-auto">
+            <SiteHeader />
+            <main className="flex-1 p-4 lg:p-6">
+              <div className="container mx-auto space-y-6">
+                {children}
+              </div>
+            </main>
+            <footer className="p-4 md:p-6 text-[10px] text-muted-foreground text-center mt-auto opacity-50 uppercase tracking-widest font-bold">
+              &copy; {new Date().getFullYear()} IIAP. Todos los derechos reservados.
+            </footer>
+          </SidebarInset>
+        </SidebarProvider>
+      </PageHeaderProvider>
     </TeamsProvider>
   )
 }
