@@ -14,6 +14,7 @@ interface StatsChartProps {
     statsContent: typeof translations.es.stats;
     chartContent: typeof translations.es.chart;
     lang: string;
+    classData?: any[];
 }
 
 const CountUp: React.FC<{ value: number }> = ({ value }) => {
@@ -31,13 +32,7 @@ const CountUp: React.FC<{ value: number }> = ({ value }) => {
     return <span>{count}</span>;
 }
 
-const data = [
-    { name: 'Anfibios', value: 485, color: '#3b82f6' },      // Blue
-    { name: 'Aves', value: 132, color: '#8b5cf6' },          // Purple
-    { name: 'Murciélagos', value: 100, color: '#ec4899' },   // Pink
-    { name: 'Grillos', value: 56, color: '#14b8a6' },        // Teal
-    { name: 'Reptiles', value: 42, color: '#6366f1' },       // Indigo
-];
+const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1', '#f59e0b', '#10b981'];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -75,7 +70,7 @@ const renderLegend = (props: any) => {
   );
 };
 
-export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartContent, lang }) => {
+export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartContent, lang, classData = [] }) => {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -86,7 +81,15 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
         { ...statsContent.s1, value: parseInt(statsContent.s1.count) || 0 },
         { ...statsContent.s2, value: parseInt(statsContent.s2.count) || 0 },
         { ...statsContent.s3, value: parseInt(statsContent.s3.count) || 0 },
+        { ...statsContent.s4, value: parseInt(statsContent.s4.count) || 0 },
+        { ...statsContent.s5, value: parseInt(statsContent.s5.count) || 0 },
     ];
+
+    const chartData = classData.map((item, index) => ({
+        name: lang === 'en' ? item.title_en : lang === 'pt' ? item.title_pt : item.title_es,
+        value: item.count,
+        color: COLORS[index % COLORS.length]
+    })).filter(item => item.value > 0).sort((a, b) => b.value - a.value);
 
     if (!isMounted) return <div className="h-[450px] w-full bg-[#050515]/50 animate-pulse rounded-3xl" />;
 
@@ -144,7 +147,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={data}
+                                    data={chartData}
                                     cx="40%"
                                     cy="50%"
                                     innerRadius={90}
@@ -153,7 +156,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                     dataKey="value"
                                     stroke="none"
                                 >
-                                    {data.map((entry, index) => (
+                                    {chartData.map((entry, index) => (
                                         <Cell 
                                             key={`cell-${index}`} 
                                             fill={entry.color} 
