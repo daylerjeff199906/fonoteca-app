@@ -60,8 +60,8 @@ export function AudioWaveform({
           labels: true,
           height: 180,
           splitChannels: false,
-          primaryLabelColor: '#ffffff',
-          secondaryLabelColor: '#888888',
+          labelsColor: '#ffffff',
+          labelsHzColor: '#888888',
         }),
         Timeline.create({
           container: timelineRef.current,
