@@ -32,7 +32,24 @@ export async function getOccurrences({
 
   let query = supabase
     .from("occurrences")
-    .select("*, taxon:taxa(*), location:locations(*), multimedia(*)", { count: "exact" });
+    .select(`
+      *, 
+      taxon:taxa(
+        *, 
+        genus:genera(
+          *, 
+          family:families(
+            *, 
+            order_obj:orders(
+              *, 
+              class_obj:classes(*)
+            )
+          )
+        )
+      ), 
+      location:locations(*), 
+      multimedia(*)
+    `, { count: "exact" });
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
@@ -244,7 +261,24 @@ export async function getAllOccurrencesForExport({
 
   let query = supabase
     .from("occurrences")
-    .select("*, taxa(*), locations(*), multimedia(*)");
+    .select(`
+      *, 
+      taxon:taxa(
+        *, 
+        genus:genera(
+          *, 
+          family:families(
+            *, 
+            order_obj:orders(
+              *, 
+              class_obj:classes(*)
+            )
+          )
+        )
+      ), 
+      location:locations(*), 
+      multimedia(*)
+    `);
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);

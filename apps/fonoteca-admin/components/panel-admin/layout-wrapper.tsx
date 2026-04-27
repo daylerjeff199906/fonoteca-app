@@ -1,8 +1,5 @@
 'use client'
 
-import { SidebarInset } from '@/components/ui/sidebar'
-import { SiteHeader } from './site-header'
-
 interface LayoutWrapperProps {
     children: React.ReactNode
     sectionTitle?: string
@@ -14,15 +11,13 @@ export const LayoutWrapper = ({
 }: LayoutWrapperProps) => {
 
     return (
-        <SidebarInset className="max-h-svh overflow-auto">
-            <SiteHeader sectionTitle={sectionTitle} />
-            <div className="container mx-auto p-4 flex flex-col gap-4">
-                {children}
-            </div>
-            <footer className="p-4 md:p-6 text-xs text-muted-foreground text-center mt-auto">
-                &copy; {new Date().getFullYear()} IIAP.{' '}
-                {'Todos los derechos reservados.'}
-            </footer>
-        </SidebarInset>
+        <div className="flex flex-col gap-6">
+            {sectionTitle && (
+                <div className="flex flex-col gap-1 mb-2">
+                    <h2 className="text-xl font-bold tracking-tight text-foreground">{sectionTitle}</h2>
+                </div>
+            )}
+            {children}
+        </div>
     )
 }

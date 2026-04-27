@@ -1,7 +1,10 @@
+"use client"
+
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { AppSwitcher } from "./app-switcher"
 import { useTeams } from "@/components/providers/teams-provider"
+import { DynamicBreadcrumbs } from "./dynamic-breadcrumbs"
 
 interface SiteHeaderProps {
     sectionTitle?: string
@@ -15,9 +18,10 @@ export const SiteHeader = ({ sectionTitle }: SiteHeaderProps) => {
             <div className="flex items-center gap-1 px-4 lg:gap-2 lg:px-6">
                 <SidebarTrigger className="-ml-1" />
                 <Separator orientation="vertical" className="mx-2 h-4" />
-                <div className="flex-1">
+                <div className="flex flex-col justify-center">
+                    <DynamicBreadcrumbs />
                     {sectionTitle && (
-                        <h1 className="text-sm font-medium">{sectionTitle}</h1>
+                        <h1 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-70">{sectionTitle}</h1>
                     )}
                 </div>
             </div>

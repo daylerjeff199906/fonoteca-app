@@ -90,12 +90,9 @@ export function OccurrencesClient({
         item.basisOfRecord || "",
         item.recordedBy || "",
         item.identifiedBy || "",
-        item.eventDate || "",
-        item.eventTime || "",
         item.institutionCode || "",
         item.collectionCode || "",
         item.catalogNumber || "",
-        item.samplingProtocol || "",
         item.lifeStage || "",
         item.sex || "",
         item.reproductiveCondition || "",
@@ -461,9 +458,16 @@ export function OccurrencesClient({
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{oc.occurrenceID}</TableCell>
-                    <TableCell className="italic">{oc.taxon?.scientificName || "Desconocido"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col min-w-[180px]">
+                        <span className="italic font-bold text-primary">{oc.taxon?.scientificName || "Desconocido"}</span>
+                        <span className="text-[9px] text-muted-foreground uppercase tracking-tight line-clamp-1">
+                          {oc.taxon?.genus?.family?.order_obj?.class_obj?.name || "?"} / {oc.taxon?.genus?.family?.order_obj?.name || "?"} / {oc.taxon?.genus?.family?.name || "?"}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>{oc.location?.locality || "Desconocida"}</TableCell>
-                    <TableCell>{oc.eventDate}</TableCell>
+                    <TableCell>{oc.event?.eventDate}</TableCell>
                     <TableCell>{oc.recordedBy}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

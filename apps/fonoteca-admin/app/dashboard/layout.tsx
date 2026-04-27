@@ -1,4 +1,5 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SiteHeader } from "@/components/panel-admin/site-header"
 import { AdminSidebar } from "@/components/panel-admin/admin-sidebar"
 import { createBioIntranetServer } from '@/utils/supabase/bio-intranet/server'
 import { cookies, headers } from 'next/headers'
@@ -100,7 +101,17 @@ export default async function AdminLayout({
     <TeamsProvider teams={authorizedTeams}>
       <SidebarProvider>
         <AppSidebar userData={userData} />
-        {children}
+        <SidebarInset className="max-h-svh overflow-auto">
+          <SiteHeader />
+          <main className="flex-1 p-4 lg:p-6">
+            <div className="container mx-auto space-y-6">
+              {children}
+            </div>
+          </main>
+          <footer className="p-4 md:p-6 text-[10px] text-muted-foreground text-center mt-auto opacity-50 uppercase tracking-widest font-bold">
+            &copy; {new Date().getFullYear()} IIAP. Todos los derechos reservados.
+          </footer>
+        </SidebarInset>
       </SidebarProvider>
     </TeamsProvider>
   )

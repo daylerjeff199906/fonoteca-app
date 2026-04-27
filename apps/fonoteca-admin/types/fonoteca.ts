@@ -14,6 +14,7 @@ export interface Location {
   elevationAccuracy: number | null;
   habitat: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Class {
@@ -38,11 +39,8 @@ export interface Family {
   id: string;
   name: string;
   order_id: string | null;
-  kingdom: string | null;
-  phylum: string | null;
-  class: string | null;
-  order: string | null;
   created_at: string;
+  updated_at: string;
 
   // Joined
   order_obj?: Order;
@@ -53,6 +51,7 @@ export interface Genus {
   family_id: string;
   name: string;
   created_at: string;
+  updated_at: string;
 
   // Joined (optional)
   family?: Family;
@@ -71,6 +70,7 @@ export interface Taxon {
   nomenclaturalCode: string;
   genus_id: string | null;
   created_at: string;
+  updated_at: string;
 
   // Joined (optional)
   genus?: Genus;
@@ -89,6 +89,7 @@ export interface Event {
   dynamicProperties: Record<string, any>;
   record_status: "draft" | "published" | "deleted";
   created_at: string;
+  updated_at: string;
 
   // Joins (optional)
   location?: Location;
@@ -116,6 +117,7 @@ export interface Occurrence {
   verified_by: string | null;
   record_status: "draft" | "published" | "deleted";
   created_at: string;
+  updated_at: string;
 
   // Joins (optional)
   taxon?: Taxon;
@@ -170,4 +172,27 @@ export interface Multimedia {
   // Joins (optional)
   occurrence?: Occurrence;
   event?: Event;
+}
+
+export interface AudioRequest {
+  id: string;
+  requester_email: string;
+  requester_name: string | null;
+  institution: string | null;
+  observation_rationale: string;
+  request_status: 'pending' | 'approved' | 'rejected' | 'expired';
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+  
+  // Joined
+  items?: Multimedia[];
+}
+
+export interface DownloadLog {
+  id: string;
+  multimedia_id: string;
+  profile_id: string | null;
+  ip_address: string | null;
+  downloaded_at: string;
 }
