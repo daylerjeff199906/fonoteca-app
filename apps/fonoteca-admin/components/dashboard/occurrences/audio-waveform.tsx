@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import Spectrogram from 'wavesurfer.js/dist/plugins/spectrogram.esm.js';
 import Timeline from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js';
-import { Play, Pause, Volume2, Maximize2, RotateCcw, Music, Waves } from 'lucide-react';
+import { Play, Pause, Volume2, RotateCcw, Waves } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
@@ -96,7 +96,7 @@ export function AudioWaveform({
   }, [audioUrl]);
 
   const togglePlay = () => wavesurferRef.current?.playPause();
-  
+
   const handleZoom = (value: number[]) => {
     const newZoom = value[0];
     setZoom(newZoom);
@@ -118,27 +118,27 @@ export function AudioWaveform({
       {/* Visualizer Area */}
       <div className="relative w-full bg-black flex flex-col p-6 gap-4">
         <div className="flex items-center justify-between mb-2">
-            <div className="flex flex-col">
-                <h4 className="text-white font-bold text-sm tracking-tight">{title || "Archivo de Audio"}</h4>
-                <p className="text-white/40 text-[10px] uppercase tracking-widest">{artist || "Desconocido"}</p>
-            </div>
-            <div className="flex items-center gap-2">
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={cn("h-8 w-8 rounded-full", showSpectrogram ? "text-primary bg-primary/10" : "text-white/40 hover:text-white")}
-                    onClick={() => setShowSpectrogram(!showSpectrogram)}
-                    title="Alternar Espectrograma"
-                >
-                    <Waves className="h-4 w-4" />
-                </Button>
-            </div>
+          <div className="flex flex-col">
+            <h4 className="text-white font-bold text-sm tracking-tight">{title || "Archivo de Audio"}</h4>
+            <p className="text-white/40 text-[10px] uppercase tracking-widest">{artist || "Desconocido"}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-8 w-8 rounded-full", showSpectrogram ? "text-primary bg-primary/10" : "text-white/40 hover:text-white")}
+              onClick={() => setShowSpectrogram(!showSpectrogram)}
+              title="Alternar Espectrograma"
+            >
+              <Waves className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className={cn("transition-all duration-500 overflow-hidden", showSpectrogram ? "h-[200px] opacity-100 mb-4" : "h-0 opacity-0")}>
-            <div ref={spectrogramRef} className="w-full h-full rounded-xl overflow-hidden" />
+          <div ref={spectrogramRef} className="w-full h-full rounded-xl overflow-hidden" />
         </div>
-        
+
         <div ref={timelineRef} className="w-full mb-2 opacity-50" />
         <div ref={waveformRef} className="w-full" />
       </div>
@@ -163,7 +163,7 @@ export function AudioWaveform({
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
-          
+
           <div className="font-mono text-xs tracking-widest flex items-center gap-2 px-3 py-1.5 bg-black/40 rounded-lg border border-white/5">
             <span className="text-primary font-bold min-w-[40px]">{currentTime}</span>
             <span className="text-white/20">/</span>
