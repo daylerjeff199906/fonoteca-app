@@ -1,6 +1,7 @@
 import React from 'react';
 import { type translations } from '../../i18n/data';
-import { Search } from 'lucide-react';
+import { Search, ArrowUpRight, ArrowDownRight, ChevronRight, ChevronLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface HeroProps {
     content: typeof translations.es.hero;
@@ -14,147 +15,138 @@ interface HeroProps {
     };
 }
 
-const SPECTRO_DATA = [
-    35, 60, 45, 80, 50, 95, 75, 40, 65, 85, 30, 55, 70, 90, 45, 60, 80, 50, 40, 75,
-    60, 85, 45, 70, 90, 55, 35, 80, 50, 65, 95, 40, 75, 60, 85, 45, 70, 50, 90, 60,
-    35, 65, 80, 45, 90, 60, 40, 75, 50, 85, 35, 60, 45, 80, 50, 95, 75, 40, 65, 85
-];
-
 export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        window.location.href = `/${lang}/species`;
+        const formData = new FormData(e.target as HTMLFormElement);
+        const query = formData.get('q');
+        window.location.href = `/${lang}/species?q=${encodeURIComponent(query as string)}`;
     };
 
-    return (
-        <section className="relative h-screen min-h-[700px] lg:max-h-[950px] flex items-center justify-center bg-[#04070a] overflow-hidden">
-            {/* Background subtle effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f16] via-[#04070a] to-[#010203] z-0"></div>
+    const metrics = [
+        { label: lang === 'es' ? 'Grabaciones' : 'Recordings', value: stats?.recordings || 0, unit: 'audios', trend: 'up' },
+        { label: lang === 'es' ? 'Especies' : 'Species', value: stats?.species || 0, unit: 'taxa', trend: 'up' },
+        { label: lang === 'es' ? 'Familias' : 'Families', value: stats?.families || 0, unit: 'grupos', trend: 'up' },
+        { label: lang === 'es' ? 'Órdenes' : 'Orders', value: stats?.orders || 0, unit: 'taxa', trend: 'up' },
+        { label: lang === 'es' ? 'Clases' : 'Classes', value: stats?.classes || 0, unit: 'bioma', trend: 'up' },
+    ];
 
-            {/* Background Animated Spectrogram */}
-            <div className="absolute inset-0 z-0 flex items-end justify-evenly opacity-15 overflow-hidden pb-10">
-                {SPECTRO_DATA.map((height, i) => (
-                    <div
-                        key={i}
-                        className="w-1 md:w-3 bg-accent-green rounded-t-full opacity-60"
-                        style={{
-                            height: `${height}%`,
-                            animation: `spectro-bg ${1.5 + (i % 3) * 0.4}s ease-in-out infinite ${(i % 5) * 0.2}s alternate`,
-                            transformOrigin: 'bottom'
-                        }}
-                    />
-                ))}
+    return (
+        <section className="relative h-screen min-h-[750px] flex flex-col bg-black overflow-hidden font-sans">
+            {/* Background Image with Cinematic Overlay */}
+            <div className="absolute inset-0 z-0">
+                <img 
+                    src="https://images.unsplash.com/photo-1547234935-80c7145ec969?q=80&w=2074&auto=format&fit=crop" 
+                    alt="Amazon Forest" 
+                    className="w-full h-full object-cover opacity-60 scale-105 animate-slow-zoom"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20"></div>
             </div>
 
-            {/* Gradient overlay to fade the spectrogram gently at the bottom/top */}
-            <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#04070a] via-transparent to-[#04070a]"></div>
-            <div className="absolute inset-0 z-0 bg-[#04070a]/40 backdrop-blur-[2px]"></div>
-
-            {/* Content centered */}
-            <div className="relative z-10 w-full max-w-6xl mx-auto px-6 text-center flex flex-col items-center mt-[-40px]">
-                <span className="text-accent-green font-bold text-xs md:text-sm uppercase tracking-[0.4em] mb-4 animate-fade-in relative shadow-sm">
-                    {lang === 'es' ? 'Bienvenido a la' : lang === 'pt' ? 'Bem-vindo à' : 'Welcome to'}
-                </span>
-
-                <div className="min-h-[160px] md:min-h-[120px] mb-8 flex items-center justify-center">
-                    <h1
-                        className="text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-wide animate-fade-up leading-none flex flex-col gap-1 drop-shadow-md"
+            {/* Main Content Area */}
+            <div className="relative z-10 flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-20 pt-20">
+                <div className="max-w-4xl space-y-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
                     >
-                        {content.titles_animate[0].split('|').map((part, i) => (
-                            <span key={i} className="block mt-1 font-extralight tracking-tight">
-                                {part.trim()}
+                        <h1 className="text-6xl md:text-8xl font-bold text-white tracking-tighter leading-[0.9]">
+                            {content.titles_animate[0].split('|')[0].trim()}
+                            <span className="block text-accent-green opacity-90">
+                                {content.titles_animate[0].split('|')[1]?.trim() || 'Portal'}
                             </span>
-                        ))}
-                    </h1>
-                </div>
+                        </h1>
+                    </motion.div>
 
-                {/* Omnibox / Prominent Search */}
-                <form
-                    onSubmit={handleSearch}
-                    className="w-full max-w-3xl relative animate-fade-in delay-200 mb-16"
-                >
-                    <div className="relative flex items-center w-full h-16 bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden focus-within:ring-2 focus-within:ring-accent-green focus-within:bg-white/10 transition-all duration-300">
-                        <div className="pl-6 flex items-center justify-center text-gray-400">
-                            <Search className="w-6 h-6 drop-shadow-sm" />
+                    <motion.p 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed font-light"
+                    >
+                        {content.description}
+                    </motion.p>
+
+                    {/* Integrated Search */}
+                    <motion.form 
+                        onSubmit={handleSearch}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="max-w-xl relative group"
+                    >
+                        <div className="relative flex items-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-accent-green/50 transition-all shadow-2xl">
+                            <Search className="absolute left-6 w-5 h-5 text-gray-400 group-focus-within:text-accent-green transition-colors" />
+                            <input 
+                                name="q"
+                                type="text" 
+                                placeholder={lang === 'es' ? "Explorar la biblioteca..." : "Explore the library..."}
+                                className="w-full h-14 pl-14 pr-32 bg-transparent text-white outline-none placeholder:text-gray-500 font-medium"
+                            />
+                            <button className="absolute right-2 bg-accent-green hover:bg-accent-green/90 text-white px-6 py-2 rounded-full font-bold transition-colors">
+                                {lang === 'es' ? 'Buscar' : 'Search'}
+                            </button>
                         </div>
-                        <input
-                            type="text"
-                            placeholder={lang === 'es' ? "Buscar especies, cantos, audios..." : lang === 'pt' ? "Pesquisar espécies, cantos..." : "Search species, calls..."}
-                            className="w-full h-full pl-4 pr-32 bg-transparent text-white text-lg focus:outline-none placeholder-gray-500 font-medium"
-                        />
-                        <button
-                            type="submit"
-                            className="absolute right-2 top-2 bottom-2 px-8 bg-accent-green hover:bg-[#19a54a] text-white font-semibold rounded-xl transition-colors duration-300 flex items-center justify-center shadow-lg"
-                        >
-                            {lang === 'es' ? 'Buscar' : lang === 'pt' ? 'Buscar' : 'Search'}
-                        </button>
-                    </div>
-                </form>
+                    </motion.form>
+                </div>
+            </div>
 
-                {/* Data Indicators */}
-                <div className="grid grid-cols-2 md:flex md:flex-row justify-center items-center gap-8 md:gap-12 text-white/70 animate-fade-in delay-300 backdrop-blur-xs w-full">
-                    <div className="flex flex-col items-center">
-                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.classes.toLocaleString() || '0'}
-                        </span>
-                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Clases' : 'Classes'}</span>
-                    </div>
-                    
-                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-                    
-                    <div className="flex flex-col items-center">
-                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.orders.toLocaleString() || '0'}
-                        </span>
-                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Órdenes' : 'Orders'}</span>
+            {/* Vital Signs / Metrics Bar */}
+            <div className="relative z-10 bg-black/80 backdrop-blur-md border-t border-white/10 py-8 px-6 md:px-12 lg:px-20">
+                <div className="max-w-[1600px] mx-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-green">VITAL SIGNS</span>
+                            <div className="h-px w-20 bg-accent-green/30"></div>
+                        </div>
+                        <a href={`/${lang}/stats`} className="text-[10px] font-bold uppercase tracking-widest text-white hover:text-accent-green flex items-center gap-2 transition-colors">
+                            Show All <ArrowUpRight className="w-3 h-3" />
+                        </a>
                     </div>
 
-                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-
-                    <div className="flex flex-col items-center">
-                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.families.toLocaleString() || '0'}
-                        </span>
-                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Familias' : 'Families'}</span>
-                    </div>
-
-                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-
-                    <div className="flex flex-col items-center">
-                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.species.toLocaleString() || '0'}
-                        </span>
-                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Especies' : 'Species'}</span>
-                    </div>
-
-                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
-
-                    <div className="flex flex-col items-center col-span-2 md:col-span-1">
-                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.recordings.toLocaleString() || '0'}
-                        </span>
-                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Grabaciones' : 'Recordings'}</span>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16">
+                        {metrics.map((metric, i) => (
+                            <motion.div 
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.6 + (i * 0.1) }}
+                                className="space-y-4"
+                            >
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-bold text-white border-b border-white/10 pb-2 inline-block min-w-full">
+                                        {metric.label}
+                                    </h4>
+                                    <div className="flex items-baseline gap-3 pt-2">
+                                        {metric.trend === 'up' ? (
+                                            <ArrowUpRight className="w-5 h-5 text-accent-green" />
+                                        ) : (
+                                            <ArrowDownRight className="w-5 h-5 text-red-500" />
+                                        )}
+                                        <span className="text-4xl md:text-5xl font-light text-white tracking-tighter">
+                                            {metric.value.toLocaleString()}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                            {metric.unit}
+                                        </span>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </div>
 
             <style>{`
-                @keyframes fade-up {
-                    from { opacity: 0; transform: translateY(30px); }
-                    to { opacity: 1; transform: translateY(0); }
+                @keyframes slow-zoom {
+                    from { transform: scale(1); }
+                    to { transform: scale(1.1); }
                 }
-                @keyframes fade-in {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
+                .animate-slow-zoom {
+                    animation: slow-zoom 20s ease-in-out infinite alternate;
                 }
-                @keyframes spectro-bg {
-                    0% { transform: scaleY(0.4); opacity: 0.3; }
-                    100% { transform: scaleY(1); opacity: 1; }
-                }
-                .animate-fade-up { animation: fade-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-                .animate-fade-in { animation: fade-in 1.2s ease-out forwards; }
-                .delay-200 { animation-delay: 0.2s; }
-                .delay-300 { animation-delay: 0.4s; }
             `}</style>
         </section>
     );
