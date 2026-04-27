@@ -7,7 +7,7 @@ import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import axios from "axios";
 import { R2_PUBLIC_URL } from "@/lib/r2";
 import { cn } from "@/lib/utils";
@@ -213,7 +213,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
 
         const sizeLimit = type === MEDIA_TYPE.SOUND ? 40 * 1024 * 1024 : 10 * 1024 * 1024; // Increased image limit to 10MB too
         if (file.size > sizeLimit) {
-          toast.error(`El archivo ${file.name} supera el límite de ${type === MEDIA_TYPE.SOUND ? '40MB' : '10MB'}`);
+          showToast.error("Archivo demasiado grande", `El archivo ${file.name} supera el límite de ${type === MEDIA_TYPE.SOUND ? '40MB' : '10MB'}`);
           continue;
         }
 
@@ -221,7 +221,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
 
         const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
         if (signResp.error || !signResp.url) {
-          toast.error(`Error al preparar subida de ${file.name}`);
+          showToast.error("Error de subida", `Error al preparar subida de ${file.name}`);
           continue;
         }
 
@@ -261,7 +261,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         const createResp = await createMultimedia(validatedData as any);
 
         if (createResp.error) {
-          toast.error(`Error al registrar ${file.name} en BD`);
+          showToast.error("Error de registro", `Error al registrar ${file.name} en la base de datos`);
           continue;
         }
 
@@ -277,7 +277,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         } else {
           detail = ` - ${err.message}`;
         }
-        toast.error(`Error subiendo ${file.name}${detail}`);
+        showToast.error("Error al subir archivo", `Error subiendo ${file.name}${detail}`);
       }
     }
 
@@ -286,7 +286,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       setUploading(null);
       setUploadProgress({});
       if (successCount > 0) {
-        toast.success(`${successCount} archivo(s) procesado(s) correctamente.`);
+        showToast.success("Subida Completa", `${successCount} archivo(s) procesado(s) correctamente.`);
         loadMultimedia();
       }
     }, 500);
@@ -322,19 +322,14 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
 
       await createMultimedia(validatedData as any);
 
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Operación Exitosa</span>
-          <span className="text-xs opacity-90">{isSpectro ? "Histograma agregado" : "Enlace agregado correctamente"} a la multimedia actual.</span>
-        </div>
-      );
+      showToast.success("Operación Exitosa", `${isSpectro ? "Histograma agregado" : "Enlace agregado correctamente"} a la multimedia actual.`);
       setUrlSheetOpen(false);
       setUrlInput("");
       setUrlTitle("");
       setActiveParentItemId(null);
       loadMultimedia();
     } catch (err) {
-      toast.error("Error agregando enlace");
+      showToast.error("Error", "Error agregando enlace a la multimedia.");
     } finally {
       setUploading(null);
     }
@@ -358,11 +353,11 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         tag: item.tag,
       });
 
-      toast.success("Elemento vinculado de la biblioteca");
+      showToast.success("Vínculo Creado", "Elemento vinculado correctamente desde la biblioteca.");
       setLibSheetOpen(false);
       loadMultimedia();
     } catch (err) {
-      toast.error("Error vinculando elemento");
+      showToast.error("Error de vínculo", "No se pudo vincular el elemento de la biblioteca.");
     } finally {
       setUploading(null);
     }
@@ -377,13 +372,13 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       } as any);
 
       if (resp.error) {
-        toast.error("Error al cambiar visibilidad: " + resp.error);
+        showToast.error("Error de Visibilidad", "No se pudo cambiar la visibilidad: " + resp.error);
       } else {
-        toast.success(`Ahora es ${!item.is_public ? 'Público' : 'Privado'}`);
+        showToast.success("Visibilidad Actualizada", `El archivo ahora es ${!item.is_public ? 'Público' : 'Privado'}.`);
         loadMultimedia();
       }
     } catch (err) {
-      toast.error("Error inesperado");
+      showToast.error("Error Inesperado", "Ocurrió un error al intentar cambiar la visibilidad.");
     } finally {
       setUpdatingId(null);
     }
@@ -434,15 +429,15 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       const resp = await updateMultimedia(editingItem.id, validatedData as any);
 
       if (resp.error) {
-        toast.error("Error al actualizar");
+        showToast.error("Error de Actualización", "No se pudieron guardar los cambios.");
       } else {
-        toast.success("Elemento actualizado correctamente");
+        showToast.success("Cambios Guardados", "Elemento actualizado correctamente.");
         setEditSheetOpen(false);
         setEditingItem(null);
         loadMultimedia();
       }
     } catch (err) {
-      toast.error("Error actualizando elemento");
+      showToast.error("Error", "Error actualizando elemento multimedia.");
     } finally {
       setUploading(null);
     }
@@ -457,15 +452,15 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       const fileName = `spectrogram_${cleanName}_${Date.now()}.${fileExt}`;
       const uploadPath = `occurrences/${occurrenceId}/${fileName}`;
 
-      if (file.size > 10 * 1024 * 1024) { // Increase to 10MB for better quality spectros if needed
-        toast.error("El espectrograma supera el límite de 10MB");
+      if (file.size > 10 * 1024 * 1024) { 
+        showToast.error("Archivo Excedido", "El espectrograma supera el límite de 10MB.");
         return false;
       }
 
       // 1. Get Presigned URL
       const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
       if (signResp.error || !signResp.url) {
-        toast.error(`Error al preparar subida de ${file.name}`);
+        showToast.error("Error de Preparación", `Error al preparar subida de ${file.name}.`);
         return false;
       }
 
@@ -502,7 +497,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       });
 
       if (createResp.error) {
-        toast.error("Error al registrar espectrograma en BD");
+        showToast.error("Error de Base de Datos", "Error al registrar espectrograma en la base de datos.");
         return false;
       }
 
@@ -514,7 +509,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       return true;
     } catch (err) {
       console.error("Spectrogram upload error:", err);
-      toast.error("Error subiendo espectrograma");
+      showToast.error("Error de Subida", "Ocurrió un error al subir el espectrograma.");
       return false;
     } finally {
       setUploading(null);
@@ -542,7 +537,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
             if (await uploadSpectrogramFile(file, targetItem.id)) count++;
           }
           if (count > 0) {
-            toast.success(`${count} histograma(s) subido(s)`);
+            showToast.success("Subida Exitosa", `${count} histograma(s) subido(s) correctamente.`);
             loadMultimedia();
           }
           return;
@@ -566,12 +561,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           { id: draggedItem.id, order_index: targetItem.order_index || 0 },
           { id: targetItem.id, order_index: draggedItem.order_index || 0 }
         ]);
-        toast.success(
-          <div className="flex flex-col gap-0.5">
-            <span className="font-bold text-sm">Orden Actualizado</span>
-            <span className="text-xs opacity-90">Se reordenaron los histogramas.</span>
-          </div>
-        );
+        showToast.success("Orden Actualizado", "Se reordenaron los histogramas correctamente.");
       }
       setDraggedItem(null);
       return;
@@ -586,12 +576,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         });
         setItems(updated);
         await updateMultimedia(draggedItem.id, { ...draggedItem, parent_multimedia_id: targetItem.id });
-        toast.success(
-          <div className="flex flex-col gap-0.5">
-            <span className="font-bold text-sm">Histograma Movido</span>
-            <span className="text-xs opacity-90">El histograma se vinculó al nuevo audio.</span>
-          </div>
-        );
+        showToast.success("Histograma Movido", "El histograma se vinculó al nuevo audio correctamente.");
       }
       setDraggedItem(null);
       return;
@@ -611,7 +596,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       { id: draggedItem.id, order_index: targetItem.order_index || 0 },
       { id: targetItem.id, order_index: draggedItem.order_index || 0 }
     ]);
-    toast.success("Orden actualizado");
+    showToast.success("Orden Actualizado", "El orden de los elementos ha sido guardado.");
     setDraggedItem(null);
   };
 
@@ -641,15 +626,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const handleDelete = async (id: string, isAudioChild = false) => {
     const resp = await deleteMultimedia(id);
     if (resp.success) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Archivo Eliminado</span>
-          <span className="text-xs opacity-90">{isAudioChild ? "El espectrograma fue eliminado." : "El archivo multimedia fue eliminado con éxito."}</span>
-        </div>
-      );
+      showToast.success("Archivo Eliminado", isAudioChild ? "El espectrograma fue eliminado correctamente." : "El archivo multimedia fue eliminado con éxito.");
       loadMultimedia();
     } else {
-      toast.error("Error al eliminar");
+      showToast.error("Error", "No se pudo eliminar el archivo.");
     }
   };
 

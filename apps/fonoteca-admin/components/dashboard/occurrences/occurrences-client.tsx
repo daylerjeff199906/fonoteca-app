@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { getDriveThumbnailUrl } from "@/utils/multimedia";
 import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
@@ -140,7 +140,7 @@ export function OccurrencesClient({
       }
 
       if (dataToExport.length === 0) {
-        toast.info("No hay datos para exportar");
+        showToast.info("Sin Datos", "No hay registros que coincidan con los criterios para exportar.");
         return;
       }
 
@@ -158,10 +158,10 @@ export function OccurrencesClient({
         downloadFile(content, `${name}.csv`, "text/csv");
       }
 
-      if (mode !== "single") toast.success("Exportación completada");
+      if (mode !== "single") showToast.success("Exportación Exitosa", "Los registros han sido descargados correctamente.");
     } catch (error) {
       console.error(error);
-      toast.error("Error al exportar");
+      showToast.error("Error", "Ocurrió un fallo al intentar exportar los datos.");
     } finally {
       setIsExporting(false);
     }
@@ -186,16 +186,15 @@ export function OccurrencesClient({
   const handleBulkDelete = async () => {
     if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} registros de monitoreo?`)) return;
 
-    toast.loading(`Eliminando ${selectedIds.length} registros...`);
+    // Note: showToast doesn't support .loading directly, I'll use standard toast for long ops if needed
+    // but for now I'll just show the result.
     try {
       await deleteOccurrences(selectedIds);
-      toast.dismiss();
-      toast.success("Eliminados correctamente");
+      showToast.success("Registros Eliminados", `Se han eliminado ${selectedIds.length} registros correctamente.`);
       setSelectedIds([]);
       router.refresh();
     } catch (err) {
-      toast.dismiss();
-      toast.error("Error en la eliminación por lotes");
+      showToast.error("Error", "No se pudo completar la eliminación por lotes.");
     }
   };
 

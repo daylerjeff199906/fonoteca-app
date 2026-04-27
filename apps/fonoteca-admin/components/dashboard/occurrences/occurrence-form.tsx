@@ -8,7 +8,7 @@ import { createOccurrence, updateOccurrence, getOccurrence } from "@/actions/occ
 import { getTaxa } from "@/actions/taxa";
 import { getLocations } from "@/actions/locations";
 import { Input } from "@/components/ui/input";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Taxon } from "@/types/fonoteca";
@@ -86,12 +86,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             });
           }
         } else {
-          toast.error(
-            <div className="flex flex-col gap-0.5">
-              <span className="font-bold text-sm">Error de carga</span>
-              <span className="text-xs opacity-90">No se pudo cargar la ocurrencia.</span>
-            </div>
-          );
+          showToast.error("Error de carga", "No se pudo cargar la ocurrencia solicitada.");
         }
       });
     }
@@ -108,12 +103,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     setLoading(false);
 
     if (resp.success) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Operación Exitosa</span>
-          <span className="text-xs opacity-90">{id ? "La ocurrencia se actualizó correctamente." : "La ocurrencia se registró correctamente en el sistema."}</span>
-        </div>
-      );
+      showToast.success("Operación Exitosa", id ? "La ocurrencia se actualizó correctamente." : "La ocurrencia se registró correctamente en el sistema.");
       if (redirectUrl && resp.data?.id) {
         const finalUrl = redirectUrl.replace('[id]', resp.data.id);
         router.push(finalUrl);
@@ -121,12 +111,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         router.push("/dashboard/occurrences");
       }
     } else {
-      toast.error(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Ocurrió un error</span>
-          <span className="text-xs opacity-90">{typeof resp.error === "string" ? resp.error : "Falló la validación."}</span>
-        </div>
-      );
+      showToast.error("Error", typeof resp.error === "string" ? resp.error : "Falló la validación o el registro de la ocurrencia.");
     }
   };
 

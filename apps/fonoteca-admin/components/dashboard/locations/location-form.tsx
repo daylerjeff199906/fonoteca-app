@@ -8,7 +8,7 @@ import { locationSchema, LocationInput } from "@/lib/validations/fonoteca";
 import { createLocation, updateLocation, getLocation } from "@/actions/locations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Globe, Loader2, Ruler, Mountain, AlignLeft, Info, FileText } from "lucide-react";
@@ -48,7 +48,7 @@ export function LocationForm({ id }: { id?: string }) {
         if (resp.data) {
           reset(resp.data as any);
         } else {
-          toast.error("Error al cargar ubicación");
+          showToast.error("Error de Carga", "No se pudo recuperar la información de la ubicación.");
         }
       });
     }
@@ -65,20 +65,10 @@ export function LocationForm({ id }: { id?: string }) {
     setLoading(false);
 
     if (resp.success) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Operación Exitosa</span>
-          <span className="text-xs opacity-90">{id ? "Ubicación actualizada correctamente." : "Ubicación registrada correctamente."}</span>
-        </div>
-      );
+      showToast.success("Operación Exitosa", id ? "Ubicación actualizada correctamente en el sistema." : "Ubicación registrada correctamente.");
       router.push("/dashboard/locations");
     } else {
-      toast.error(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Error de Proceso</span>
-          <span className="text-xs opacity-90">{typeof resp.error === "string" ? resp.error : "Falló la validación."}</span>
-        </div>
-      );
+      showToast.error("Error de Proceso", typeof resp.error === "string" ? resp.error : "Hubo un fallo al intentar procesar la ubicación.");
     }
   };
 
