@@ -29,10 +29,18 @@ export interface DbLocation {
     created_at: string;
 }
 
+export interface DbClass {
+    name: string;
+}
+
+export interface DbOrder {
+    name: string;
+    classes: DbClass;
+}
+
 export interface DbFamily {
     name: string;
-    order: string;
-    class: string;
+    orders: DbOrder;
 }
 
 export interface DbGenus {
@@ -57,10 +65,12 @@ export interface DbOccurrence {
     catalogNumber: string | null;
     recordedBy: string;
     identifiedBy: string | null;
-    eventDate: string;
-    eventTime: string | null;
     lifeStage: string | null;
     sex: string | null;
+    events?: {
+        eventDate: string;
+        eventTime: string | null;
+    };
     taxa: DbTaxon;
     locations: DbLocation;
     multimedia: DbMultimedia[];
@@ -208,12 +218,20 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                     name,
                     family:families!inner (
                         name,
-                        order,
-                        class
+                        orders:orders!inner (
+                            name,
+                            classes:classes!inner (
+                                name
+                            )
+                        )
                     )
                 )
             ),
             locations!inner (*),
+            events (
+                eventDate,
+                eventTime
+            ),
             multimedia${multimediaJoin}(*)
         `, { count: 'exact' });
 
@@ -225,11 +243,11 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
 
     // 2. Taxonomic filters (Category was mapped to class, now we use class directly)
     if (className && className !== 'All') {
-        query = query.eq('taxa.genus.family.class', className);
+        query = query.eq('taxa.genus.family.orders.classes.name', className);
     }
 
     if (order && order !== 'All') {
-        query = query.eq('taxa.genus.family.order', order);
+        query = query.eq('taxa.genus.family.orders.name', order);
     }
 
     if (family && family !== 'All') {
@@ -317,7 +335,7 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
             'Reptilia': "Reptiles",
         };
 
-        const class_name = taxon?.genus?.family?.class || "";
+        const class_name = taxon?.genus?.family?.orders?.classes?.name || "";
         const cat = classToCategory[class_name] || "Amphibians";
         const commonName = taxon?.vernacularName || "Sin Nombre";
 
@@ -348,16 +366,16 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
             location: loc?.locality || "Unknown Location",
             genus: taxon?.genus?.name,
             family: taxon?.genus?.family?.name,
-            order: taxon?.genus?.family?.order,
-            class_name: taxon?.genus?.family?.class,
+            order: taxon?.genus?.family?.orders?.name,
+            class_name: taxon?.genus?.family?.orders?.classes?.name,
             databaseDetails: {
                 occurrenceID: occ.occurrenceID,
                 basisOfRecord: occ.basisOfRecord,
                 institutionCode: occ.institutionCode,
                 collectionCode: occ.collectionCode,
                 catalogNumber: occ.catalogNumber,
-                eventDate: occ.eventDate,
-                eventTime: occ.eventTime,
+                eventDate: occ.events?.eventDate || null,
+                eventTime: occ.events?.eventTime || null,
                 lifeStage: occ.lifeStage,
                 sex: occ.sex,
                 identifiedBy: occ.identifiedBy,
@@ -389,11 +407,13 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             institutionCode,
             collectionCode,
             catalogNumber,
-            eventDate,
-            eventTime,
             lifeStage,
             sex,
             identifiedBy,
+            events (
+                eventDate,
+                eventTime
+            ),
             taxa:taxa!inner(
                 scientificName,
                 vernacularName,
@@ -401,8 +421,12 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
                     name,
                     family:families!inner(
                         name,
-                        order,
-                        class
+                        orders:orders!inner(
+                            name,
+                            classes:classes!inner(
+                                name
+                            )
+                        )
                     )
                 )
             ),
@@ -488,7 +512,7 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
         'Reptilia': "Reptiles",
     };
 
-    const class_name = taxon?.genus?.family?.class || "";
+    const class_name = taxon?.genus?.family?.orders?.classes?.name || "";
     const cat = classToCategory[class_name] || "Amphibians";
     const commonName = taxon?.vernacularName || "Sin Nombre";
 
@@ -517,16 +541,16 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
         location: loc?.locality || "Unknown Location",
         genus: taxon?.genus?.name,
         family: taxon?.genus?.family?.name,
-        order: taxon?.genus?.family?.order,
-        class_name: taxon?.genus?.family?.class,
+        order: taxon?.genus?.family?.orders?.name,
+        class_name: taxon?.genus?.family?.orders?.classes?.name,
         databaseDetails: {
             occurrenceID: occurrence.occurrenceID,
             basisOfRecord: occurrence.basisOfRecord,
             institutionCode: occurrence.institutionCode,
             collectionCode: occurrence.collectionCode,
             catalogNumber: occurrence.catalogNumber,
-            eventDate: occurrence.eventDate,
-            eventTime: occurrence.eventTime,
+            eventDate: occurrence.events?.eventDate || null,
+            eventTime: occurrence.events?.eventTime || null,
             lifeStage: occurrence.lifeStage,
             sex: occurrence.sex,
             identifiedBy: occurrence.identifiedBy,
@@ -552,16 +576,20 @@ export async function getFilterMetaData() {
                 name, 
                 family:families!inner(
                     name, 
-                    order, 
-                    class
+                    orders:orders!inner(
+                        name, 
+                        classes:classes!inner(
+                            name
+                        )
+                    )
                 )
             )
         `) as { data: DbTaxon[] | null };
 
     const { data: locs } = await supabase.from('locations').select('locality') as { data: { locality: string }[] | null };
 
-    const classes = Array.from(new Set(taxa?.map(t => t.genus?.family?.class).filter(Boolean) as string[])).sort();
-    const orders = Array.from(new Set(taxa?.map(t => t.genus?.family?.order).filter(Boolean) as string[])).sort();
+    const classes = Array.from(new Set(taxa?.map(t => t.genus?.family?.orders?.classes?.name).filter(Boolean) as string[])).sort();
+    const orders = Array.from(new Set(taxa?.map(t => t.genus?.family?.orders?.name).filter(Boolean) as string[])).sort();
     const families = Array.from(new Set(taxa?.map(t => t.genus?.family?.name).filter(Boolean) as string[])).sort();
     const genera = Array.from(new Set(taxa?.map(t => t.genus?.name).filter(Boolean) as string[])).sort();
     const localities = Array.from(new Set(locs?.map(l => l.locality).filter(Boolean) as string[])).sort();

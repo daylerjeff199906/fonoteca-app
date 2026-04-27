@@ -10,7 +10,6 @@ export async function getRealStats() {
             .eq('multimedia.type', 'Sound');
 
         // 2. Total Species (Unique Taxa)
-        // Check if we have unique taxa in the 'taxa' table
         const { count: speciesCount, error: speciesError } = await supabase
             .from('taxa')
             .select('*', { count: 'exact', head: true });
@@ -22,7 +21,7 @@ export async function getRealStats() {
 
         if (recordingsError || speciesError || familiesError) {
             console.error("Supabase Query Error:", { recordingsError, speciesError, familiesError });
-            // Fallback to simpler queries if requested relation fails
+            // Fallback to simpler queries
             const { count: multimediaCount } = await supabase
                 .from('multimedia')
                 .select('*', { count: 'exact', head: true })
@@ -34,8 +33,6 @@ export async function getRealStats() {
                 families: familiesCount || 0
             };
         }
-
-        console.log("Stats successfully fetched from Supabase:", { recordingsCount, speciesCount, familiesCount });
 
         return {
             recordings: recordingsCount || 0,
@@ -49,17 +46,41 @@ export async function getRealStats() {
 }
 
 export async function getSpeciesByClass() {
-    // Fetch all unique classes from the database
-    const { data: taxa, error } = await supabase
-        .from('taxa')
-        .select('genus:genera!inner(family:families!inner(class))') as { data: any[] | null, error: any };
-
-    if (error || !taxa) {
-        console.error("Error fetching unique classes:", error);
-        return [];
+    // Fetch all classes and count species for each
+    interface NestedTaxonomy {
+        id: string;
+        name: string;
+        orders: {
+            families: {
+                genera: {
+                    taxa: {
+                        id: string;
+                    }[];
+                }[];
+            }[];
+        }[];
     }
 
-    const uniqueClasses = Array.from(new Set(taxa.map(t => t.genus?.family?.class).filter(Boolean)));
+    const { data: classes, error: classesError } = await supabase
+        .from('classes')
+        .select(`
+            id,
+            name,
+            orders:orders (
+                families:families (
+                    genera:genera (
+                        taxa:taxa (
+                            id
+                        )
+                    )
+                )
+            )
+        `) as { data: NestedTaxonomy[] | null, error: any };
+
+    if (classesError || !classes) {
+        console.error("Error fetching species by class:", classesError);
+        return [];
+    }
 
     const classMapping: Record<string, { es: string, en: string, pt: string, icon: string }> = {
         'Amphibia': { es: 'Anfibios', en: 'Amphibians', pt: 'Anfíbios', icon: '🐸' },
@@ -70,23 +91,28 @@ export async function getSpeciesByClass() {
         'Actinopterygii': { es: 'Peces', en: 'Fish', pt: 'Peixes', icon: '🐟' },
     };
 
-    const results = await Promise.all(uniqueClasses.map(async (clsId) => {
-        const { count, error: countError } = await supabase
-            .from('taxa')
-            .select('*, genus:genera!inner(family:families!inner(class))', { count: 'exact', head: true })
-            .eq('genus.family.class', clsId);
+    const results = classes.map(cls => {
+        // Flatten the nesting to count taxa
+        let totalTaxa = 0;
+        cls.orders?.forEach(order => {
+            order.families?.forEach(family => {
+                family.genera?.forEach(genus => {
+                    totalTaxa += genus.taxa?.length || 0;
+                });
+            });
+        });
 
-        const mapping = classMapping[clsId] || { es: clsId, en: clsId, pt: clsId, icon: '🐾' };
+        const mapping = classMapping[cls.name] || { es: cls.name, en: cls.name, pt: cls.name, icon: '🐾' };
 
         return {
-            id: clsId,
+            id: cls.name,
             title_es: mapping.es,
             title_en: mapping.en,
             title_pt: mapping.pt,
             icon: mapping.icon,
-            count: count || 0
+            count: totalTaxa
         };
-    }));
+    });
 
     return results;
 }
