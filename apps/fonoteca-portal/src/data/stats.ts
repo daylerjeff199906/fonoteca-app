@@ -3,7 +3,6 @@ import { supabase } from "../lib/supabase";
 export async function getRealStats() {
     try {
         // 1. Total Occurrences with Audio (Recordings)
-        // We count occurrences that have at least one multimedia record of type 'Sound'
         const { count: recordingsCount, error: recordingsError } = await supabase
             .from('occurrences')
             .select('id, multimedia!inner(id)', { count: 'exact', head: true })
@@ -14,14 +13,24 @@ export async function getRealStats() {
             .from('taxa')
             .select('*', { count: 'exact', head: true });
 
-        // 3. Total Families (Unique Families)
+        // 3. Total Families
         const { count: familiesCount, error: familiesError } = await supabase
             .from('families')
             .select('*', { count: 'exact', head: true });
 
-        if (recordingsError || speciesError || familiesError) {
-            console.error("Supabase Query Error:", { recordingsError, speciesError, familiesError });
-            // Fallback to simpler queries
+        // 4. Total Orders
+        const { count: ordersCount, error: ordersError } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true });
+
+        // 5. Total Classes
+        const { count: classesCount, error: classesError } = await supabase
+            .from('classes')
+            .select('*', { count: 'exact', head: true });
+
+        if (recordingsError || speciesError || familiesError || ordersError || classesError) {
+            console.error("Supabase Query Error:", { recordingsError, speciesError, familiesError, ordersError, classesError });
+            
             const { count: multimediaCount } = await supabase
                 .from('multimedia')
                 .select('*', { count: 'exact', head: true })
@@ -30,18 +39,22 @@ export async function getRealStats() {
             return {
                 recordings: (recordingsCount !== null ? recordingsCount : multimediaCount) || 0,
                 species: speciesCount || 0,
-                families: familiesCount || 0
+                families: familiesCount || 0,
+                orders: ordersCount || 0,
+                classes: classesCount || 0
             };
         }
 
         return {
             recordings: recordingsCount || 0,
             species: speciesCount || 0,
-            families: familiesCount || 0
+            families: familiesCount || 0,
+            orders: ordersCount || 0,
+            classes: classesCount || 0
         };
     } catch (err) {
         console.error("Critical error in getRealStats:", err);
-        return { recordings: 0, species: 0, families: 0 };
+        return { recordings: 0, species: 0, families: 0, orders: 0, classes: 0 };
     }
 }
 

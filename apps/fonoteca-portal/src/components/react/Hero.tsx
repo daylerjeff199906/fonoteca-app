@@ -9,6 +9,8 @@ interface HeroProps {
         recordings: number;
         species: number;
         families: number;
+        orders: number;
+        classes: number;
     };
 }
 
@@ -25,7 +27,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
     };
 
     return (
-        <section className="relative h-screen min-h-[600px] lg:max-h-[920px] flex items-center justify-center bg-[#04070a] overflow-hidden">
+        <section className="relative h-screen min-h-[700px] lg:max-h-[950px] flex items-center justify-center bg-[#04070a] overflow-hidden">
             {/* Background subtle effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f16] via-[#04070a] to-[#010203] z-0"></div>
 
@@ -49,7 +51,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
             <div className="absolute inset-0 z-0 bg-[#04070a]/40 backdrop-blur-[2px]"></div>
 
             {/* Content centered */}
-            <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center flex flex-col items-center mt-[-40px]">
+            <div className="relative z-10 w-full max-w-6xl mx-auto px-6 text-center flex flex-col items-center mt-[-40px]">
                 <span className="text-accent-green font-bold text-xs md:text-sm uppercase tracking-[0.4em] mb-4 animate-fade-in relative shadow-sm">
                     {lang === 'es' ? 'Bienvenido a la' : lang === 'pt' ? 'Bem-vindo à' : 'Welcome to'}
                 </span>
@@ -90,28 +92,48 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                 </form>
 
                 {/* Data Indicators */}
-                <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 text-white/70 animate-fade-in delay-300 backdrop-blur-xs">
+                <div className="grid grid-cols-2 md:flex md:flex-row justify-center items-center gap-8 md:gap-12 text-white/70 animate-fade-in delay-300 backdrop-blur-xs w-full">
                     <div className="flex flex-col items-center">
-                        <span className="text-4xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.recordings.toLocaleString() || '1,250'}
+                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
+                            {stats?.classes.toLocaleString() || '0'}
                         </span>
-                        <span className="text-xs md:text-sm uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Audios' : 'Audios'}</span>
+                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Clases' : 'Classes'}</span>
                     </div>
-                    <div className="w-px h-12 bg-white/20 hidden sm:block"></div>
+                    
+                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+                    
                     <div className="flex flex-col items-center">
-                        <span className="text-4xl md:text-5xl font-light text-white drop-shadow-sm">
-                            {stats?.species.toLocaleString() || '450'}
+                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
+                            {stats?.orders.toLocaleString() || '0'}
                         </span>
-                        <span className="text-xs md:text-sm uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Especies' : 'Species'}</span>
+                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Órdenes' : 'Orders'}</span>
                     </div>
-                    <div className="w-px h-12 bg-white/20 hidden sm:block"></div>
+
+                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+
                     <div className="flex flex-col items-center">
-                        <span className="text-4xl md:text-5xl font-light text-white drop-shadow-sm text-balance max-w-[120px] text-center leading-none">
-                            {stats?.families.toLocaleString() || 'IIAP'}
+                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
+                            {stats?.families.toLocaleString() || '0'}
                         </span>
-                        <span className="text-xs md:text-sm uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">
-                            {stats ? (lang === 'es' ? 'Familias' : 'Families') : (lang === 'es' ? 'Respaldado por' : 'Backed by')}
+                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Familias' : 'Families'}</span>
+                    </div>
+
+                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+
+                    <div className="flex flex-col items-center">
+                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
+                            {stats?.species.toLocaleString() || '0'}
                         </span>
+                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Especies' : 'Species'}</span>
+                    </div>
+
+                    <div className="w-px h-8 bg-white/10 hidden md:block"></div>
+
+                    <div className="flex flex-col items-center col-span-2 md:col-span-1">
+                        <span className="text-3xl md:text-5xl font-light text-white drop-shadow-sm">
+                            {stats?.recordings.toLocaleString() || '0'}
+                        </span>
+                        <span className="text-[10px] md:text-xs uppercase tracking-[0.2em] mt-2 font-medium text-accent-green drop-shadow-sm">{lang === 'es' ? 'Grabaciones' : 'Recordings'}</span>
                     </div>
                 </div>
             </div>
