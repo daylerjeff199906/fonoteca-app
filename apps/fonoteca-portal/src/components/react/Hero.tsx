@@ -35,9 +35,9 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
         <section className="relative h-screen min-h-[750px] flex flex-col bg-black overflow-hidden font-sans">
             {/* Background Image with Cinematic Overlay */}
             <div className="absolute inset-0 z-0">
-                <img 
-                    src="https://images.unsplash.com/photo-1547234935-80c7145ec969?q=80&w=2074&auto=format&fit=crop" 
-                    alt="Amazon Forest" 
+                <img
+                    src="https://images.unsplash.com/photo-1547234935-80c7145ec969?q=80&w=2074&auto=format&fit=crop"
+                    alt="Amazon Forest"
                     className="w-full h-full object-cover opacity-60 scale-105 animate-slow-zoom"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
@@ -46,7 +46,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
 
             {/* Main Content Area */}
             <div className="relative z-10 flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-20 pt-20">
-                <div className="max-w-4xl space-y-8">
+                <div className="container mx-auto space-y-8">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -60,7 +60,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                         </h1>
                     </motion.div>
 
-                    <motion.p 
+                    <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
@@ -70,7 +70,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                     </motion.p>
 
                     {/* Integrated Search */}
-                    <motion.form 
+                    <motion.form
                         onSubmit={handleSearch}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -79,9 +79,9 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                     >
                         <div className="relative flex items-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-accent-green/50 transition-all shadow-2xl">
                             <Search className="absolute left-6 w-5 h-5 text-gray-400 group-focus-within:text-accent-green transition-colors" />
-                            <input 
+                            <input
                                 name="q"
-                                type="text" 
+                                type="text"
                                 placeholder={lang === 'es' ? "Explorar la biblioteca..." : "Explore the library..."}
                                 className="w-full h-14 pl-14 pr-32 bg-transparent text-white outline-none placeholder:text-gray-500 font-medium"
                             />
@@ -108,7 +108,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16">
                         {metrics.map((metric, i) => (
-                            <motion.div 
+                            <motion.div
                                 key={i}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
