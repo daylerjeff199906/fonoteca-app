@@ -101,7 +101,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
           <FileAudio className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Asociación y Archivo</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Ocurrencia Relacionada *</label>
@@ -207,18 +207,18 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             ].map((field) => (
               <div key={field.key} className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">{field.label}</label>
-                <Input 
-                  {...register(`guano_metadata.${field.key}` as any)} 
-                  className="h-8 text-xs bg-background/80" 
+                <Input
+                  {...register(`guano_metadata.${field.key}` as any)}
+                  className="h-8 text-xs bg-background/80"
                   placeholder="N/A"
                 />
               </div>
             ))}
             <div className="flex flex-col gap-1 sm:col-span-2 md:col-span-3">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Note / Observaciones GUANO</label>
-              <Textarea 
-                {...register("guano_metadata.Note" as any)} 
-                className="text-xs bg-background/80" 
+              <Textarea
+                {...register("guano_metadata.Note" as any)}
+                className="text-xs bg-background/80"
                 placeholder="Notas técnicas de la grabación..."
               />
             </div>
@@ -279,7 +279,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
               control={control}
               name="is_public"
               render={({ field }) => (
-                <div 
+                <div
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors w-full",
                     field.value ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-muted/30 text-muted-foreground"
