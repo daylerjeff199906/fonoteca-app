@@ -864,26 +864,35 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                   <span className="text-[11px] font-bold truncate text-foreground/80">{item.title || "Sin título"}</span>
                 </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
-                    <MoreVertical className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete({ id: item.id, isChild: false })}><Trash2 className="h-4 w-4 mr-2" /> Eliminar</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-1">
+                  <div className={cn(
+                    "p-1 rounded-full",
+                    item.is_public ? "text-green-500" : "text-orange-500"
+                  )}>
+                    {item.is_public ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
+                      <MoreVertical className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete({ id: item.id, isChild: false })}><Trash2 className="h-4 w-4 mr-2" /> Eliminar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
 
               {/* Body Section */}
-              <div className="relative aspect-square bg-white flex items-center justify-center p-4 m-2 rounded-xl cursor-pointer overflow-hidden group/img" onClick={() => {
+              <div className="relative aspect-square bg-white flex items-center justify-center p-4 m-2 rounded-xl cursor-pointer overflow-hidden group/img max-h-[180px]" onClick={() => {
                 setSliderItems(list);
                 setSliderIndex(list.indexOf(item));
                 setSliderOpen(true);
               }}>
                 <img
                   src={getDriveThumbnailUrl(item.identifier) || item.identifier}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110 "
                   alt={item.title || "Imagen"}
                 />
                 {/* Tag Overlay Bottom Left */}

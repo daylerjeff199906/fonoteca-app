@@ -146,6 +146,9 @@ importers:
       uuid:
         specifier: ^14.0.0
         version: 14.0.0
+      wavesurfer.js:
+        specifier: ^7.12.6
+        version: 7.12.6
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
