@@ -119,6 +119,7 @@ export const occurrenceSchema = z.object({
   verification_status: z.enum(["pending", "verified", "rejected"]).default("pending"),
   verified_by: z.string().uuid().optional().nullable(),
   record_status: z.enum(["draft", "published", "deleted"]).default("draft"),
+  occurrence_date: z.string().optional().nullable(),
 });
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;

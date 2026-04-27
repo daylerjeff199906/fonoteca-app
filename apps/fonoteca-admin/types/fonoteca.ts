@@ -116,6 +116,7 @@ export interface Occurrence {
   verification_status: "pending" | "verified" | "rejected";
   verified_by: string | null;
   record_status: "draft" | "published" | "deleted";
+  occurrence_date: string | null;
   created_at: string;
   updated_at: string;
 
@@ -125,6 +126,30 @@ export interface Occurrence {
   event?: Event;
   multimedia?: Multimedia[];
 }
+
+export const BASIS_OF_RECORD = {
+  PRESERVED_SPECIMEN: 'PreservedSpecimen',
+  FOSSIL_SPECIMEN: 'FossilSpecimen',
+  LIVING_SPECIMEN: 'LivingSpecimen',
+  MATERIAL_SAMPLE: 'MaterialSample',
+  EVENT: 'Event',
+  HUMAN_OBSERVATION: 'HumanObservation',
+  MACHINE_OBSERVATION: 'MachineObservation',
+  TAXON: 'Taxon',
+  OCCURRENCE: 'Occurrence',
+} as const;
+
+export const BASIS_OF_RECORD_LABELS: Record<string, string> = {
+  [BASIS_OF_RECORD.PRESERVED_SPECIMEN]: 'Espécimen Preservado',
+  [BASIS_OF_RECORD.FOSSIL_SPECIMEN]: 'Espécimen Fósil',
+  [BASIS_OF_RECORD.LIVING_SPECIMEN]: 'Espécimen Vivo',
+  [BASIS_OF_RECORD.MATERIAL_SAMPLE]: 'Muestra de Material',
+  [BASIS_OF_RECORD.EVENT]: 'Evento',
+  [BASIS_OF_RECORD.HUMAN_OBSERVATION]: 'Observación Humana',
+  [BASIS_OF_RECORD.MACHINE_OBSERVATION]: 'Observación de Máquina',
+  [BASIS_OF_RECORD.TAXON]: 'Taxón',
+  [BASIS_OF_RECORD.OCCURRENCE]: 'Ocurrencia',
+};
 
 export const MEDIA_TYPE = {
   SOUND: 'Sound',
