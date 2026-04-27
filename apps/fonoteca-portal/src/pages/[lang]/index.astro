@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import { Header } from "../../components/react/Header";
 import { Footer } from "../../components/react/Footer";
 import { Hero } from "../../components/react/Hero";
+import { ClassExplorer } from "../../components/react/ClassExplorer";
 import { StatsChart } from "../../components/react/StatsChart";
 import { PlaylistCarousel } from "../../components/react/PlaylistCarousel";
 import { getAllSpecies } from "../../data/species";
@@ -47,6 +48,8 @@ const statsContent = {
     <main>
         <Hero client:load content={content.hero} lang={lang as string} stats={realStats} />
         
+        <ClassExplorer client:load lang={lang as string} classes={speciesByClassData} />
+
         {/* Audio Archive Section - Últimas Colecciones */}
         <section
             id="library"
