@@ -39,6 +39,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "react-toastify";
 import { getDriveThumbnailUrl } from "@/utils/multimedia";
+import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
 export function OccurrencesClient({
   data,
@@ -416,6 +417,7 @@ export function OccurrencesClient({
               </TableHead>
               <TableHead className="w-[80px]">Media</TableHead>
               <TableHead>Occurrence ID</TableHead>
+              <TableHead>Basis</TableHead>
               <TableHead>Taxón</TableHead>
               <TableHead>Ubicación</TableHead>
               <TableHead>Fecha</TableHead>
@@ -459,6 +461,11 @@ export function OccurrencesClient({
                     </TableCell>
                     <TableCell className="font-medium">{oc.occurrenceID}</TableCell>
                     <TableCell>
+                      <p className="  max-w-[150px] text-[10px] font-semibold">
+                        {BASIS_OF_RECORD_LABELS[oc.basisOfRecord] || oc.basisOfRecord}
+                      </p>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex flex-col min-w-[180px]">
                         <span className="italic font-bold text-primary">{oc.taxon?.scientificName || "Desconocido"}</span>
                         <span className="text-[9px] text-muted-foreground uppercase tracking-tight line-clamp-1">
@@ -467,7 +474,11 @@ export function OccurrencesClient({
                       </div>
                     </TableCell>
                     <TableCell>{oc.location?.locality || "Desconocida"}</TableCell>
-                    <TableCell>{oc.event?.eventDate}</TableCell>
+                    <TableCell>
+                      <span className="text-xs">
+                        {oc.event?.eventDate || oc.occurrence_date || "S/F"}
+                      </span>
+                    </TableCell>
                     <TableCell>{oc.recordedBy}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
