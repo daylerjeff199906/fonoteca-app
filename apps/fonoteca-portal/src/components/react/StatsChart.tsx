@@ -94,88 +94,136 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
     if (!isMounted) return <div className="h-[450px] w-full bg-[#050515]/50 animate-pulse rounded-3xl" />;
 
     return (
-        <div className="w-full mx-auto container py-16 px-6 relative z-10">
-            <div className="bg-[#050514] border border-[#1e1b4b] p-8 md:p-12 rounded-[2rem] shadow-2xl relative overflow-hidden flex flex-col xl:flex-row gap-12 xl:gap-8 items-center lg:items-start">
+        <div className="w-full mx-auto container py-24 px-6 relative z-10">
+            <div className="bg-[#050514] border border-[#1e1b4b]/50 p-8 md:p-16 rounded-[3rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col xl:flex-row gap-12 xl:gap-8 items-center lg:items-center">
                 
-                {/* Decorative Glowing Orbs behind the chart */}
-                <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-fuchsia-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+                {/* Decorative Glowing Orbs - Improved for App Aesthetic */}
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-accent-green/10 rounded-full blur-[120px] pointer-events-none"></div>
+                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/[0.02] rounded-full blur-[150px] pointer-events-none"></div>
 
                 {/* Left Side: Presentation and Big Stats */}
-                <div className="w-full xl:w-5/12 flex flex-col justify-between relative z-10 lg:pr-8">
-                    <div>
-                        <span className="text-indigo-400 font-semibold text-xs uppercase tracking-[0.2em] mb-4 block">
+                <div className="w-full xl:w-5/12 flex flex-col justify-center relative z-10 lg:pr-12">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <span className="text-accent-green font-black text-[10px] uppercase tracking-[0.4em] mb-6 block">
                             {chartContent.title_sm}
                         </span>
-                        <h2 className="text-4xl md:text-5xl text-white font-light tracking-tight leading-tight mb-6">
+                        <h2 className="text-5xl md:text-6xl text-white font-bold tracking-tighter leading-[0.95] mb-8">
                             {chartContent.title}
                         </h2>
-                        <p className="text-indigo-200/60 text-lg font-light max-w-md mb-10">
+                        <p className="text-gray-400 text-lg font-light max-w-md mb-12 leading-relaxed">
                             {chartContent.desc}
                         </p>
-                    </div>
+                    </motion.div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-2 gap-8 mb-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-2 gap-x-12 gap-y-10 mb-12">
                         {statsList.map((stat, i) => (
                             <motion.div
                                 key={i}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.8, delay: i * 0.2 }}
-                                className="flex flex-col"
+                                transition={{ duration: 0.6, delay: i * 0.1 }}
+                                className="flex flex-col space-y-1"
                             >
-                                <span className="text-4xl md:text-5xl font-medium text-white tracking-tight mb-1">
-                                    <CountUp value={stat.value} />
-                                    <span className="text-accent-green">+</span>
-                                </span>
-                                <p className="text-sm md:text-base text-gray-400 font-light leading-snug">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl md:text-5xl font-bold text-white tracking-tighter">
+                                        <CountUp value={stat.value} />
+                                    </span>
+                                    <span className="text-accent-green font-bold">+</span>
+                                </div>
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-black">
                                     {stat.label}
                                 </p>
                             </motion.div>
                         ))}
                     </div>
 
-                    <a href={`/${lang}/species`} className="self-start px-6 py-3 bg-[#11112b] border border-[#2e2b6b] text-white rounded-full text-sm font-medium hover:bg-white hover:text-black transition-colors cursor-pointer inline-block">
+                    <motion.a 
+                        href={`/${lang}/species`} 
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.8 }}
+                        className="self-start px-8 py-4 bg-white/5 border border-white/10 text-white rounded-full text-xs font-black uppercase tracking-widest hover:bg-accent-green hover:border-accent-green hover:text-white transition-all cursor-pointer inline-block"
+                    >
                         {chartContent.button}
-                    </a>
+                    </motion.a>
                 </div>
 
-                {/* Right Side: Pie Chart */}
-                <div className="h-[400px] md:h-[450px] w-full xl:w-7/12 relative z-10 flex">
-                    <div className="w-full h-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={chartData}
-                                    cx="40%"
-                                    cy="50%"
-                                    innerRadius={90}
-                                    outerRadius={140}
-                                    paddingAngle={3}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {chartData.map((entry, index) => (
-                                        <Cell 
-                                            key={`cell-${index}`} 
-                                            fill={entry.color} 
-                                            className="hover:opacity-80 transition-opacity outline-none"
-                                        />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend content={renderLegend} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ paddingRight: '20px' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        {/* Center text for Doughnut */}
-                        <div className="absolute top-1/2 left-[40%] -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                            <span className="block text-4xl font-light text-white">
-                                <CountUp value={statsList[0].value} />+
-                            </span>
-                            <span className="block text-xs text-gray-400 uppercase tracking-widest mt-1">{lang === 'es' ? 'Total Audio' : lang === 'pt' ? 'Áudio Total' : 'Total Audio'}</span>
+                {/* Right Side: 3D Tilted Pie Chart */}
+                <div className="h-[500px] md:h-[600px] w-full xl:w-7/12 relative z-10 flex items-center justify-center">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.8, rotateY: 20 }}
+                        whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1.2, ease: "easeOut" }}
+                        className="w-full h-full relative perspective-[1000px]"
+                        style={{ perspective: '1200px' }}
+                    >
+                        <div 
+                            className="w-full h-full transform-gpu transition-transform duration-700 hover:rotate-y-[-5deg] hover:rotate-x-[5deg]"
+                            style={{ 
+                                transform: 'rotateX(20deg) rotateY(-15deg)',
+                                transformStyle: 'preserve-3d'
+                            }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={chartData}
+                                        cx="45%"
+                                        cy="50%"
+                                        innerRadius={130}
+                                        outerRadius={190}
+                                        paddingAngle={8}
+                                        dataKey="value"
+                                        stroke="none"
+                                        animationBegin={500}
+                                        animationDuration={1500}
+                                    >
+                                        {chartData.map((entry, index) => (
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.color} 
+                                                className="hover:opacity-80 transition-opacity outline-none cursor-pointer"
+                                                style={{ filter: `drop-shadow(0 0 20px ${entry.color}44)` }}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend 
+                                        content={renderLegend} 
+                                        layout="vertical" 
+                                        verticalAlign="middle" 
+                                        align="right" 
+                                        wrapperStyle={{ 
+                                            paddingRight: '0px',
+                                            transform: 'translateZ(50px)' 
+                                        }} 
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+
+                            {/* Center text for Doughnut with 3D depth */}
+                            <div 
+                                className="absolute top-1/2 left-[45%] -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none"
+                                style={{ transform: 'translateZ(80px)' }}
+                            >
+                                <span className="block text-6xl font-bold text-white tracking-tighter">
+                                    <CountUp value={statsList[0].value} />
+                                </span>
+                                <span className="block text-[10px] text-accent-green font-black uppercase tracking-[0.3em] mt-2">
+                                    {lang === 'es' ? 'Total Audio' : lang === 'pt' ? 'Áudio Total' : 'Total Audio'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </div>
