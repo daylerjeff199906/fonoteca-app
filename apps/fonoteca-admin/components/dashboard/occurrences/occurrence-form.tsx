@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Location, Taxon } from "@/types/fonoteca";
+import { Location, Taxon, BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 import { FileText, FolderTree, Calendar, Building, Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -162,7 +162,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Basis of Record *</label>
-              <Input {...register("basisOfRecord")} className="bg-background h-9 focus-visible:ring-primary/20" />
+              <select
+                {...register("basisOfRecord")}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
+              >
+                {Object.entries(BASIS_OF_RECORD_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
               {errors.basisOfRecord && <p className="text-[10px] text-red-500 mt-1">{errors.basisOfRecord.message}</p>}
             </div>
 
