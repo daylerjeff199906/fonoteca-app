@@ -1,12 +1,10 @@
 "use client"
 
 import { Multimedia, MEDIA_TYPE } from "@/types/fonoteca";
-import { X, ChevronLeft, ChevronRight, MapPin, Save, Trash2, Loader2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, MapPin, Eye, EyeOff, User, Tag, Info, Calendar, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 interface MultimediaViewerProps {
   items: Multimedia[];
@@ -20,24 +18,10 @@ interface MultimediaViewerProps {
 
 export function MultimediaViewer({ items, initialIndex, isOpen, onClose, location, onUpdate, onDelete }: MultimediaViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState<Partial<Multimedia>>({});
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
-
-  useEffect(() => {
-    if (items[currentIndex]) {
-      setFormData({
-        title: items[currentIndex].title || "",
-        tag: items[currentIndex].tag || "",
-        creator: items[currentIndex].creator || "",
-        license: items[currentIndex].license || "",
-        description: items[currentIndex].description || "",
-      });
-    }
-  }, [currentIndex, items]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,16 +32,6 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
     if (isOpen) window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, items.length, onClose]);
-
-  const handleSave = async () => {
-    if (!onUpdate) return;
-    setIsSaving(true);
-    try {
-      await onUpdate({ ...items[currentIndex], ...formData });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   if (!isOpen || items.length === 0) return null;
 
@@ -84,13 +58,22 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
           </div>
         </div>
 
-        {/* Image Container */}
+        {/* Image/Audio Container */}
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 relative overflow-hidden group">
-          <img
-            src={currentItem.identifier}
-            alt={currentItem.title || "Viewer"}
-            className="max-h-full max-w-full object-contain shadow-2xl transition-all duration-500"
-          />
+          {currentItem.type === MEDIA_TYPE.STILL ? (
+            <img
+              src={currentItem.identifier}
+              alt={currentItem.title || "Viewer"}
+              className="max-h-full max-w-full object-contain shadow-2xl transition-all duration-500"
+            />
+          ) : (
+            <div className="w-full max-w-4xl px-4 flex flex-col items-center gap-6">
+               <div className="h-40 w-40 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse">
+                  <FileText className="h-16 w-16 text-primary" />
+               </div>
+               <audio src={currentItem.identifier} controls className="w-full max-w-2xl" />
+            </div>
+          )}
 
           {/* Navigation Arrows Overlay */}
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -134,111 +117,95 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
         </div>
       </div>
 
-      {/* Sidebar Content (Right Aside) - Minimalist Form */}
+      {/* Sidebar Content (Right Aside) - Static Details */}
       <div className="w-full md:w-[380px] bg-[#0A0A0A] border-l border-white/5 flex flex-col text-white z-30 p-8 overflow-y-auto no-scrollbar">
         <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-8 pb-4 border-b border-white/5">
           <div className="h-4 w-1 bg-primary" />
-          DETALLE DEL ELEMENTO
+          DETALLES DE MULTIMEDIA
         </div>
 
-        <div className="flex-1 space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Título</label>
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="bg-white/5 border-white/10 text-white h-9 text-xs focus:ring-primary/40"
-                placeholder="Título del archivo"
-              />
+        <div className="flex-1 space-y-8">
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Título</label>
+              <p className="text-sm font-medium text-white/90">{currentItem.title || "Sin título"}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Etiqueta</label>
-                <Input
-                  value={formData.tag}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tag: e.target.value }))}
-                  className="bg-white/5 border-white/10 text-white h-9 text-xs focus:ring-primary/40"
-                  placeholder="gallery, main..."
-                />
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Etiqueta</label>
+                <div className="flex items-center gap-2">
+                  <Tag className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-sm font-medium text-white/90 uppercase">{currentItem.tag || "N/A"}</p>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Creador</label>
-                <Input
-                  value={formData.creator}
-                  onChange={(e) => setFormData(prev => ({ ...prev, creator: e.target.value }))}
-                  className="bg-white/5 border-white/10 text-white h-9 text-xs focus:ring-primary/40"
-                  placeholder="Autor"
-                />
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Visibilidad</label>
+                <div className={cn(
+                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                  currentItem.is_public ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-orange-500/10 text-orange-500 border-orange-500/20"
+                )}>
+                  {currentItem.is_public ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  {currentItem.is_public ? "Público" : "Privado"}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Licencia</label>
-              <Input
-                value={formData.license}
-                onChange={(e) => setFormData(prev => ({ ...prev, license: e.target.value }))}
-                className="bg-white/5 border-white/10 text-white h-9 text-xs focus:ring-primary/40"
-                placeholder="URL de licencia"
-              />
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Creador</label>
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-sm font-medium text-white/90">{currentItem.creator || "Desconocido"}</p>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Descripción</label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="bg-white/5 border-white/10 text-white min-h-[100px] text-xs focus:ring-primary/40 resize-none"
-                placeholder="Describa el contenido..."
-              />
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Licencia</label>
+              <div className="flex items-center gap-2">
+                <Info className="h-3.5 w-3.5 text-white/40" />
+                <p className="text-xs font-medium text-white/70 truncate">{currentItem.license || "Propiedad del IIAP"}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Descripción</label>
+              <p className="text-sm leading-relaxed text-white/60 italic">
+                {currentItem.description || "Sin descripción disponible para este elemento multimedia."}
+              </p>
             </div>
 
             {location && (
-              <div className="bg-white/5 p-3 rounded-lg border border-white/5 flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[10px] font-bold text-white/60 uppercase">{location}</span>
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Localidad</label>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold">{location}</span>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-8 mt-auto flex flex-col gap-3">
-          <Button
-            className="w-full bg-primary hover:bg-primary/90 text-black font-bold h-11"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-2" /> Guardar Cambios</>}
-          </Button>
-
+        <div className="pt-8 mt-auto flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              className="bg-transparent border-white/10 text-white hover:bg-white/5 h-10 text-xs"
+              className="bg-transparent border-white/10 text-white hover:bg-white/5 h-12 text-sm font-bold"
               onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
               disabled={currentIndex === 0}
             >
-              Anterior
+              <ChevronLeft className="h-4 w-4 mr-2" /> Anterior
             </Button>
             <Button
               variant="outline"
-              className="bg-transparent border-white/10 text-white hover:bg-white/5 h-10 text-xs"
+              className="bg-transparent border-white/10 text-white hover:bg-white/5 h-12 text-sm font-bold"
               onClick={() => setCurrentIndex(prev => Math.min(items.length - 1, prev + 1))}
               disabled={currentIndex === items.length - 1}
             >
-              Siguiente
+              Siguiente <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
-
-          <Button
-            variant="ghost"
-            className="w-full text-red-500 hover:text-red-400 hover:bg-red-500/10 h-10 text-[10px] font-bold uppercase tracking-widest mt-2"
-            onClick={() => onDelete && onDelete(currentItem.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5 mr-2" /> Eliminar Elemento
-          </Button>
         </div>
       </div>
     </div>

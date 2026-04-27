@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
@@ -671,6 +671,17 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Add New Audio Card */}
+          <button
+            onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setSelectedFiles([]); setUploadSheetOpen(true); }}
+            className="w-full flex items-center justify-center gap-4 p-6 rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all group"
+          >
+            <div className="bg-primary/20 p-2 rounded-full group-hover:scale-110 transition-transform">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-sm font-bold text-primary">Añadir nuevo audio o grabación</span>
+          </button>
+
           {list.map((item) => {
             const isPlaying = playingId === item.id;
             const spectrograms = items.filter(it => it.parent_multimedia_id === item.id && it.tag === "spectrogram");
@@ -712,6 +723,14 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                       onPause={() => playingId === item.id && setPlayingId(null)}
                       onEnded={() => playingId === item.id && setPlayingId(null)}
                     />
+                  </div>
+                  {/* Visibility Chip */}
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase",
+                    item.is_public ? "bg-green-50 text-green-600 border-green-200" : "bg-orange-50 text-orange-600 border-orange-200"
+                  )}>
+                    {item.is_public ? <Eye className="h-3 w-3 inline mr-1" /> : <EyeOff className="h-3 w-3 inline mr-1" />}
+                    {item.is_public ? "Público" : "Privado"}
                   </div>
                 </div>
 
@@ -816,6 +835,17 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {/* Add New Image Card */}
+          <button
+            onClick={() => { setActiveUploadType(uploadType); setSelectedFiles([]); setUploadSheetOpen(true); }}
+            className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all group aspect-square"
+          >
+            <div className="bg-primary/20 p-4 rounded-full group-hover:scale-110 transition-transform">
+              <Plus className="h-8 w-8 text-primary" />
+            </div>
+            <span className="text-xs font-bold text-primary text-center px-4">Subir nueva fotografía</span>
+          </button>
+
           {list.map((item) => (
             <div
               key={item.id}
@@ -891,14 +921,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         }
       }}
     >
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Upload className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">Gestión Multimedia (R2-Bucket)</h3>
-        </div>
-        <p className="text-xs text-muted-foreground">Sube Audios, Histogramas y Fotografías. Arrastra para cambiar el orden o vincular histogramas.</p>
-      </div>
-
       <div className="grid grid-cols-1 gap-6">
         {initialLoading ? (
           <div className="space-y-8">
@@ -1102,11 +1124,11 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
               {getDriveEmbedUrl(editUrl) ? (
                 <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
               ) : editingItem?.type === MEDIA_TYPE.STILL ? (
-                <img 
-                  src={getAudioUrl(editUrl)} 
-                  className="max-h-full max-w-full object-contain" 
-                  alt="Preview" 
-                  onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} 
+                <img
+                  src={getAudioUrl(editUrl)}
+                  className="max-h-full max-w-full object-contain"
+                  alt="Preview"
+                  onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted/10 p-8">
