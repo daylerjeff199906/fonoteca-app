@@ -452,7 +452,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       const fileName = `spectrogram_${cleanName}_${Date.now()}.${fileExt}`;
       const uploadPath = `occurrences/${occurrenceId}/${fileName}`;
 
-      if (file.size > 10 * 1024 * 1024) { 
+      if (file.size > 10 * 1024 * 1024) {
         showToast.error("Archivo Excedido", "El espectrograma supera el límite de 10MB.");
         return false;
       }
@@ -1572,9 +1572,9 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           const validatedData = multimediaSchema.parse(updatedItem);
           const resp = await updateMultimedia(updatedItem.id, validatedData as any);
           if (resp.error) {
-            toast.error("Error al actualizar");
+            showToast.error("Error de Actualización", "No se pudieron guardar los cambios en el elemento.");
           } else {
-            toast.success("Elemento actualizado correctamente");
+            showToast.success("Cambios Guardados", "El elemento ha sido actualizado correctamente.");
             loadMultimedia();
           }
         }}

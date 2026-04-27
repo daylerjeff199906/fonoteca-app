@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Occurrence, MEDIA_TYPE } from "@/types/fonoteca";
@@ -50,7 +50,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
         if (resp.data) {
           reset(resp.data as any);
         } else {
-          toast.error("No se pudo cargar la información multimedia.");
+          showToast.error("Error de Carga", "No se pudo recuperar la información del archivo multimedia.");
         }
       });
     }
@@ -67,12 +67,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
     setLoading(false);
 
     if (resp.success) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Operación Exitosa</span>
-          <span className="text-xs opacity-90">{id ? "Multimedia actualizada correctamente." : "Multimedia registrada correctamente."}</span>
-        </div>
-      );
+      showToast.success("Operación Exitosa", id ? "Multimedia actualizada correctamente." : "Multimedia registrada correctamente.");
       if (redirectUrl && resp.data?.id) {
         const finalUrl = redirectUrl.replace('[id]', resp.data.id);
         router.push(finalUrl);
@@ -80,7 +75,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
         router.push("/dashboard/occurrences/" + data.occurrence_id);
       }
     } else {
-      toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
+      showToast.error("Error", (typeof resp.error === "string" ? resp.error : "Hubo un fallo al procesar los datos multimedia."));
     }
   };
 
