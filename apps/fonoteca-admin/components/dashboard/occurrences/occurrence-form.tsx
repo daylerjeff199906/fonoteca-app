@@ -32,6 +32,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: string, redirectUrl?: string, defaultEventId?: string }) {
   const router = useRouter();
@@ -131,9 +132,29 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
   if (isFetching) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground w-full">
-        <Loader2 className="h-8 w-8 animate-spin mb-4 text-primary" />
-        <span className="text-sm font-medium">Cargando detalles de la ocurrencia...</span>
+      <div className="space-y-6 w-full animate-pulse">
+        <div className="space-y-4 bg-card border rounded-lg p-5">
+          <Skeleton className="h-4 w-40" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4 bg-card border rounded-lg p-5">
+          <Skeleton className="h-4 w-40" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -158,6 +179,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             <label className="text-xs font-semibold text-muted-foreground uppercase">Basis of Record *</label>
             <Input {...register("basisOfRecord")} className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.basisOfRecord && <p className="text-[10px] text-red-500 mt-1">{errors.basisOfRecord.message}</p>}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+              <Calendar className="h-3 w-3" />
+              Fecha de la Ocurrencia
+            </label>
+            <Input type="date" {...register("occurrence_date")} className="bg-background h-9 focus-visible:ring-primary/20" />
+            <p className="text-[9px] text-muted-foreground italic">Usar solo si no está asociada a un evento.</p>
+            {errors.occurrence_date && <p className="text-[10px] text-red-500 mt-1">{errors.occurrence_date.message}</p>}
           </div>
 
           <div className="flex flex-col gap-1">

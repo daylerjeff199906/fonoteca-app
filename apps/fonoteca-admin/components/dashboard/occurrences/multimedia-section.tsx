@@ -31,6 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MultimediaViewer } from "./multimedia-viewer";
 
 const BaseSheet = ({
   open,
@@ -103,7 +104,7 @@ const sanitizeFilename = (name: string) => {
     .replace(/^_|_$/g, "");         // Trim underscores
 };
 
-export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
+export function MultimediaSection({ occurrenceId, location }: { occurrenceId: string, location?: string }) {
   const [items, setItems] = useState<Multimedia[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<Multimedia | null>(null);
@@ -845,10 +846,14 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
               </div>
 
               {/* Body Section */}
-              <div className="relative flex-1 bg-white flex items-center justify-center min-h-[160px] p-4 m-2 rounded-sm cursor-pointer" onClick={() => handleEditClick(item)}>
+              <div className="relative aspect-square bg-white flex items-center justify-center p-4 m-2 rounded-xl cursor-pointer overflow-hidden group/img" onClick={() => {
+                setSliderItems(list);
+                setSliderIndex(list.indexOf(item));
+                setSliderOpen(true);
+              }}>
                 <img
                   src={getDriveThumbnailUrl(item.identifier) || item.identifier}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110"
                   alt={item.title || "Imagen"}
                 />
                 {/* Tag Overlay Bottom Left */}
@@ -1079,7 +1084,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       <BaseSheet
         open={editSheetOpen}
         onOpenChange={(open) => { setEditSheetOpen(open); if (!open) setEditingItem(null); }}
-        title="Detalles del Elemento"
+        title="Editar"
         description="Gestiona la información y metadatos del archivo."
         footer={(
           <div className="flex justify-end gap-3 w-full">
@@ -1093,14 +1098,24 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         <div className="space-y-6">
           {/* Visualizer */}
           {editUrl && (
-            <div className="aspect-video relative rounded-2xl border bg-card flex flex-col items-center justify-center overflow-hidden mb-4 shadow-sm">
+            <div className="relative aspect-video rounded-2xl overflow-hidden border bg-black flex items-center justify-center mb-6 shadow-xl group">
               {getDriveEmbedUrl(editUrl) ? (
                 <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
               ) : editingItem?.type === MEDIA_TYPE.STILL ? (
-                <img src={getAudioUrl(editUrl)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
+                <img 
+                  src={getAudioUrl(editUrl)} 
+                  className="max-h-full max-w-full object-contain" 
+                  alt="Preview" 
+                  onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} 
+                />
               ) : (
-                <audio src={getAudioUrl(editUrl)} controls className="w-[90%] mt-auto mb-4" />
+                <div className="w-full h-full flex items-center justify-center bg-muted/10 p-8">
+                  <audio src={getAudioUrl(editUrl)} controls className="w-full" />
+                </div>
               )}
+              <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/50 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-widest">
+                Vista Previa
+              </div>
             </div>
           )}
 
@@ -1492,63 +1507,27 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* --- Slider Modal for Spectrogram Preview --- */}
-      <BaseSheet
-        open={sliderOpen}
-        onOpenChange={setSliderOpen}
-        title="Previsualización de Espectrogramas"
-        description={`${sliderIndex + 1} de ${sliderItems.length} archivos vinculados`}
-        footer={(
-          <div className="flex items-center justify-between w-full">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={sliderIndex === 0}
-                onClick={() => setSliderIndex(prev => prev - 1)}
-                className="rounded-full h-10 w-10"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={sliderIndex === sliderItems.length - 1}
-                onClick={() => setSliderIndex(prev => prev + 1)}
-                className="rounded-full h-10 w-10"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="text-xs rounded-xl" onClick={() => handleEditClick(sliderItems[sliderIndex])}>
-                <Pencil className="h-3.5 w-3.5 mr-2" /> Editar Metadatos
-              </Button>
-              <Button className="text-xs rounded-xl px-6" onClick={() => setSliderOpen(false)}>Cerrar</Button>
-            </div>
-          </div>
-        )}
-      >
-        <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
-          {sliderItems[sliderIndex] && (
-            <div className="w-full space-y-4">
-              <div className="aspect-square sm:aspect-video relative rounded-3xl overflow-hidden border bg-black flex items-center justify-center shadow-2xl">
-                <img
-                  src={sliderItems[sliderIndex].identifier}
-                  className="max-h-full max-w-full object-contain"
-                  alt={sliderItems[sliderIndex].title || "Spectrogram"}
-                />
-              </div>
-              <div className="bg-muted/10 p-4 rounded-2xl border border-dashed text-center">
-                <p className="text-xs font-bold text-foreground">{sliderItems[sliderIndex].title || "Sin título"}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
-                  {sliderItems[sliderIndex].creator || "Autor Desconocido"} • {sliderItems[sliderIndex].format || "image/jpeg"}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </BaseSheet>
+      {/* --- Premium Multimedia Viewer --- */}
+      <MultimediaViewer
+        isOpen={sliderOpen}
+        items={sliderItems}
+        initialIndex={sliderIndex}
+        onClose={() => setSliderOpen(false)}
+        location={location}
+        onUpdate={async (updatedItem) => {
+          const validatedData = multimediaSchema.parse(updatedItem);
+          const resp = await updateMultimedia(updatedItem.id, validatedData as any);
+          if (resp.error) {
+            toast.error("Error al actualizar");
+          } else {
+            toast.success("Elemento actualizado correctamente");
+            loadMultimedia();
+          }
+        }}
+        onDelete={async (id) => {
+          setItemToDelete({ id, isChild: false });
+        }}
+      />
     </div>
   );
 }
