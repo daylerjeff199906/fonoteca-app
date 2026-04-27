@@ -123,6 +123,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [activeParentItemId, setActiveParentItemId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string, isChild: boolean } | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
 
   // URL States
@@ -364,6 +365,27 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       toast.error("Error vinculando elemento");
     } finally {
       setUploading(null);
+    }
+  };
+
+  const handleToggleVisibility = async (item: Multimedia) => {
+    setUpdatingId(item.id);
+    try {
+      const resp = await updateMultimedia(item.id, {
+        ...item,
+        is_public: !item.is_public
+      } as any);
+
+      if (resp.error) {
+        toast.error("Error al cambiar visibilidad: " + resp.error);
+      } else {
+        toast.success(`Ahora es ${!item.is_public ? 'Público' : 'Privado'}`);
+        loadMultimedia();
+      }
+    } catch (err) {
+      toast.error("Error inesperado");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -725,13 +747,23 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                     />
                   </div>
                   {/* Visibility Chip */}
-                  <div className={cn(
-                    "px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase",
-                    item.is_public ? "bg-green-50 text-green-600 border-green-200" : "bg-orange-50 text-orange-600 border-orange-200"
-                  )}>
-                    {item.is_public ? <Eye className="h-3 w-3 inline mr-1" /> : <EyeOff className="h-3 w-3 inline mr-1" />}
+                  <button
+                    onClick={() => handleToggleVisibility(item)}
+                    disabled={updatingId === item.id}
+                    className={cn(
+                      "px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
+                      item.is_public ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100" : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                    )}
+                  >
+                    {updatingId === item.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
+                    ) : item.is_public ? (
+                      <Eye className="h-3 w-3 inline mr-1" />
+                    ) : (
+                      <EyeOff className="h-3 w-3 inline mr-1" />
+                    )}
                     {item.is_public ? "Público" : "Privado"}
-                  </div>
+                  </button>
                 </div>
 
                 {/* Spectrograms Thumbnails */}
@@ -865,12 +897,23 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <div className={cn(
-                    "p-1 rounded-full",
-                    item.is_public ? "text-green-500" : "text-orange-500"
-                  )}>
-                    {item.is_public ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                  </div>
+                  <button
+                    onClick={() => handleToggleVisibility(item)}
+                    disabled={updatingId === item.id}
+                    className={cn(
+                      "p-1 rounded-full transition-all hover:bg-muted active:scale-90 disabled:opacity-50",
+                      item.is_public ? "text-green-500" : "text-orange-500"
+                    )}
+                    title={item.is_public ? "Cambiar a Privado" : "Cambiar a Público"}
+                  >
+                    {updatingId === item.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : item.is_public ? (
+                      <Eye className="h-3 w-3" />
+                    ) : (
+                      <EyeOff className="h-3 w-3" />
+                    )}
+                  </button>
 
                   <DropdownMenu>
                     <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
