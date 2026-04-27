@@ -13,9 +13,9 @@ export const createFonotecaServer = async (cookieStore: Awaited<ReturnType<typeo
                 getAll() {
                     return cookieStore.getAll()
                 },
-                setAll(cookiesToSet) {
+                setAll(cookiesToSet: any) {
                     try {
-                        cookiesToSet.forEach(({ name, value, options }) => {
+                        cookiesToSet.forEach(({ name, value, options }: any) => {
                             // En esta base de datos Fonoteca no solemos persistir sesiones de Auth
                             // Dado que la sesión de admin se valida con bio-intranet.
                             cookieStore.set(name, value, options);
