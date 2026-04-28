@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-    Bird, 
-    Bug, 
-    Fish, 
-    Waves, 
-    Dog, 
+import {
+    Bird,
+    Bug,
+    Fish,
+    Waves,
+    Dog,
     Zap,
     ArrowRight
 } from 'lucide-react';
@@ -56,7 +56,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                 <div className="flex flex-col lg:flex-row items-center gap-12 mb-16">
                     {/* Left Side: Content */}
                     <div className="w-full lg:w-1/2 space-y-6">
-                        <motion.h2 
+                        <motion.h2
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
@@ -64,7 +64,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                         >
                             {t.title}
                         </motion.h2>
-                        <motion.p 
+                        <motion.p
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
@@ -77,14 +77,14 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
 
                     {/* Right Side: Feature Image */}
                     <div className="w-full lg:w-1/2">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl"
                         >
-                            <img 
-                                src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2070&auto=format&fit=crop" 
+                            <img
+                                src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2070&auto=format&fit=crop"
                                 alt="Forest ambience"
                                 className="w-full h-full object-cover"
                             />
@@ -96,9 +96,12 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                 {/* Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {displayClasses.map((cls, idx) => {
-                        const Icon = iconMap[cls.id] || Zap;
                         const name = lang === 'en' ? cls.title_en : lang === 'pt' ? cls.title_pt : cls.title_es;
-                        
+
+                        // Check if icon is SVG string or emoji/lucide name
+                        const isSvg = cls.icon?.trim().startsWith('<svg');
+                        const IconComponent = iconMap[cls.id] || Zap;
+
                         return (
                             <motion.a
                                 key={cls.id}
@@ -108,16 +111,27 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.1 }}
                                 whileHover={{ y: -8 }}
-                                className="group bg-[#004d40] dark:bg-[#064e3b] p-8 rounded-3xl flex flex-col gap-8 transition-all hover:shadow-xl hover:shadow-emerald-900/20"
+                                className="group bg-primary p-8 rounded-3xl flex flex-col gap-8 transition-all hover:shadow-xl hover:shadow-accent-green/20"
                             >
-                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#004d40]">
-                                    <Icon className="w-6 h-6" />
+                                <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-xl flex items-center justify-center text-accent-green overflow-hidden p-2">
+                                    {isSvg ? (
+                                        <div
+                                            className="w-full h-full flex items-center justify-center"
+                                            dangerouslySetInnerHTML={{ __html: cls.icon }}
+                                        />
+                                    ) : (
+                                        typeof cls.icon === 'string' && cls.icon.length > 2 ? (
+                                            <IconComponent className="w-12 h-12" />
+                                        ) : (
+                                            <span className="text-2xl">{cls.icon || '🐾'}</span>
+                                        )
+                                    )}
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold text-white leading-tight">
+                                    <h3 className="text-xl font-bold text-[#0F2531] leading-tight">
                                         {name}
                                     </h3>
-                                    <div className="flex items-center gap-2 text-emerald-100/60 text-sm font-medium group-hover:text-white transition-colors">
+                                    <div className="flex items-center gap-2 text-[#0F2531]/70 text-sm font-medium group-hover:text-[#0F2531] transition-colors">
                                         <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
                                         <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                                     </div>

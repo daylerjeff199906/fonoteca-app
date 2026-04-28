@@ -63,6 +63,8 @@ export async function getSpeciesByClass() {
     interface NestedTaxonomy {
         id: string;
         name: string;
+        label_name: any;
+        icon: string | null;
         orders: {
             families: {
                 genera: {
@@ -79,6 +81,8 @@ export async function getSpeciesByClass() {
         .select(`
             id,
             name,
+            label_name,
+            icon,
             orders:orders (
                 families:families (
                     genera:genera (
@@ -95,15 +99,6 @@ export async function getSpeciesByClass() {
         return [];
     }
 
-    const classMapping: Record<string, { es: string, en: string, pt: string, icon: string }> = {
-        'Amphibia': { es: 'Anfibios', en: 'Amphibians', pt: 'Anfíbios', icon: '🐸' },
-        'Aves': { es: 'Aves', en: 'Birds', pt: 'Aves', icon: '🐦' },
-        'Mammalia': { es: 'Mamíferos', en: 'Mammals', pt: 'Mamíferos', icon: '🦇' },
-        'Insecta': { es: 'Grillos', en: 'Crickets', pt: 'Grilos', icon: '🦗' },
-        'Reptilia': { es: 'Reptiles', en: 'Reptiles', pt: 'Répteis', icon: '🐍' },
-        'Actinopterygii': { es: 'Peces', en: 'Fish', pt: 'Peixes', icon: '🐟' },
-    };
-
     const results = classes.map(cls => {
         // Flatten the nesting to count taxa
         let totalTaxa = 0;
@@ -115,14 +110,15 @@ export async function getSpeciesByClass() {
             });
         });
 
-        const mapping = classMapping[cls.name] || { es: cls.name, en: cls.name, pt: cls.name, icon: '🐾' };
-
+        // Use database fields if available, otherwise fallback to name
+        const label = cls.label_name || {};
+        
         return {
             id: cls.name,
-            title_es: mapping.es,
-            title_en: mapping.en,
-            title_pt: mapping.pt,
-            icon: mapping.icon,
+            title_es: label.es || cls.name,
+            title_en: label.en || cls.name,
+            title_pt: label.pt || cls.name,
+            icon: cls.icon || '🐾', // Default emoji if icon is null
             count: totalTaxa
         };
     });

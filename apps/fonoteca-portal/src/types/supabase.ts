@@ -67,6 +67,8 @@ export interface Database {
           kingdom: string
           phylum: string | null
           name: string
+          label_name: Json | null
+          icon: string | null
           created_at: string | null
         }
         Insert: {
@@ -74,6 +76,8 @@ export interface Database {
           kingdom?: string
           phylum?: string | null
           name: string
+          label_name?: Json | null
+          icon?: string | null
           created_at?: string | null
         }
         Update: {
@@ -81,6 +85,8 @@ export interface Database {
           kingdom?: string
           phylum?: string | null
           name?: string
+          label_name?: Json | null
+          icon?: string | null
           created_at?: string | null
         }
       }
