@@ -22,6 +22,9 @@ export interface Class {
   kingdom: string;
   phylum: string | null;
   name: string;
+  label_name: string | null;
+  icon: string | null;
+  image_url: string | null;
   created_at: string;
 }
 
