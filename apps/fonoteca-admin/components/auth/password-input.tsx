@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff } from 'lucide-react';
 
-export interface PasswordInputProps
-    extends React.ComponentProps<"input"> { }
+export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 export function PasswordInput({ className, ...props }: PasswordInputProps) {
     const [showPassword, setShowPassword] = useState(false);
@@ -15,7 +14,7 @@ export function PasswordInput({ className, ...props }: PasswordInputProps) {
             <Input
                 type={showPassword ? 'text' : 'password'}
                 className={className}
-                {...(props as any)}
+                {...props}
             />
             <button
                 type="button"
