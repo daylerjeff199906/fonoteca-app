@@ -10,22 +10,20 @@ import {
     ArrowRight
 } from 'lucide-react';
 
+interface ClassData {
+    id: string;
+    label_name: string | null;
+    icon: string | null;
+    image_url: string | null;
+    count: number;
+}
+
 interface ClassExplorerProps {
     lang: string;
-    classes: any[];
+    classes: ClassData[];
 }
 
 export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) => {
-    // Mapping of class names to icons (placeholders)
-    const iconMap: Record<string, any> = {
-        'Amphibia': Waves,
-        'Aves': Bird,
-        'Mammalia': Dog,
-        'Insecta': Bug,
-        'Reptilia': Zap, // Placeholder for reptile
-        'Actinopterygii': Fish,
-    };
-
     const classTranslations: Record<string, any> = {
         es: {
             title: "Nuestra Diversidad Biológica",
@@ -40,18 +38,17 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
         pt: {
             title: "Nossa Diversidade Biológica",
             subtitle: "Explore a riqueza sonora da Amazônia através de suas diferentes classes taxonômicas. Cada gravação é um testemunho único da vida selvagem.",
-            button: "Ver todas as espécies"
+            button: "Ver todas las especies"
         }
     };
 
     const t = classTranslations[lang] || classTranslations.es;
 
-    // Filter classes to show only those with count > 0 and limit to 4 for the grid if needed, 
-    // but the image shows 4. We'll show up to 4 or 5.
+    // Filter classes to show only those with count > 0
     const displayClasses = classes.filter(c => c.count > 0).slice(0, 4);
 
     return (
-        <section className="py-20 bg-white dark:bg-[#0c141d] overflow-hidden">
+        <section className="py-20 bg-white dark:bg-[#04070a] overflow-hidden">
             <div className="container mx-auto px-6">
                 <div className="flex flex-col lg:flex-row items-center gap-12 mb-16">
                     {/* Left Side: Content */}
@@ -94,14 +91,48 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                 </div>
 
                 {/* Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {displayClasses.map((cls, idx) => {
-                        const name = lang === 'en' ? cls.title_en : lang === 'pt' ? cls.title_pt : cls.title_es;
+                        const name = cls.label_name || idx.toString();
 
-                        // Check if icon is SVG string or emoji/lucide name
-                        const isSvg = cls.icon?.trim().startsWith('<svg');
-                        const IconComponent = iconMap[cls.id] || Zap;
+                        // Use image_url from database
+                        const popoutImg = cls.image_url;
+                        <motion.a
+                            key={cls.id}
+                            href={`/${lang}/species?class=${cls.id}`}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.1, duration: 0.8 }}
+                            whileHover={{ y: -5 }}
+                            className="group relative h-80 flex flex-col justify-end p-8 rounded-[3.5rem] bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/10 hover:border-primary/40 transition-all mt-16 mb-4"
+                        >
+                            {/* 3D Pop-out Image - Uses image_url */}
+                            <motion.img
+                                src={popoutImg || '/images/generic_class.webp'}
+                                alt={name}
+                                initial={{ y: 20, opacity: 0, scale: 0.9 }}
+                                whileInView={{ y: -80, opacity: 1, scale: 1.2 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1 + 0.4, duration: 1, type: "spring" }}
+                                className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 object-contain drop-shadow-[0_45px_45px_rgba(0,0,0,0.7)] z-20 pointer-events-none transition-transform duration-500"
+                            />
 
+                            <div className="relative z-10 text-center">
+                                <h3 className="text-2xl font-bold text-white tracking-tighter mb-1">
+                                    {name}
+                                </h3>
+                                <div className="flex items-center justify-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+                                    <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
+                                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </div>
+
+                            {/* Decorative Blur Circle */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+                        </motion.a>
+
+                        // Variant 1: Modern Glass (Simplified, no icon)
                         return (
                             <motion.a
                                 key={cls.id}
@@ -110,32 +141,22 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.1 }}
-                                whileHover={{ y: -8 }}
-                                className="group bg-primary p-8 rounded-3xl flex flex-col gap-8 transition-all hover:shadow-xl hover:shadow-accent-green/20"
+                                whileHover={{ y: -10 }}
+                                className="group h-80 p-8 rounded-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 hover:border-primary/40 transition-all flex flex-col justify-center items-center overflow-hidden relative text-center mt-16 mb-4"
                             >
-                                <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-xl flex items-center justify-center text-accent-green overflow-hidden p-2">
-                                    {isSvg ? (
-                                        <div
-                                            className="w-full h-full flex items-center justify-center"
-                                            dangerouslySetInnerHTML={{ __html: cls.icon }}
-                                        />
-                                    ) : (
-                                        typeof cls.icon === 'string' && cls.icon.length > 2 ? (
-                                            <IconComponent className="w-12 h-12" />
-                                        ) : (
-                                            <span className="text-2xl">{cls.icon || '🐾'}</span>
-                                        )
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <h3 className="text-xl font-bold text-[#0F2531] leading-tight">
+                                <div className="space-y-4 relative z-10">
+                                    <h3 className="text-4xl font-bold text-white tracking-tighter leading-tight">
                                         {name}
                                     </h3>
-                                    <div className="flex items-center gap-2 text-[#0F2531]/70 text-sm font-medium group-hover:text-[#0F2531] transition-colors">
+                                    <div className="flex items-center justify-center gap-2 text-gray-400 text-sm font-medium group-hover:text-primary transition-colors">
                                         <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
                                         <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </div>
+
+                                {/* Decorative elements for the glass card */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
                             </motion.a>
                         );
                     })}

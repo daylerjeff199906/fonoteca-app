@@ -30,7 +30,7 @@ export async function getRealStats() {
 
         if (recordingsError || speciesError || familiesError || ordersError || classesError) {
             console.error("Supabase Query Error:", { recordingsError, speciesError, familiesError, ordersError, classesError });
-            
+
             const { count: multimediaCount } = await supabase
                 .from('multimedia')
                 .select('*', { count: 'exact', head: true })
@@ -65,6 +65,7 @@ export async function getSpeciesByClass() {
         name: string;
         label_name: any;
         icon: string | null;
+        image_url: string | null;
         orders: {
             families: {
                 genera: {
@@ -83,6 +84,7 @@ export async function getSpeciesByClass() {
             name,
             label_name,
             icon,
+            image_url,
             orders:orders (
                 families:families (
                     genera:genera (
@@ -110,16 +112,12 @@ export async function getSpeciesByClass() {
             });
         });
 
-        // Use database fields if available, otherwise fallback to name
-        const label = cls.label_name || {};
-        
         return {
             id: cls.name,
-            title_es: label.es || cls.name,
-            title_en: label.en || cls.name,
-            title_pt: label.pt || cls.name,
-            icon: cls.icon || '🐾', // Default emoji if icon is null
-            count: totalTaxa
+            label_name: cls.label_name,
+            icon: cls.icon,
+            count: totalTaxa,
+            image_url: cls.image_url
         };
     });
 

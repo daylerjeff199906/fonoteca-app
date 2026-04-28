@@ -69,6 +69,7 @@ export interface Database {
           name: string
           label_name: Json | null
           icon: string | null
+          image_url: string | null
           created_at: string | null
         }
         Insert: {
@@ -78,6 +79,7 @@ export interface Database {
           name: string
           label_name?: Json | null
           icon?: string | null
+          image_url?: string | null
           created_at?: string | null
         }
         Update: {
@@ -87,6 +89,7 @@ export interface Database {
           name?: string
           label_name?: Json | null
           icon?: string | null
+          image_url?: string | null
           created_at?: string | null
         }
       }
