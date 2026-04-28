@@ -91,7 +91,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                 </div>
 
                 {/* Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 pt-20">
                     {displayClasses.map((cls, idx) => {
                         // Safe JSON parsing for label_name
                         let labelObj: any = null;
@@ -108,72 +108,63 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                             : (labelObj || cls.id || idx.toString());
 
                         const popoutImg = cls.image_url || undefined;
-                        const isPopOut = true;
 
-                        if (isPopOut) {
-                            return (
-                                <motion.a
-                                    key={cls.id}
-                                    href={`/${lang}/species?class=${cls.id}`}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.1, duration: 0.8 }}
-                                    whileHover={{ y: -5 }}
-                                    className="group relative h-80 flex flex-col justify-end p-8 rounded-[3.5rem] bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/10 hover:border-primary/40 transition-all mt-16 mb-4"
-                                >
-                                    {/* 3D Pop-out Image - Uses image_url */}
-                                    <motion.img
-                                        src={popoutImg}
-                                        alt={name}
-                                        initial={{ y: 20, opacity: 0, scale: 0.9 }}
-                                        whileInView={{ y: -80, opacity: 1, scale: 1.2 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: idx * 0.1 + 0.4, duration: 1, type: "spring" }}
-                                        className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 object-contain drop-shadow-[0_45px_45px_rgba(0,0,0,0.7)] z-20 pointer-events-none transition-transform duration-500"
-                                    />
-
-                                    <div className="relative z-10 text-center">
-                                        <h3 className="text-2xl font-bold text-white tracking-tighter mb-1">
-                                            {name}
-                                        </h3>
-                                        <div className="flex items-center justify-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-                                            <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
-                                            <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                                        </div>
-                                    </div>
-
-                                    {/* Decorative Blur Circle */}
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
-                                </motion.a>
-                            );
-                        }
-
-                        // Variant 1: Modern Glass (Simplified, no icon)
                         return (
                             <motion.a
                                 key={cls.id}
                                 href={`/${lang}/species?class=${cls.id}`}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ delay: idx * 0.1 }}
-                                whileHover={{ y: -10 }}
-                                className="group h-80 p-8 rounded-[3.5rem] bg-white/5 backdrop-blur-xl border border-white/10 hover:border-primary/40 transition-all flex flex-col justify-center items-center overflow-hidden relative text-center mt-16 mb-4"
+                                transition={{ 
+                                    delay: idx * 0.1, 
+                                    duration: 0.8,
+                                    ease: [0.16, 1, 0.3, 1]
+                                }}
+                                className="group relative h-64 flex flex-col justify-end p-8 rounded-[3rem] bg-gradient-to-br from-[#0c141d] to-[#04070a] border border-white/5 hover:border-primary/40 transition-all duration-500 mt-12 mb-4"
                             >
-                                <div className="space-y-4 relative z-10">
-                                    <h3 className="text-4xl font-bold text-white tracking-tighter leading-tight">
-                                        {name}
-                                    </h3>
-                                    <div className="flex items-center justify-center gap-2 text-gray-400 text-sm font-medium group-hover:text-primary transition-colors">
-                                        <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
-                                        <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                                {/* 3D Pop-out Image - Dramatic emerging effect */}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none z-20">
+                                    <motion.img 
+                                        src={popoutImg}
+                                        alt={name}
+                                        initial={{ y: 30, opacity: 0, scale: 0.8 }}
+                                        whileInView={{ y: -100, opacity: 1, scale: 1.35 }}
+                                        viewport={{ once: true }}
+                                        transition={{ 
+                                            delay: idx * 0.1 + 0.3, 
+                                            duration: 1.4, 
+                                            type: "spring",
+                                            bounce: 0.5
+                                        }}
+                                        className="w-56 h-56 mx-auto object-contain drop-shadow-[0_45px_55px_rgba(0,0,0,0.9)] group-hover:scale-[1.45] transition-transform duration-700"
+                                    />
+                                </div>
+                                
+                                {/* Content Area - Left Aligned */}
+                                <div className="relative z-30 flex flex-col items-start text-left space-y-4">
+                                    <div className="space-y-1 w-full">
+                                        <h3 className="text-4xl font-black text-white tracking-tighter leading-none group-hover:text-primary transition-colors">
+                                            {name}
+                                        </h3>
+                                        <div className="h-1.5 w-0 bg-primary group-hover:w-16 transition-all duration-500 rounded-full"></div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 w-full">
+                                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-2 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-500">
+                                            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                            <span className="text-[10px] font-black text-gray-400 group-hover:text-primary uppercase tracking-[0.2em] transition-colors">
+                                                {cls.count} {lang === 'es' ? 'Especies' : 'Species'}
+                                            </span>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-primary group-hover:text-black group-hover:border-primary transition-all duration-500 ml-auto">
+                                            <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Decorative elements for the glass card */}
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
-                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+                                {/* Deep Ambient Glow */}
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/15 transition-all duration-700"></div>
                             </motion.a>
                         );
                     })}
