@@ -474,7 +474,7 @@ export function OccurrencesClient({
                     </TableCell>
                     <TableCell>{oc.location?.locality || "Desconocida"}</TableCell>
                     <TableCell>
-                      <span className="text-xs">
+                      <span className="text-xs truncate">
                         {oc.event?.eventDate || oc.occurrence_date || "S/F"}
                       </span>
                     </TableCell>
