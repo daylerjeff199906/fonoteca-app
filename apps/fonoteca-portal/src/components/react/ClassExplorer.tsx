@@ -81,7 +81,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                             className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl"
                         >
                             <img
-                                src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=2070&auto=format&fit=crop"
+                                src="https://www.actualidadambiental.pe/wp-content/uploads/2018/08/investigadores-en-madre-de-dios_thomas-muller-1.jpg"
                                 alt="Forest ambience"
                                 className="w-full h-full object-cover"
                             />
@@ -96,8 +96,8 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                         // Safe JSON parsing for label_name
                         let labelObj: any = null;
                         try {
-                            labelObj = typeof cls.label_name === 'string' && cls.label_name.startsWith('{') 
-                                ? JSON.parse(cls.label_name) 
+                            labelObj = typeof cls.label_name === 'string' && cls.label_name.startsWith('{')
+                                ? JSON.parse(cls.label_name)
                                 : cls.label_name;
                         } catch (e) {
                             labelObj = cls.label_name;
@@ -106,10 +106,10 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                         const name = (typeof labelObj === 'object' && labelObj !== null)
                             ? (labelObj[lang] || labelObj['es'] || cls.id || idx.toString())
                             : (labelObj || cls.id || idx.toString());
-                        
-                        const popoutImg = cls.image_url;
-                        const isPopOut = !!popoutImg && idx % 2 === 0;
-                        
+
+                        const popoutImg = cls.image_url || undefined;
+                        const isPopOut = true;
+
                         if (isPopOut) {
                             return (
                                 <motion.a
@@ -123,7 +123,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                     className="group relative h-80 flex flex-col justify-end p-8 rounded-[3.5rem] bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/10 hover:border-primary/40 transition-all mt-16 mb-4"
                                 >
                                     {/* 3D Pop-out Image - Uses image_url */}
-                                    <motion.img 
+                                    <motion.img
                                         src={popoutImg}
                                         alt={name}
                                         initial={{ y: 20, opacity: 0, scale: 0.9 }}
@@ -132,7 +132,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                         transition={{ delay: idx * 0.1 + 0.4, duration: 1, type: "spring" }}
                                         className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 object-contain drop-shadow-[0_45px_45px_rgba(0,0,0,0.7)] z-20 pointer-events-none transition-transform duration-500"
                                     />
-                                    
+
                                     <div className="relative z-10 text-center">
                                         <h3 className="text-2xl font-bold text-white tracking-tighter mb-1">
                                             {name}
