@@ -32,7 +32,24 @@ export async function getOccurrences({
 
   let query = supabase
     .from("occurrences")
-    .select("*, taxon:taxa(*), location:locations(*), multimedia(*)", { count: "exact" });
+    .select(`
+      *, 
+      taxon:taxa(
+        *, 
+        genus:genera(
+          *, 
+          family:families(
+            *, 
+            order_obj:orders(
+              *, 
+              class_obj:classes(*)
+            )
+          )
+        )
+      ), 
+      location:locations(*), 
+      multimedia(*)
+    `, { count: "exact" });
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
@@ -85,9 +102,6 @@ export async function getOccurrences({
   // Map supabase structure to our expected nested structure
   const formattedData = (data || []).map((item: any) => ({
     ...item,
-    taxon: item.taxa,
-    location: item.locations,
-    multimedia: item.multimedia,
   })) as Occurrence[];
 
   return {
@@ -244,7 +258,24 @@ export async function getAllOccurrencesForExport({
 
   let query = supabase
     .from("occurrences")
-    .select("*, taxa(*), locations(*), multimedia(*)");
+    .select(`
+      *, 
+      taxon:taxa(
+        *, 
+        genus:genera(
+          *, 
+          family:families(
+            *, 
+            order_obj:orders(
+              *, 
+              class_obj:classes(*)
+            )
+          )
+        )
+      ), 
+      location:locations(*), 
+      multimedia(*)
+    `);
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
@@ -290,9 +321,6 @@ export async function getAllOccurrencesForExport({
 
   const formattedData = (data || []).map((item: any) => ({
     ...item,
-    taxon: item.taxa,
-    location: item.locations,
-    multimedia: item.multimedia,
   })) as Occurrence[];
 
   return { data: formattedData };
@@ -308,7 +336,7 @@ export async function bulkCreateOccurrences(inputs: any[]) {
 
   for (const input of inputs) {
     const parsed = occurrenceSchema.safeParse(input);
-    
+
     if (!parsed.success) {
       errorCount++;
       errors.push(`ID ${input.occurrenceID || '?'}: Error validación de campos`);

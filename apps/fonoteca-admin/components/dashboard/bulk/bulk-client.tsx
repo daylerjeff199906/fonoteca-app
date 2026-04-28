@@ -11,7 +11,7 @@ import {
   History, Image, FileSearch, X
 } from "lucide-react";
 import { bulkUpsert } from "@/actions/bulk";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { PageHeader } from "@/components/panel-admin/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -106,12 +106,12 @@ export function BulkClient() {
           const workbook = XLSX.read(data, { type: 'binary' });
           const firstSheet = workbook.SheetNames[0];
           if (!firstSheet) {
-            toast.error("El archivo no contiene hojas");
+            showToast.error("Hoja No Encontrada", "El archivo Excel no contiene ninguna hoja de datos.");
             return;
           }
           const worksheet = workbook.Sheets[firstSheet];
           if (!worksheet) {
-            toast.error("No se pudo encontrar la hoja en el archivo");
+            showToast.error("Error de Lectura", "No se pudo encontrar la hoja especificada en el archivo.");
             return;
           }
           const jsonData = XLSX.utils.sheet_to_json(worksheet as XLSX.WorkSheet, { 
@@ -121,9 +121,9 @@ export function BulkClient() {
           setPreviewData(jsonData);
           setSelectedFile(file);
           setResults(null);
-          toast.success(`Archivo Excel "${file.name}" cargado`);
+          showToast.success("Archivo Cargado", `El archivo Excel "${file.name}" se procesó correctamente.`);
         } catch (err) {
-          toast.error("Error al leer el archivo Excel");
+          showToast.error("Error de Archivo", "Ocurrió un fallo al intentar leer el archivo Excel.");
         }
       };
       reader.readAsBinaryString(file);
@@ -185,7 +185,7 @@ export function BulkClient() {
           const rows = parseRobustCSV(text, separator);
           
           if (rows.length === 0) {
-            toast.error("El archivo está vacío");
+            showToast.error("Archivo Vacío", "El archivo CSV no contiene registros válidos.");
             return;
           }
 
@@ -202,9 +202,9 @@ export function BulkClient() {
         }
         setSelectedFile(file);
         setResults(null);
-        toast.info(`Archivo cargado: ${file.name}`);
+        showToast.info("Archivo Cargado", `Se ha cargado el archivo: ${file.name}`);
       } catch (err) {
-        toast.error("Error procesando CSV/JSON");
+        showToast.error("Error de Procesamiento", "Hubo un fallo al analizar el contenido CSV/JSON.");
       }
     };
     reader.readAsText(file);
@@ -238,10 +238,10 @@ export function BulkClient() {
         errorCount: resp.errorCount || 0,
         errors: resp.errors || []
       });
-      if (resp.success) toast.success("Carga completada");
-      else toast.error("La carga tuvo errores");
+      if (resp.success) showToast.success("Carga Completada", "Todos los registros se procesaron correctamente.");
+      else showToast.error("Error parcial", "Algunos registros no pudieron ser procesados.");
     } catch (err) {
-      toast.error("Error en servidor");
+      showToast.error("Error del Servidor", "No se pudo completar la operación en el servidor.");
     } finally {
       setLoading(false);
     }

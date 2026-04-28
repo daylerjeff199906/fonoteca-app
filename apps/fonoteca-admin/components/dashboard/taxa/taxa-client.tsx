@@ -539,7 +539,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
                     />
                   </TableCell>
                   <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
-                  <TableCell>{taxon.genus?.family?.kingdom || "Animalia"}</TableCell>
+                  <TableCell>{taxon.genus?.family?.order_obj?.class_obj?.kingdom || "Animalia"}</TableCell>
                   <TableCell>{taxon.genus?.family?.name || "-"}</TableCell>
                   <TableCell>{taxon.genus?.name || "-"}</TableCell>
                   <TableCell>{taxon.taxonRank}</TableCell>

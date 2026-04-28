@@ -27,8 +27,10 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
               {item.active ? (
                 <BreadcrumbPage>{item.label}</BreadcrumbPage>
               ) : (
-                <BreadcrumbLink render={<Link href={item.href} />}>
-                  {item.label}
+                <BreadcrumbLink asChild>
+                  <Link href={item.href}>
+                    {item.label}
+                  </Link>
                 </BreadcrumbLink>
               )}
             </BreadcrumbItem>

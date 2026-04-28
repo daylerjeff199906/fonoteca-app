@@ -8,7 +8,7 @@ import { createEvent, updateEvent, getEvent } from "@/actions/events";
 import { getLocations } from "@/actions/locations";
 import { getProfiles, getCurrentProfile } from "@/actions/profiles";
 import { Input } from "@/components/ui/input";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Event } from "@/types/fonoteca";
@@ -64,7 +64,7 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
             });
           }
         } else {
-          toast.error("Error al cargar evento");
+          showToast.error("Error de Carga", "No se pudieron obtener los detalles del evento.");
         }
       });
     }
@@ -81,7 +81,7 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
     setLoading(false);
 
     if (resp.success) {
-      toast.success(id ? "Evento actualizado" : "Evento registrado");
+      showToast.success("Operación Exitosa", id ? "El evento ha sido actualizado correctamente." : "El evento ha sido registrado en el sistema.");
       if (redirectUrl && resp.data?.id) {
         // Replace [id] with actual event id if present in the redirectUrl
         const finalUrl = redirectUrl.replace('[id]', resp.data.id);
@@ -90,7 +90,7 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
         router.push("/dashboard/events");
       }
     } else {
-      toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
+      showToast.error("Error", (typeof resp.error === "string" ? resp.error : "Hubo un problema al procesar el evento."));
     }
   };
 
