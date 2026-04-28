@@ -8,9 +8,10 @@ import { createClass, updateClass } from "@/actions/classes";
 import { uploadToR2 } from "@/actions/multimedia";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { FormFooter } from "@/components/panel-admin/form-footer";
-import { ImageIcon, Upload, Link as LinkIcon, X, Loader2 } from "lucide-react";
+import { ImageIcon, Upload, Link as LinkIcon, X, Loader2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ClassForm({
@@ -56,7 +57,6 @@ export function ClassForm({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      // Path structure: classes/className_timestamp.ext
       const className = watch("name") || "unnamed";
       const sanitizedName = className.toLowerCase().replace(/[^a-z0-9]/g, "-");
       const path = `classes/${sanitizedName}_${Date.now()}.${file.name.split('.').pop()}`;
@@ -94,82 +94,101 @@ export function ClassForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Core Taxonomy */}
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Reino *</label>
-            <Input {...register("kingdom")} className="bg-background" />
-            {errors.kingdom && <p className="text-xs text-red-500">{errors.kingdom.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 flex flex-col max-w-2xl mx-auto">
+      {/* Taxonomy Section */}
+      <div className="space-y-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+        <h3 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+          <Info className="h-3 w-3" /> Datos Taxonómicos
+        </h3>
+        
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Reino *</Label>
+            <Input {...register("kingdom")} className="bg-background h-9" />
+            {errors.kingdom && <p className="text-[10px] text-red-500">{errors.kingdom.message}</p>}
           </div>
           
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Filo</label>
-            <Input {...register("phylum")} className="bg-background" />
-            {errors.phylum && <p className="text-xs text-red-500">{errors.phylum.message}</p>}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Filo</Label>
+            <Input {...register("phylum")} className="bg-background h-9" />
+            {errors.phylum && <p className="text-[10px] text-red-500">{errors.phylum.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Nombre Científico (Clase) *</label>
-            <Input {...register("name")} className="bg-background" placeholder="Ej: Mammalia" />
-            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Nombre Científico (Clase) *</Label>
+            <Input {...register("name")} className="bg-background h-9" placeholder="Ej: Mammalia" />
+            {errors.name && <p className="text-[10px] text-red-500">{errors.name.message}</p>}
           </div>
         </div>
+      </div>
 
-        {/* Presentation & UI */}
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Nombre Común / Etiqueta</label>
-            <Input {...register("label_name")} className="bg-background" placeholder="Ej: Mamíferos" />
+      {/* Presentation Section */}
+      <div className="space-y-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+        <h3 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+          <ImageIcon className="h-3 w-3" /> Presentación y UI
+        </h3>
+
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Nombre Común / Etiqueta</Label>
+            <Input {...register("label_name")} className="bg-background h-9" placeholder="Ej: Mamíferos" />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Icono (Lucide / Emoji)</label>
-            <Input {...register("icon")} className="bg-background" placeholder="Ej: bird, dog, waves..." />
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Icono (Lucide / Emoji)</Label>
+            <Input {...register("icon")} className="bg-background h-9" placeholder="Ej: bird, dog, waves..." />
           </div>
 
-          {/* Image URL / Upload */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Imagen representativa</label>
-              <div className="flex bg-muted rounded-md p-0.5">
-                <Button 
-                  type="button" 
-                  variant={imageMode === "url" ? "secondary" : "ghost"} 
-                  size="sm" 
-                  className="h-6 text-[10px] px-2"
+          {/* Image URL / Upload with Switch-like UI */}
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="flex items-center justify-between bg-background border rounded-lg p-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">Modo de Imagen</span>
+                <span className="text-xs text-foreground/70">{imageMode === 'url' ? 'Vínculo Externo' : 'Subida Directa'}</span>
+              </div>
+              <div className="flex items-center bg-muted p-1 rounded-full border shadow-inner">
+                <button
+                  type="button"
                   onClick={() => setImageMode("url")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all",
+                    imageMode === "url" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <LinkIcon className="h-3 w-3 mr-1" /> URL
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={imageMode === "upload" ? "secondary" : "ghost"} 
-                  size="sm" 
-                  className="h-6 text-[10px] px-2"
+                  <LinkIcon className="h-3 w-3" /> URL
+                </button>
+                <button
+                  type="button"
                   onClick={() => setImageMode("upload")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all",
+                    imageMode === "upload" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <Upload className="h-3 w-3 mr-1" /> Subir
-                </Button>
+                  <Upload className="h-3 w-3" /> SUBIR
+                </button>
               </div>
             </div>
 
-            <div className="relative group">
+            <div className="relative">
               {imageMode === "url" ? (
-                <Input {...register("image_url")} className="bg-background" placeholder="https://..." />
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">URL de la Imagen</Label>
+                  <Input {...register("image_url")} className="bg-background h-9" placeholder="https://..." />
+                </div>
               ) : (
                 <div className="flex flex-col gap-2">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">Archivo de Imagen</Label>
                   <div className={cn(
-                    "border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center transition-colors",
-                    uploading ? "opacity-50" : "hover:bg-muted/50 cursor-pointer"
+                    "relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all bg-background",
+                    uploading ? "opacity-50" : "hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
                   )}>
                     {uploading ? (
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     ) : (
                       <>
                         <Upload className="h-6 w-6 text-muted-foreground mb-2" />
-                        <span className="text-xs text-muted-foreground text-center">Click para seleccionar archivo</span>
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Seleccionar archivo</span>
                         <input 
                           type="file" 
                           className="absolute inset-0 opacity-0 cursor-pointer" 
@@ -180,40 +199,39 @@ export function ClassForm({
                       </>
                     )}
                   </div>
-                  {imageUrl && (
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground bg-muted p-1 rounded overflow-hidden">
-                      <span className="truncate flex-1">{imageUrl}</span>
-                      <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setValue("image_url", "")}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
             
             {imageUrl && (
-              <div className="mt-2 relative h-32 w-full rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
-                <img src={imageUrl} alt="Preview" className="h-full w-full object-cover" />
-                <Button 
-                  type="button"
-                  variant="destructive" 
-                  size="icon" 
-                  className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setValue("image_url", "")}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+              <div className="mt-2 relative group rounded-xl border overflow-hidden bg-background ring-1 ring-border shadow-sm">
+                <div className="aspect-video w-full flex items-center justify-center bg-muted/20">
+                  <img src={imageUrl} alt="Preview" className="h-full w-full object-cover" />
+                </div>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button 
+                    type="button"
+                    variant="destructive" 
+                    size="sm" 
+                    className="h-8 gap-2"
+                    onClick={() => setValue("image_url", "")}
+                  >
+                    <X className="h-4 w-4" /> Eliminar Imagen
+                  </Button>
+                </div>
+                <div className="bg-background px-2 py-1 border-t text-[9px] text-muted-foreground truncate">
+                  {imageUrl}
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <FormFooter variant="sticky">
-        <Button variant="outline" type="button" onClick={() => onSuccess?.()}>Cancelar</Button>
-        <Button type="submit" disabled={isSubmitting || uploading}>
-          {isSubmitting ? "Guardando..." : id ? "Guardar Cambios" : "Registrar Clase"}
+      <FormFooter variant="sticky" className="pt-4 border-t mt-6 bg-background/80 backdrop-blur-sm">
+        <Button variant="outline" type="button" onClick={() => onSuccess?.()} className="h-9 px-6">Cancelar</Button>
+        <Button type="submit" disabled={isSubmitting || uploading} className="h-9 px-8 shadow-lg shadow-primary/20">
+          {isSubmitting ? "Guardando..." : id ? "Actualizar Clase" : "Registrar Clase"}
         </Button>
       </FormFooter>
     </form>
