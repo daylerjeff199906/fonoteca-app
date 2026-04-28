@@ -13,13 +13,6 @@ export default async function EditOccurrencePage({
   return (
     <LayoutWrapper sectionTitle="Editar Ocurrencia">
       <div className="w-full space-y-4 py-4 px-4">
-        <Breadcrumbs
-          items={[
-            { label: "Inicio", href: "/dashboard" },
-            { label: "Ocurrencias", href: "/dashboard/occurrences" },
-            { label: "Editar Ocurrencia", href: `/dashboard/occurrences/${id}/edit`, active: true },
-          ]}
-        />
         <OccurrenceForm id={id} />
         <MultimediaSection occurrenceId={id} />
       </div>

@@ -36,8 +36,8 @@ export function OrdersClient({ data, count }: { data: Order[]; count: number }) 
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Órdenes Taxonómicos" 
+      <PageHeader
+        title="Órdenes Taxonómicos"
         description="Gestiona los órdenes registrados en el catálogo"
       />
 
@@ -69,16 +69,16 @@ export function OrdersClient({ data, count }: { data: Order[]; count: number }) 
               data.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-semibold">{item.name}</TableCell>
-                  <TableCell>{item.class?.name || "Sin Clase"}</TableCell>
+                  <TableCell>{item.class_obj?.name || "Sin Clase"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <DeleteButtonWithConfirm 
+                      <DeleteButtonWithConfirm
                         id={item.id}
-                        onConfirm={deleteOrder} 
-                        itemName={`orden ${item.name}`} 
+                        onConfirm={deleteOrder}
+                        itemName={`orden ${item.name}`}
                         requiredText="eliminar"
                       />
                     </div>
@@ -97,10 +97,10 @@ export function OrdersClient({ data, count }: { data: Order[]; count: number }) 
           <SheetHeader className="pb-4">
             <SheetTitle>{currentOrder ? "Editar Orden" : "Registrar Orden"}</SheetTitle>
           </SheetHeader>
-          <OrderForm 
-            id={currentOrder?.id || null} 
-            defaultValues={currentOrder || undefined} 
-            onSuccess={() => setIsFormOpen(false)} 
+          <OrderForm
+            id={currentOrder?.id || null}
+            defaultValues={currentOrder || undefined}
+            onSuccess={() => setIsFormOpen(false)}
           />
         </SheetContent>
       </Sheet>

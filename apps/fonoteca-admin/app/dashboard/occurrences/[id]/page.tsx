@@ -47,7 +47,8 @@ export default async function OccurrenceDetailPage({
           </p>
           <p><span className="font-bold text-muted-foreground mr-2">Taxón:</span><span className="italic font-semibold text-primary">{occurrence.taxon?.scientificName || "Desconocido"}</span></p>
           <p><span className="font-bold text-muted-foreground mr-2">Ubicación:</span>{occurrence.location?.locality || "Desconocida"}</p>
-          <p><span className="font-bold text-muted-foreground mr-2">Fecha:</span>{occurrence.event?.eventDate || "-"}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Fecha (Evento):</span>{occurrence.event?.eventDate || "-"}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Fecha (Ocurrencia):</span>{occurrence.occurrence_date || "-"}</p>
           <p><span className="font-bold text-muted-foreground mr-2">Hora:</span>{occurrence.event?.eventTime || "-"}</p>
         </div>
 
@@ -61,7 +62,7 @@ export default async function OccurrenceDetailPage({
         </div>
       </div>
 
-      <MultimediaSection occurrenceId={id} />
+      <MultimediaSection occurrenceId={id} location={occurrence.location?.locality || undefined} />
     </LayoutWrapper>
   );
 }

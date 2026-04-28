@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Upload, Download, Loader2 } from "lucide-react";
 import { bulkCreateOccurrences } from "@/actions/occurrences";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 
 export function BulkUploadSheet() {
@@ -55,7 +55,7 @@ export function BulkUploadSheet() {
           // Fallback to basic CSV parser
           const lines = text.split("\n").filter(Boolean);
           if (lines.length === 0) {
-            toast.error("Archivo vacío");
+            showToast.error("Archivo Vacío", "El archivo CSV seleccionado no contiene datos.");
             setLoading(false);
             return;
           }
@@ -72,7 +72,7 @@ export function BulkUploadSheet() {
         }
 
         if (items.length === 0) {
-          toast.error("Archivo vacío o formato inválido");
+          showToast.error("Formato Inválido", "El archivo está vacío o no tiene un formato compatible.");
           setLoading(false);
           return;
         }
@@ -85,14 +85,14 @@ export function BulkUploadSheet() {
         });
 
         if ((resp.successCount || 0) > 0) {
-          toast.success(`Carga completada: ${resp.successCount} subidos correctamente`);
+          showToast.success("Carga Completada", `Se han procesado ${resp.successCount} registros correctamente.`);
           router.refresh();
         } else {
-          toast.error("No se pudo subir ningún registro");
+          showToast.error("Error de Carga", "No se pudo subir ningún registro del archivo.");
         }
 
       } catch (err) {
-        toast.error("Error procesando el archivo");
+        showToast.error("Error", "Hubo un fallo al procesar el contenido del archivo.");
       } finally {
         setLoading(false);
       }

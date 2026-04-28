@@ -1,4 +1,9 @@
-'use client'
+"use client"
+
+import { usePageHeader } from "@/components/providers/page-header-provider"
+import { useEffect } from "react"
+
+import { DynamicBreadcrumbs } from "./dynamic-breadcrumbs"
 
 interface LayoutWrapperProps {
     children: React.ReactNode
@@ -9,14 +14,19 @@ export const LayoutWrapper = ({
     children,
     sectionTitle,
 }: LayoutWrapperProps) => {
+    const { setTitle } = usePageHeader()
+
+    useEffect(() => {
+        if (sectionTitle) {
+            setTitle(sectionTitle)
+        }
+    }, [sectionTitle, setTitle])
 
     return (
         <div className="flex flex-col gap-6">
-            {sectionTitle && (
-                <div className="flex flex-col gap-1 mb-2">
-                    <h2 className="text-xl font-bold tracking-tight text-foreground">{sectionTitle}</h2>
-                </div>
-            )}
+            <div>
+                <DynamicBreadcrumbs />
+            </div>
             {children}
         </div>
     )

@@ -15,9 +15,9 @@ export const createBioIntranetServer = async (cookieStore: Awaited<ReturnType<ty
                 getAll() {
                     return cookieStore.getAll()
                 },
-                setAll(cookiesToSet) {
+                setAll(cookiesToSet: any) {
                     try {
-                        cookiesToSet.forEach(({ name, value, options }) => {
+                        cookiesToSet.forEach(({ name, value, options }: any) => {
                             const cookieOptions = { ...options };
                             if (isProd) {
                                 cookieOptions.domain = '.iiap.gob.pe';

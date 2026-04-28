@@ -36,8 +36,8 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Familias Taxonómicas" 
+      <PageHeader
+        title="Familias Taxonómicas"
         description="Gestiona las familias registradas en el catálogo"
       />
 
@@ -69,16 +69,16 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
               data.map((family) => (
                 <TableRow key={family.id}>
                   <TableCell className="font-semibold">{family.name}</TableCell>
-                  <TableCell>{family.order_ref?.name || "Sin Orden"}</TableCell>
+                  <TableCell>{family.order_obj?.name || "Sin Orden"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(family)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <DeleteButtonWithConfirm 
+                      <DeleteButtonWithConfirm
                         id={family.id}
-                        onConfirm={deleteFamily} 
-                        itemName={`familia ${family.name}`} 
+                        onConfirm={deleteFamily}
+                        itemName={`familia ${family.name}`}
                         requiredText="eliminar"
                       />
                     </div>
@@ -97,13 +97,13 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
           <SheetHeader className="pb-4">
             <SheetTitle>{currentFamily ? "Editar Familia" : "Registrar Familia"}</SheetTitle>
           </SheetHeader>
-          <FamilyForm 
-            id={currentFamily?.id || null} 
+          <FamilyForm
+            id={currentFamily?.id || null}
             defaultValues={currentFamily ? {
               ...currentFamily,
               order_id: currentFamily.order_id ?? ""
-            } : undefined} 
-            onSuccess={() => setIsFormOpen(false)} 
+            } : undefined}
+            onSuccess={() => setIsFormOpen(false)}
           />
         </SheetContent>
       </Sheet>

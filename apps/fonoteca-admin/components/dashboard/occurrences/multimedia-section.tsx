@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import axios from "axios";
 import { R2_PUBLIC_URL } from "@/lib/r2";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MultimediaViewer } from "./multimedia-viewer";
 
 const BaseSheet = ({
   open,
@@ -103,7 +104,7 @@ const sanitizeFilename = (name: string) => {
     .replace(/^_|_$/g, "");         // Trim underscores
 };
 
-export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
+export function MultimediaSection({ occurrenceId, location }: { occurrenceId: string, location?: string }) {
   const [items, setItems] = useState<Multimedia[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<Multimedia | null>(null);
@@ -122,6 +123,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const [activeParentItemId, setActiveParentItemId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string, isChild: boolean } | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
 
   // URL States
@@ -211,7 +213,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
 
         const sizeLimit = type === MEDIA_TYPE.SOUND ? 40 * 1024 * 1024 : 10 * 1024 * 1024; // Increased image limit to 10MB too
         if (file.size > sizeLimit) {
-          toast.error(`El archivo ${file.name} supera el límite de ${type === MEDIA_TYPE.SOUND ? '40MB' : '10MB'}`);
+          showToast.error("Archivo demasiado grande", `El archivo ${file.name} supera el límite de ${type === MEDIA_TYPE.SOUND ? '40MB' : '10MB'}`);
           continue;
         }
 
@@ -219,7 +221,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
 
         const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
         if (signResp.error || !signResp.url) {
-          toast.error(`Error al preparar subida de ${file.name}`);
+          showToast.error("Error de subida", `Error al preparar subida de ${file.name}`);
           continue;
         }
 
@@ -259,7 +261,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         const createResp = await createMultimedia(validatedData as any);
 
         if (createResp.error) {
-          toast.error(`Error al registrar ${file.name} en BD`);
+          showToast.error("Error de registro", `Error al registrar ${file.name} en la base de datos`);
           continue;
         }
 
@@ -275,7 +277,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         } else {
           detail = ` - ${err.message}`;
         }
-        toast.error(`Error subiendo ${file.name}${detail}`);
+        showToast.error("Error al subir archivo", `Error subiendo ${file.name}${detail}`);
       }
     }
 
@@ -284,7 +286,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       setUploading(null);
       setUploadProgress({});
       if (successCount > 0) {
-        toast.success(`${successCount} archivo(s) procesado(s) correctamente.`);
+        showToast.success("Subida Completa", `${successCount} archivo(s) procesado(s) correctamente.`);
         loadMultimedia();
       }
     }, 500);
@@ -320,19 +322,14 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
 
       await createMultimedia(validatedData as any);
 
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Operación Exitosa</span>
-          <span className="text-xs opacity-90">{isSpectro ? "Histograma agregado" : "Enlace agregado correctamente"} a la multimedia actual.</span>
-        </div>
-      );
+      showToast.success("Operación Exitosa", `${isSpectro ? "Histograma agregado" : "Enlace agregado correctamente"} a la multimedia actual.`);
       setUrlSheetOpen(false);
       setUrlInput("");
       setUrlTitle("");
       setActiveParentItemId(null);
       loadMultimedia();
     } catch (err) {
-      toast.error("Error agregando enlace");
+      showToast.error("Error", "Error agregando enlace a la multimedia.");
     } finally {
       setUploading(null);
     }
@@ -356,13 +353,34 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         tag: item.tag,
       });
 
-      toast.success("Elemento vinculado de la biblioteca");
+      showToast.success("Vínculo Creado", "Elemento vinculado correctamente desde la biblioteca.");
       setLibSheetOpen(false);
       loadMultimedia();
     } catch (err) {
-      toast.error("Error vinculando elemento");
+      showToast.error("Error de vínculo", "No se pudo vincular el elemento de la biblioteca.");
     } finally {
       setUploading(null);
+    }
+  };
+
+  const handleToggleVisibility = async (item: Multimedia) => {
+    setUpdatingId(item.id);
+    try {
+      const resp = await updateMultimedia(item.id, {
+        ...item,
+        is_public: !item.is_public
+      } as any);
+
+      if (resp.error) {
+        showToast.error("Error de Visibilidad", "No se pudo cambiar la visibilidad: " + resp.error);
+      } else {
+        showToast.success("Visibilidad Actualizada", `El archivo ahora es ${!item.is_public ? 'Público' : 'Privado'}.`);
+        loadMultimedia();
+      }
+    } catch (err) {
+      showToast.error("Error Inesperado", "Ocurrió un error al intentar cambiar la visibilidad.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -411,15 +429,15 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       const resp = await updateMultimedia(editingItem.id, validatedData as any);
 
       if (resp.error) {
-        toast.error("Error al actualizar");
+        showToast.error("Error de Actualización", "No se pudieron guardar los cambios.");
       } else {
-        toast.success("Elemento actualizado correctamente");
+        showToast.success("Cambios Guardados", "Elemento actualizado correctamente.");
         setEditSheetOpen(false);
         setEditingItem(null);
         loadMultimedia();
       }
     } catch (err) {
-      toast.error("Error actualizando elemento");
+      showToast.error("Error", "Error actualizando elemento multimedia.");
     } finally {
       setUploading(null);
     }
@@ -434,15 +452,15 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       const fileName = `spectrogram_${cleanName}_${Date.now()}.${fileExt}`;
       const uploadPath = `occurrences/${occurrenceId}/${fileName}`;
 
-      if (file.size > 10 * 1024 * 1024) { // Increase to 10MB for better quality spectros if needed
-        toast.error("El espectrograma supera el límite de 10MB");
+      if (file.size > 10 * 1024 * 1024) {
+        showToast.error("Archivo Excedido", "El espectrograma supera el límite de 10MB.");
         return false;
       }
 
       // 1. Get Presigned URL
       const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
       if (signResp.error || !signResp.url) {
-        toast.error(`Error al preparar subida de ${file.name}`);
+        showToast.error("Error de Preparación", `Error al preparar subida de ${file.name}.`);
         return false;
       }
 
@@ -479,7 +497,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       });
 
       if (createResp.error) {
-        toast.error("Error al registrar espectrograma en BD");
+        showToast.error("Error de Base de Datos", "Error al registrar espectrograma en la base de datos.");
         return false;
       }
 
@@ -491,7 +509,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       return true;
     } catch (err) {
       console.error("Spectrogram upload error:", err);
-      toast.error("Error subiendo espectrograma");
+      showToast.error("Error de Subida", "Ocurrió un error al subir el espectrograma.");
       return false;
     } finally {
       setUploading(null);
@@ -519,7 +537,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
             if (await uploadSpectrogramFile(file, targetItem.id)) count++;
           }
           if (count > 0) {
-            toast.success(`${count} histograma(s) subido(s)`);
+            showToast.success("Subida Exitosa", `${count} histograma(s) subido(s) correctamente.`);
             loadMultimedia();
           }
           return;
@@ -543,12 +561,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
           { id: draggedItem.id, order_index: targetItem.order_index || 0 },
           { id: targetItem.id, order_index: draggedItem.order_index || 0 }
         ]);
-        toast.success(
-          <div className="flex flex-col gap-0.5">
-            <span className="font-bold text-sm">Orden Actualizado</span>
-            <span className="text-xs opacity-90">Se reordenaron los histogramas.</span>
-          </div>
-        );
+        showToast.success("Orden Actualizado", "Se reordenaron los histogramas correctamente.");
       }
       setDraggedItem(null);
       return;
@@ -563,12 +576,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         });
         setItems(updated);
         await updateMultimedia(draggedItem.id, { ...draggedItem, parent_multimedia_id: targetItem.id });
-        toast.success(
-          <div className="flex flex-col gap-0.5">
-            <span className="font-bold text-sm">Histograma Movido</span>
-            <span className="text-xs opacity-90">El histograma se vinculó al nuevo audio.</span>
-          </div>
-        );
+        showToast.success("Histograma Movido", "El histograma se vinculó al nuevo audio correctamente.");
       }
       setDraggedItem(null);
       return;
@@ -588,7 +596,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       { id: draggedItem.id, order_index: targetItem.order_index || 0 },
       { id: targetItem.id, order_index: draggedItem.order_index || 0 }
     ]);
-    toast.success("Orden actualizado");
+    showToast.success("Orden Actualizado", "El orden de los elementos ha sido guardado.");
     setDraggedItem(null);
   };
 
@@ -618,15 +626,10 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
   const handleDelete = async (id: string, isAudioChild = false) => {
     const resp = await deleteMultimedia(id);
     if (resp.success) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Archivo Eliminado</span>
-          <span className="text-xs opacity-90">{isAudioChild ? "El espectrograma fue eliminado." : "El archivo multimedia fue eliminado con éxito."}</span>
-        </div>
-      );
+      showToast.success("Archivo Eliminado", isAudioChild ? "El espectrograma fue eliminado correctamente." : "El archivo multimedia fue eliminado con éxito.");
       loadMultimedia();
     } else {
-      toast.error("Error al eliminar");
+      showToast.error("Error", "No se pudo eliminar el archivo.");
     }
   };
 
@@ -670,6 +673,17 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Add New Audio Card */}
+          <button
+            onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setSelectedFiles([]); setUploadSheetOpen(true); }}
+            className="w-full flex items-center justify-center gap-4 p-6 rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all group"
+          >
+            <div className="bg-primary/20 p-2 rounded-full group-hover:scale-110 transition-transform">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-sm font-bold text-primary">Añadir nuevo audio o grabación</span>
+          </button>
+
           {list.map((item) => {
             const isPlaying = playingId === item.id;
             const spectrograms = items.filter(it => it.parent_multimedia_id === item.id && it.tag === "spectrogram");
@@ -712,6 +726,24 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
                       onEnded={() => playingId === item.id && setPlayingId(null)}
                     />
                   </div>
+                  {/* Visibility Chip */}
+                  <button
+                    onClick={() => handleToggleVisibility(item)}
+                    disabled={updatingId === item.id}
+                    className={cn(
+                      "px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
+                      item.is_public ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100" : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                    )}
+                  >
+                    {updatingId === item.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
+                    ) : item.is_public ? (
+                      <Eye className="h-3 w-3 inline mr-1" />
+                    ) : (
+                      <EyeOff className="h-3 w-3 inline mr-1" />
+                    )}
+                    {item.is_public ? "Público" : "Privado"}
+                  </button>
                 </div>
 
                 {/* Spectrograms Thumbnails */}
@@ -815,6 +847,17 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {/* Add New Image Card */}
+          <button
+            onClick={() => { setActiveUploadType(uploadType); setSelectedFiles([]); setUploadSheetOpen(true); }}
+            className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all group aspect-square"
+          >
+            <div className="bg-primary/20 p-4 rounded-full group-hover:scale-110 transition-transform">
+              <Plus className="h-8 w-8 text-primary" />
+            </div>
+            <span className="text-xs font-bold text-primary text-center px-4">Subir nueva fotografía</span>
+          </button>
+
           {list.map((item) => (
             <div
               key={item.id}
@@ -833,22 +876,46 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
                   <span className="text-[11px] font-bold truncate text-foreground/80">{item.title || "Sin título"}</span>
                 </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
-                    <MoreVertical className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete({ id: item.id, isChild: false })}><Trash2 className="h-4 w-4 mr-2" /> Eliminar</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleToggleVisibility(item)}
+                    disabled={updatingId === item.id}
+                    className={cn(
+                      "p-1 rounded-full transition-all hover:bg-muted active:scale-90 disabled:opacity-50",
+                      item.is_public ? "text-green-500" : "text-orange-500"
+                    )}
+                    title={item.is_public ? "Cambiar a Privado" : "Cambiar a Público"}
+                  >
+                    {updatingId === item.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : item.is_public ? (
+                      <Eye className="h-3 w-3" />
+                    ) : (
+                      <EyeOff className="h-3 w-3" />
+                    )}
+                  </button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground p-1">
+                      <MoreVertical className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4 mr-2" /> Editar</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete({ id: item.id, isChild: false })}><Trash2 className="h-4 w-4 mr-2" /> Eliminar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
 
               {/* Body Section */}
-              <div className="relative flex-1 bg-white flex items-center justify-center min-h-[160px] p-4 m-2 rounded-sm cursor-pointer" onClick={() => handleEditClick(item)}>
+              <div className="relative aspect-square bg-white flex items-center justify-center p-4 m-2 rounded-xl cursor-pointer overflow-hidden group/img max-h-[180px]" onClick={() => {
+                setSliderItems(list);
+                setSliderIndex(list.indexOf(item));
+                setSliderOpen(true);
+              }}>
                 <img
                   src={getDriveThumbnailUrl(item.identifier) || item.identifier}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110 "
                   alt={item.title || "Imagen"}
                 />
                 {/* Tag Overlay Bottom Left */}
@@ -886,14 +953,6 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         }
       }}
     >
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Upload className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">Gestión Multimedia (R2-Bucket)</h3>
-        </div>
-        <p className="text-xs text-muted-foreground">Sube Audios, Histogramas y Fotografías. Arrastra para cambiar el orden o vincular histogramas.</p>
-      </div>
-
       <div className="grid grid-cols-1 gap-6">
         {initialLoading ? (
           <div className="space-y-8">
@@ -1079,7 +1138,7 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
       <BaseSheet
         open={editSheetOpen}
         onOpenChange={(open) => { setEditSheetOpen(open); if (!open) setEditingItem(null); }}
-        title="Detalles del Elemento"
+        title="Editar"
         description="Gestiona la información y metadatos del archivo."
         footer={(
           <div className="flex justify-end gap-3 w-full">
@@ -1093,14 +1152,24 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         <div className="space-y-6">
           {/* Visualizer */}
           {editUrl && (
-            <div className="aspect-video relative rounded-2xl border bg-card flex flex-col items-center justify-center overflow-hidden mb-4 shadow-sm">
+            <div className="relative aspect-video rounded-2xl overflow-hidden border bg-black flex items-center justify-center mb-6 shadow-xl group">
               {getDriveEmbedUrl(editUrl) ? (
                 <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
               ) : editingItem?.type === MEDIA_TYPE.STILL ? (
-                <img src={getAudioUrl(editUrl)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
+                <img
+                  src={getAudioUrl(editUrl)}
+                  className="max-h-full max-w-full object-contain"
+                  alt="Preview"
+                  onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }}
+                />
               ) : (
-                <audio src={getAudioUrl(editUrl)} controls className="w-[90%] mt-auto mb-4" />
+                <div className="w-full h-full flex items-center justify-center bg-muted/10 p-8">
+                  <audio src={getAudioUrl(editUrl)} controls className="w-full" />
+                </div>
               )}
+              <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/50 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-widest">
+                Vista Previa
+              </div>
             </div>
           )}
 
@@ -1492,63 +1561,27 @@ export function MultimediaSection({ occurrenceId }: { occurrenceId: string }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* --- Slider Modal for Spectrogram Preview --- */}
-      <BaseSheet
-        open={sliderOpen}
-        onOpenChange={setSliderOpen}
-        title="Previsualización de Espectrogramas"
-        description={`${sliderIndex + 1} de ${sliderItems.length} archivos vinculados`}
-        footer={(
-          <div className="flex items-center justify-between w-full">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={sliderIndex === 0}
-                onClick={() => setSliderIndex(prev => prev - 1)}
-                className="rounded-full h-10 w-10"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={sliderIndex === sliderItems.length - 1}
-                onClick={() => setSliderIndex(prev => prev + 1)}
-                className="rounded-full h-10 w-10"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="text-xs rounded-xl" onClick={() => handleEditClick(sliderItems[sliderIndex])}>
-                <Pencil className="h-3.5 w-3.5 mr-2" /> Editar Metadatos
-              </Button>
-              <Button className="text-xs rounded-xl px-6" onClick={() => setSliderOpen(false)}>Cerrar</Button>
-            </div>
-          </div>
-        )}
-      >
-        <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
-          {sliderItems[sliderIndex] && (
-            <div className="w-full space-y-4">
-              <div className="aspect-square sm:aspect-video relative rounded-3xl overflow-hidden border bg-black flex items-center justify-center shadow-2xl">
-                <img
-                  src={sliderItems[sliderIndex].identifier}
-                  className="max-h-full max-w-full object-contain"
-                  alt={sliderItems[sliderIndex].title || "Spectrogram"}
-                />
-              </div>
-              <div className="bg-muted/10 p-4 rounded-2xl border border-dashed text-center">
-                <p className="text-xs font-bold text-foreground">{sliderItems[sliderIndex].title || "Sin título"}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
-                  {sliderItems[sliderIndex].creator || "Autor Desconocido"} • {sliderItems[sliderIndex].format || "image/jpeg"}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </BaseSheet>
+      {/* --- Premium Multimedia Viewer --- */}
+      <MultimediaViewer
+        isOpen={sliderOpen}
+        items={sliderItems}
+        initialIndex={sliderIndex}
+        onClose={() => setSliderOpen(false)}
+        location={location}
+        onUpdate={async (updatedItem) => {
+          const validatedData = multimediaSchema.parse(updatedItem);
+          const resp = await updateMultimedia(updatedItem.id, validatedData as any);
+          if (resp.error) {
+            showToast.error("Error de Actualización", "No se pudieron guardar los cambios en el elemento.");
+          } else {
+            showToast.success("Cambios Guardados", "El elemento ha sido actualizado correctamente.");
+            loadMultimedia();
+          }
+        }}
+        onDelete={async (id) => {
+          setItemToDelete({ id, isChild: false });
+        }}
+      />
     </div>
   );
 }

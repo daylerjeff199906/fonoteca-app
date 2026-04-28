@@ -7,7 +7,7 @@ import { taxonSchema, TaxonInput } from "@/lib/validations/fonoteca";
 import { getTaxon, createTaxon, updateTaxon, getGenera } from "@/actions/taxa";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -48,7 +48,7 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
             genus_id: resp.data.genus_id || "",
           } as any);
         } else {
-          toast.error("Error al cargar taxón: " + resp.error);
+          showToast.error("Error de Carga", "No se pudo obtener la información del taxón: " + resp.error);
         }
       });
     } else {
@@ -72,10 +72,10 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
     setLoading(false);
 
     if (resp.success) {
-      toast.success(id ? "Taxón actualizado" : "Taxón registrado");
+      showToast.success("Operación Exitosa", id ? "El taxón ha sido actualizado correctamente." : "El taxón ha sido registrado en el sistema.");
       onSuccess(resp.data?.id);
     } else {
-      toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
+      showToast.error("Error", (typeof resp.error === "string" ? resp.error : "Hubo un problema al procesar el taxón."));
     }
   };
 

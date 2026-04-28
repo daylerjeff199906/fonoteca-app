@@ -37,8 +37,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { getDriveThumbnailUrl } from "@/utils/multimedia";
+import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
 export function OccurrencesClient({
   data,
@@ -139,7 +140,7 @@ export function OccurrencesClient({
       }
 
       if (dataToExport.length === 0) {
-        toast.info("No hay datos para exportar");
+        showToast.info("Sin Datos", "No hay registros que coincidan con los criterios para exportar.");
         return;
       }
 
@@ -157,10 +158,10 @@ export function OccurrencesClient({
         downloadFile(content, `${name}.csv`, "text/csv");
       }
 
-      if (mode !== "single") toast.success("Exportación completada");
+      if (mode !== "single") showToast.success("Exportación Exitosa", "Los registros han sido descargados correctamente.");
     } catch (error) {
       console.error(error);
-      toast.error("Error al exportar");
+      showToast.error("Error", "Ocurrió un fallo al intentar exportar los datos.");
     } finally {
       setIsExporting(false);
     }
@@ -185,16 +186,15 @@ export function OccurrencesClient({
   const handleBulkDelete = async () => {
     if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} registros de monitoreo?`)) return;
 
-    toast.loading(`Eliminando ${selectedIds.length} registros...`);
+    // Note: showToast doesn't support .loading directly, I'll use standard toast for long ops if needed
+    // but for now I'll just show the result.
     try {
       await deleteOccurrences(selectedIds);
-      toast.dismiss();
-      toast.success("Eliminados correctamente");
+      showToast.success("Registros Eliminados", `Se han eliminado ${selectedIds.length} registros correctamente.`);
       setSelectedIds([]);
       router.refresh();
     } catch (err) {
-      toast.dismiss();
-      toast.error("Error en la eliminación por lotes");
+      showToast.error("Error", "No se pudo completar la eliminación por lotes.");
     }
   };
 
@@ -416,6 +416,7 @@ export function OccurrencesClient({
               </TableHead>
               <TableHead className="w-[80px]">Media</TableHead>
               <TableHead>Occurrence ID</TableHead>
+              <TableHead>Basis</TableHead>
               <TableHead>Taxón</TableHead>
               <TableHead>Ubicación</TableHead>
               <TableHead>Fecha</TableHead>
@@ -459,6 +460,11 @@ export function OccurrencesClient({
                     </TableCell>
                     <TableCell className="font-medium">{oc.occurrenceID}</TableCell>
                     <TableCell>
+                      <p className="  max-w-[150px] text-[10px] font-semibold">
+                        {BASIS_OF_RECORD_LABELS[oc.basisOfRecord] || oc.basisOfRecord}
+                      </p>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex flex-col min-w-[180px]">
                         <span className="italic font-bold text-primary">{oc.taxon?.scientificName || "Desconocido"}</span>
                         <span className="text-[9px] text-muted-foreground uppercase tracking-tight line-clamp-1">
@@ -467,7 +473,11 @@ export function OccurrencesClient({
                       </div>
                     </TableCell>
                     <TableCell>{oc.location?.locality || "Desconocida"}</TableCell>
-                    <TableCell>{oc.event?.eventDate}</TableCell>
+                    <TableCell>
+                      <span className="text-xs">
+                        {oc.event?.eventDate || oc.occurrence_date || "S/F"}
+                      </span>
+                    </TableCell>
                     <TableCell>{oc.recordedBy}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

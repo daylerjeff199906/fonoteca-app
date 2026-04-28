@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 
 export function DeleteButtonWithConfirm({
   id,
@@ -37,14 +37,14 @@ export function DeleteButtonWithConfirm({
     try {
       const result = await onConfirm(id);
       if (result.success) {
-        toast.success(`${itemName} eliminado correctamente`);
+        showToast.success("Eliminación Exitosa", `El ${itemName} ha sido eliminado correctamente.`);
         setOpen(false);
         setInputValue("");
       } else {
-        toast.error(result.error || "Error al eliminar");
+        showToast.error("Error", result.error || `No se pudo eliminar el ${itemName}.`);
       }
     } catch (err) {
-      toast.error("Error inesperado al eliminar");
+      showToast.error("Error", "Ocurrió un error inesperado al intentar eliminar el registro.");
     } finally {
       setLoading(false);
     }

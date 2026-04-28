@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Occurrence, MEDIA_TYPE } from "@/types/fonoteca";
@@ -50,7 +50,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
         if (resp.data) {
           reset(resp.data as any);
         } else {
-          toast.error("No se pudo cargar la información multimedia.");
+          showToast.error("Error de Carga", "No se pudo recuperar la información del archivo multimedia.");
         }
       });
     }
@@ -67,12 +67,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
     setLoading(false);
 
     if (resp.success) {
-      toast.success(
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-sm">Operación Exitosa</span>
-          <span className="text-xs opacity-90">{id ? "Multimedia actualizada correctamente." : "Multimedia registrada correctamente."}</span>
-        </div>
-      );
+      showToast.success("Operación Exitosa", id ? "Multimedia actualizada correctamente." : "Multimedia registrada correctamente.");
       if (redirectUrl && resp.data?.id) {
         const finalUrl = redirectUrl.replace('[id]', resp.data.id);
         router.push(finalUrl);
@@ -80,7 +75,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
         router.push("/dashboard/occurrences/" + data.occurrence_id);
       }
     } else {
-      toast.error("Error: " + (typeof resp.error === "string" ? resp.error : "Falló la validación"));
+      showToast.error("Error", (typeof resp.error === "string" ? resp.error : "Hubo un fallo al procesar los datos multimedia."));
     }
   };
 
@@ -101,7 +96,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
           <FileAudio className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Asociación y Archivo</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Ocurrencia Relacionada *</label>
@@ -207,18 +202,18 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             ].map((field) => (
               <div key={field.key} className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">{field.label}</label>
-                <Input 
-                  {...register(`guano_metadata.${field.key}` as any)} 
-                  className="h-8 text-xs bg-background/80" 
+                <Input
+                  {...register(`guano_metadata.${field.key}` as any)}
+                  className="h-8 text-xs bg-background/80"
                   placeholder="N/A"
                 />
               </div>
             ))}
             <div className="flex flex-col gap-1 sm:col-span-2 md:col-span-3">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Note / Observaciones GUANO</label>
-              <Textarea 
-                {...register("guano_metadata.Note" as any)} 
-                className="text-xs bg-background/80" 
+              <Textarea
+                {...register("guano_metadata.Note" as any)}
+                className="text-xs bg-background/80"
                 placeholder="Notas técnicas de la grabación..."
               />
             </div>
@@ -279,7 +274,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
               control={control}
               name="is_public"
               render={({ field }) => (
-                <div 
+                <div
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors w-full",
                     field.value ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-muted/30 text-muted-foreground"
