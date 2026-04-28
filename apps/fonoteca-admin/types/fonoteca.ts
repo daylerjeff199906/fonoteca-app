@@ -224,3 +224,22 @@ export interface DownloadLog {
   ip_address: string | null;
   downloaded_at: string;
 }
+
+export const TAXON_KINGDOM = {
+  ANIMALIA: 'Animalia',
+  PLANTAE: 'Plantae',
+  FUNGI: 'Fungi',
+  PROTISTA: 'Protista',
+  ARCHAEA: 'Archaea',
+  BACTERIA: 'Bacteria',
+} as const;
+
+export const TAXON_PHYLUM = {
+  CHORDATA: 'Chordata',
+  ARTHROPODA: 'Arthropoda',
+  MOLLUSCA: 'Mollusca',
+  ANNELIDA: 'Annelida',
+  CNIDARIA: 'Cnidaria',
+  ECHINODERMATA: 'Echinodermata',
+  PORIFERA: 'Porifera',
+} as const;

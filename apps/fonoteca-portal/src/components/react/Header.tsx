@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                             alt="Logo IIAP"
                             className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
                         />
-                        <span className="hidden md:block text-sm md:text-base font-medium max-w-[260px] leading-tight">
+                        <span className="hidden md:block text-sm font-medium max-w-[260px] leading-tight">
                             Instituto de Investigaciones de la Amazonía Peruana
                         </span>
                     </a>
