@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getSpeciesById, type Species } from '../../data/species';
 import { translations, type Language } from '../../i18n/data';
 import { SpeciesGallery } from './SpeciesGallery';
@@ -10,7 +11,8 @@ import {
     FileText,
     Share2,
     ChevronRight,
-    Lock
+    Lock,
+    Music
 } from 'lucide-react';
 
 interface Props {
@@ -47,6 +49,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState('at-a-glance');
+    const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
 
     const content = translations[lang as keyof typeof translations];
     const currentLang = lang as Language;
@@ -348,44 +351,69 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 description={lang === 'es' ? 'Explora la fonología y los patrones acústicos a través de grabaciones en alta fidelidad y espectrogramas dinámicos.' : 'Explore phonology and acoustic patterns through high-fidelity recordings and dynamic spectrograms.'}
                             />
 
-                            <div className="space-y-16">
-                                {species.audios.map((audio) => (
-                                    <div key={audio.id} className="space-y-6">
-                                        {isGoogleDriveLink(audio.url) ? (
-                                            <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-8 text-center space-y-6">
-                                                <div className="mx-auto w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
-                                                    <Lock size={32} />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <h4 className="text-xl font-black text-gray-900">Reproducción Protegida</h4>
-                                                    <p className="text-sm text-gray-500 max-w-md mx-auto">
-                                                        Este audio está alojado en un sistema seguro. Utiliza el reproductor oficial de Google Drive a continuación para escucharlo.
-                                                    </p>
-                                                </div>
+                            <div className="grid grid-cols-1 gap-4">
+                                {species.audios.map((audio, idx) => (
+                                    <motion.div
+                                        key={audio.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        onClick={() => setSelectedAudioIndex(idx)}
+                                        className="group flex items-center gap-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer"
+                                    >
+                                        {/* Play Indicator / Icon */}
+                                        <div className="w-12 h-12 shrink-0 rounded-full bg-accent-green/10 text-accent-green flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-all">
+                                            <Music size={20} className="group-hover:animate-pulse" />
+                                        </div>
 
-                                                <div className="relative aspect-video w-full max-w-3xl mx-auto rounded-xl overflow-hidden shadow-2xl bg-black border border-gray-800">
-                                                    <iframe
-                                                        src={getDriveIframe(audio.url) || ''}
-                                                        className="absolute inset-0 w-full h-full"
-                                                        allow="autoplay"
-                                                        title="Drive Protected Player"
-                                                    />
+                                        {/* Metadata */}
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-black text-gray-900 dark:text-white truncate">
+                                                {audio.title || (lang === 'es' ? 'Grabación' : 'Recording')} {idx + 1}
+                                            </h4>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                                                {audio.description || (lang === 'es' ? 'Registro de campo' : 'Field record')}
+                                            </p>
+                                        </div>
+
+                                        {/* Spectrogram Preview */}
+                                        <div className="hidden md:block w-32 h-12 shrink-0 rounded-lg overflow-hidden bg-black border border-gray-100 dark:border-gray-800 relative">
+                                            {audio.spectrogramImage ? (
+                                                <img 
+                                                    src={audio.spectrogramImage} 
+                                                    alt="Preview" 
+                                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center opacity-20">
+                                                    <div className="w-full h-px bg-accent-green/50"></div>
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <AudioPlayer
-                                                audioUrl={audio.url}
-                                                title={audio.title ?? undefined}
-                                                artist={commonName}
-                                                description={audio.description ?? undefined}
-                                                spectrogramImage={audio.spectrogramImage ?? undefined}
-                                                spectrogramImages={species.galleryImages?.map(img => img.url).concat(species.spectrograms?.map(img => img.url) || [])}
-                                                layoutMode="expandable"
-                                            />
-                                        )}
-                                    </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action Icon */}
+                                        <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 group-hover:border-accent-green group-hover:text-accent-green transition-all">
+                                            <ChevronRight size={16} />
+                                        </div>
+                                    </motion.div>
                                 ))}
                             </div>
+
+                            {/* Full Analysis Player Modal */}
+                            {selectedAudioIndex !== null && (
+                                <AudioPlayer
+                                    audioUrl={species.audios[selectedAudioIndex].url}
+                                    title={species.audios[selectedAudioIndex].title ?? undefined}
+                                    artist={commonName}
+                                    description={species.audios[selectedAudioIndex].description ?? undefined}
+                                    spectrogramImage={species.audios[selectedAudioIndex].spectrogramImage ?? undefined}
+                                    spectrogramImages={species.galleryImages?.map(img => img.url).concat(species.spectrograms?.map(img => img.url) || [])}
+                                    isModalContainer={true}
+                                    onClose={() => setSelectedAudioIndex(null)}
+                                    autoplay={true}
+                                />
+                            )}
 
                             {/* Spectrograms Gallery */}
                             {species.spectrograms && species.spectrograms.length > 0 && (
