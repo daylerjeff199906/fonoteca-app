@@ -42,9 +42,11 @@ export const translations = {
             ]
         },
         stats: {
-            s1: { count: "773", label: "Grabaciones", desc: "Total de registros de audio" },
-            s2: { count: "281", label: "Especies", desc: "Catalogadas en la colección" },
-            s3: { count: "48", label: "Familias", desc: "Grupos taxonómicos representados" }
+            s1: { count: "0", label: "Grabaciones", desc: "Total de registros de audio" },
+            s2: { count: "0", label: "Especies", desc: "Catalogadas en la colección" },
+            s3: { count: "0", label: "Familias", desc: "Grupos taxonómicos representados" },
+            s4: { count: "0", label: "Órdenes", desc: "Órdenes taxonómicos" },
+            s5: { count: "0", label: "Clases", desc: "Clases biológicas representadas" }
         },
         chart: {
             title_sm: "Resumen Analítico",
@@ -219,9 +221,11 @@ export const translations = {
             ]
         },
         stats: {
-            s1: { count: "773", label: "Recordings", desc: "Total audio records" },
-            s2: { count: "281", label: "Species", desc: "Cataloged in the collection" },
-            s3: { count: "48", label: "Families", desc: "Taxonomic groups represented" }
+            s1: { count: "0", label: "Recordings", desc: "Total audio records" },
+            s2: { count: "0", label: "Species", desc: "Cataloged in the collection" },
+            s3: { count: "0", label: "Families", desc: "Taxonomic groups represented" },
+            s4: { count: "0", label: "Orders", desc: "Taxonomic orders" },
+            s5: { count: "0", label: "Classes", desc: "Biological classes represented" }
         },
         chart: {
             title_sm: "Analytics Overview",
@@ -396,9 +400,11 @@ export const translations = {
             ]
         },
         stats: {
-            s1: { count: "773", label: "Gravações", desc: "Total de registros de áudio" },
-            s2: { count: "281", label: "Espécies", desc: "Catalogadas na coleção" },
-            s3: { count: "48", label: "Famílias", desc: "Grupos taxonômicos representados" }
+            s1: { count: "0", label: "Gravações", desc: "Total de registros de áudio" },
+            s2: { count: "0", label: "Espécies", desc: "Catalogadas na coleção" },
+            s3: { count: "0", label: "Famílias", desc: "Grupos taxonômicos representados" },
+            s4: { count: "0", label: "Ordens", desc: "Ordens taxonômicas" },
+            s5: { count: "0", label: "Classes", desc: "Classes biológicas representadas" }
         },
         chart: {
             title_sm: "Visão Geral Analítica",
