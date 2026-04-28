@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Play, Info, MapPin, ArrowRight } from 'lucide-react';
+import { Play, Info, MapPin, ArrowRight } from 'lucide-react';
 import type { Species } from '../../data/species';
 
 interface SpeciesCardProps {
@@ -20,8 +20,8 @@ const MediaViewer: React.FC<{
     fallback?: string;
 }> = ({ src, alt, className, onLoaded, isLoaded, fallback = '/images/logo-mini.webp' }) => {
     const [hasError, setHasError] = React.useState(false);
-    
-    // Auto-detect and fix drive links that might have slipped through without conversion
+
+    // Auto-detect and fix drive links
     const processedSrc = React.useMemo(() => {
         if (!src) return '';
         if (src.includes('drive.google.com') || src.includes('docs.google.com')) {
@@ -35,23 +35,28 @@ const MediaViewer: React.FC<{
 
     if (!processedSrc || hasError) {
         return (
-            <div className={`${className} bg-slate-100 dark:bg-slate-800 flex items-center justify-center`}>
-                 <img src={fallback} className="w-12 h-12 opacity-20 filter grayscale" alt="Fallback" onLoad={onLoaded} />
+            <div className={`${className} bg-slate-100 dark:bg-[#0c141d] flex items-center justify-center p-8`}>
+                <img
+                    src={fallback}
+                    className="w-20 h-20 opacity-10 filter grayscale brightness-50"
+                    alt="No image available"
+                    onLoad={onLoaded}
+                />
             </div>
         );
     }
 
     return (
-        <div className="relative w-full h-full overflow-hidden bg-slate-50 dark:bg-slate-900/50">
+        <div className="relative w-full h-full overflow-hidden bg-slate-100 dark:bg-[#0c141d]">
             {!isLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <div className="w-4 h-4 border-2 border-accent-green border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 animate-pulse transition-opacity duration-300">
+                    <div className="w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer"></div>
                 </div>
             )}
             <img
                 src={processedSrc}
                 alt={alt}
-                className={`${className} transition-all duration-1000 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}
+                className={`${className} transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
                 onLoad={onLoaded}
                 onError={() => setHasError(true)}
                 loading="lazy"
@@ -146,11 +151,6 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
             className="group bg-white dark:bg-[#121b28] rounded-xl border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 transition-all duration-500 relative flex flex-col overflow-hidden shadow-sm hover:shadow-xl"
         >
             <div className="aspect-[6/5] relative bg-gray-50 dark:bg-gray-900 overflow-hidden">
-                {!isLoaded && (
-                    <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-                        <RefreshCw className="w-6 h-6 text-gray-200 animate-spin" />
-                    </div>
-                )}
                 <MediaViewer
                     src={coverImage}
                     alt={species.scientificName}

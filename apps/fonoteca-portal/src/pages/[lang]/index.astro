@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import { Header } from "../../components/react/Header";
 import { Footer } from "../../components/react/Footer";
 import { Hero } from "../../components/react/Hero";
+import { ClassExplorer } from "../../components/react/ClassExplorer";
 import { StatsChart } from "../../components/react/StatsChart";
 import { PlaylistCarousel } from "../../components/react/PlaylistCarousel";
 import { getAllSpecies } from "../../data/species";
@@ -23,14 +24,17 @@ const { species: allSpecies } = await getAllSpecies();
 const randomSpecies = [...allSpecies].sort(() => 0.5 - Math.random());
 
 // Fetch real stats from Supabase
-import { getRealStats } from "../../data/stats";
+import { getRealStats, getSpeciesByClass } from "../../data/stats";
 const realStats = await getRealStats();
+const speciesByClassData = await getSpeciesByClass();
 
 // Update content with real values
 const statsContent = {
     s1: { ...content.stats.s1, count: realStats.recordings.toString() },
     s2: { ...content.stats.s2, count: realStats.species.toString() },
     s3: { ...content.stats.s3, count: realStats.families.toString() },
+    s4: { ...content.stats.s4, count: realStats.orders.toString() },
+    s5: { ...content.stats.s5, count: realStats.classes.toString() },
 };
 ---
 
@@ -44,6 +48,8 @@ const statsContent = {
     <main>
         <Hero client:load content={content.hero} lang={lang as string} stats={realStats} />
         
+        <ClassExplorer client:load lang={lang as string} classes={speciesByClassData} />
+
         {/* Audio Archive Section - Últimas Colecciones */}
         <section
             id="library"
@@ -60,7 +66,7 @@ const statsContent = {
         </section>
 
         <section class="bg-gray-50 dark:bg-[#0c141d]">
-            <StatsChart client:visible statsContent={statsContent} chartContent={content.chart} lang={lang as string} />
+            <StatsChart client:visible statsContent={statsContent} chartContent={content.chart} lang={lang as string} classData={speciesByClassData} />
         </section>
 
         {/* Especies de la colección */}
