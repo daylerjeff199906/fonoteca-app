@@ -124,68 +124,28 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 </p>
                             </motion.div>
 
-                            {/* Metrics Grid with Variants */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-                                {metrics.map((metric, i) => {
-                                    const isPopOut = i < 2;
-                                    const popOutImage = i === 0 ? '/assets/popouts/frog.png' : '/assets/popouts/macaw.png';
-                                    
-                                    if (isPopOut) {
-                                        return (
-                                            <motion.div
-                                                key={i}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                whileInView={{ opacity: 1, x: 0 }}
-                                                viewport={{ once: true }}
-                                                transition={{ delay: i * 0.2 }}
-                                                className="group relative p-8 rounded-[3rem] bg-gradient-to-br from-accent-green/20 to-accent-green/5 border border-accent-green/10 hover:border-accent-green/30 transition-all h-56 flex flex-col justify-end overflow-visible mt-12"
-                                            >
-                                                {/* Pop-out Image - Static emerging position */}
-                                                <motion.img 
-                                                    src={popOutImage}
-                                                    alt="Bio detail"
-                                                    initial={{ y: 20, opacity: 0, scale: 0.9 }}
-                                                    whileInView={{ y: -60, opacity: 1, scale: 1.3 }}
-                                                    viewport={{ once: true }}
-                                                    transition={{ delay: i * 0.2 + 0.3, duration: 1, type: "spring" }}
-                                                    className="absolute -top-16 -right-10 w-48 h-48 object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.6)] z-20 pointer-events-none transition-transform duration-500"
-                                                />
-                                                
-                                                <div className="relative z-10">
-                                                    <div className="text-5xl font-bold text-white tracking-tighter mb-1">
-                                                        <CountUp value={metric.value} />
-                                                    </div>
-                                                    <div className="text-[10px] font-black text-accent-green uppercase tracking-[0.3em]">
-                                                        {metric.label}
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    }
-
-                                    return (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            whileInView={{ opacity: 1, scale: 1 }}
-                                            viewport={{ once: true }}
-                                            transition={{ delay: i * 0.1 }}
-                                            className="group p-8 rounded-[3rem] bg-white/5 backdrop-blur-md border border-white/5 hover:border-accent-green/20 transition-all flex flex-col justify-between h-56"
-                                        >
-                                            <div className="w-12 h-12 rounded-2xl bg-accent-green/10 flex items-center justify-center text-accent-green group-hover:bg-accent-green group-hover:text-black transition-all duration-500">
-                                                <metric.icon className="w-6 h-6" />
+                            {/* Metrics Grid */}
+                            <div className="grid grid-cols-2 gap-8">
+                                {metrics.map((metric, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        whileInView={{ opacity: 1, scale: 1 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="group p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-accent-green/20 transition-all"
+                                    >
+                                        <metric.icon className="w-5 h-5 text-accent-green/50 mb-4 group-hover:text-accent-green transition-colors" />
+                                        <div className="space-y-1">
+                                            <div className="text-3xl font-bold text-white tracking-tighter">
+                                                <CountUp value={metric.value} />
                                             </div>
-                                            <div className="space-y-1">
-                                                <div className="text-5xl font-bold text-white tracking-tighter">
-                                                    <CountUp value={metric.value} />
-                                                </div>
-                                                <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-accent-green transition-colors">
-                                                    {metric.label}
-                                                </div>
+                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                                {metric.label}
                                             </div>
-                                        </motion.div>
-                                    );
-                                })}
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </div>
 
                             <motion.a 

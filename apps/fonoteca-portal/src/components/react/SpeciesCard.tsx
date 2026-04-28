@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Play, Info, MapPin, ArrowRight } from 'lucide-react';
+import { Play, Info, MapPin, ArrowRight } from 'lucide-react';
 import type { Species } from '../../data/species';
 
 interface SpeciesCardProps {
@@ -20,7 +20,7 @@ const MediaViewer: React.FC<{
     fallback?: string;
 }> = ({ src, alt, className, onLoaded, isLoaded, fallback = '/images/logo-mini.webp' }) => {
     const [hasError, setHasError] = React.useState(false);
-    
+
     // Auto-detect and fix drive links
     const processedSrc = React.useMemo(() => {
         if (!src) return '';
@@ -36,11 +36,11 @@ const MediaViewer: React.FC<{
     if (!processedSrc || hasError) {
         return (
             <div className={`${className} bg-slate-100 dark:bg-[#0c141d] flex items-center justify-center p-8`}>
-                 <img 
-                    src={fallback} 
-                    className="w-20 h-20 opacity-10 filter grayscale brightness-50" 
-                    alt="No image available" 
-                    onLoad={onLoaded} 
+                <img
+                    src={fallback}
+                    className="w-20 h-20 opacity-10 filter grayscale brightness-50"
+                    alt="No image available"
+                    onLoad={onLoaded}
                 />
             </div>
         );

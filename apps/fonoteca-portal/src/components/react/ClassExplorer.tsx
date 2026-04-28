@@ -93,44 +93,61 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                 {/* Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {displayClasses.map((cls, idx) => {
-                        const name = cls.label_name || idx.toString();
+                        // Safe JSON parsing for label_name
+                        let labelObj: any = null;
+                        try {
+                            labelObj = typeof cls.label_name === 'string' && cls.label_name.startsWith('{') 
+                                ? JSON.parse(cls.label_name) 
+                                : cls.label_name;
+                        } catch (e) {
+                            labelObj = cls.label_name;
+                        }
 
-                        // Use image_url from database
+                        const name = (typeof labelObj === 'object' && labelObj !== null)
+                            ? (labelObj[lang] || labelObj['es'] || cls.id || idx.toString())
+                            : (labelObj || cls.id || idx.toString());
+                        
                         const popoutImg = cls.image_url;
-                        <motion.a
-                            key={cls.id}
-                            href={`/${lang}/species?class=${cls.id}`}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: idx * 0.1, duration: 0.8 }}
-                            whileHover={{ y: -5 }}
-                            className="group relative h-80 flex flex-col justify-end p-8 rounded-[3.5rem] bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/10 hover:border-primary/40 transition-all mt-16 mb-4"
-                        >
-                            {/* 3D Pop-out Image - Uses image_url */}
-                            <motion.img
-                                src={popoutImg || '/images/generic_class.webp'}
-                                alt={name}
-                                initial={{ y: 20, opacity: 0, scale: 0.9 }}
-                                whileInView={{ y: -80, opacity: 1, scale: 1.2 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: idx * 0.1 + 0.4, duration: 1, type: "spring" }}
-                                className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 object-contain drop-shadow-[0_45px_45px_rgba(0,0,0,0.7)] z-20 pointer-events-none transition-transform duration-500"
-                            />
+                        const isPopOut = !!popoutImg && idx % 2 === 0;
+                        
+                        if (isPopOut) {
+                            return (
+                                <motion.a
+                                    key={cls.id}
+                                    href={`/${lang}/species?class=${cls.id}`}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.1, duration: 0.8 }}
+                                    whileHover={{ y: -5 }}
+                                    className="group relative h-80 flex flex-col justify-end p-8 rounded-[3.5rem] bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/10 hover:border-primary/40 transition-all mt-16 mb-4"
+                                >
+                                    {/* 3D Pop-out Image - Uses image_url */}
+                                    <motion.img 
+                                        src={popoutImg}
+                                        alt={name}
+                                        initial={{ y: 20, opacity: 0, scale: 0.9 }}
+                                        whileInView={{ y: -80, opacity: 1, scale: 1.2 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: idx * 0.1 + 0.4, duration: 1, type: "spring" }}
+                                        className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 object-contain drop-shadow-[0_45px_45px_rgba(0,0,0,0.7)] z-20 pointer-events-none transition-transform duration-500"
+                                    />
+                                    
+                                    <div className="relative z-10 text-center">
+                                        <h3 className="text-2xl font-bold text-white tracking-tighter mb-1">
+                                            {name}
+                                        </h3>
+                                        <div className="flex items-center justify-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+                                            <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
+                                            <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                                        </div>
+                                    </div>
 
-                            <div className="relative z-10 text-center">
-                                <h3 className="text-2xl font-bold text-white tracking-tighter mb-1">
-                                    {name}
-                                </h3>
-                                <div className="flex items-center justify-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-                                    <span>{cls.count} {lang === 'es' ? 'Especies' : 'Species'}</span>
-                                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                                </div>
-                            </div>
-
-                            {/* Decorative Blur Circle */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
-                        </motion.a>
+                                    {/* Decorative Blur Circle */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+                                </motion.a>
+                            );
+                        }
 
                         // Variant 1: Modern Glass (Simplified, no icon)
                         return (
