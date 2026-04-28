@@ -52,9 +52,9 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <h1 className="text-6xl md:text-8xl font-bold text-white tracking-tighter leading-[0.9]">
+                        <h1 className="text-6xl md:text-8xl text-white tracking-tighter leading-[0.9]">
                             {content.titles_animate[0].split('|')[0].trim()}
-                            <span className="block text-accent-green opacity-90">
+                            <span className="block text-accent-green opacity-90 font-bold">
                                 {content.titles_animate[0].split('|')[1]?.trim() || 'Portal'}
                             </span>
                         </h1>
