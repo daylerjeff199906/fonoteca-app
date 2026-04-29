@@ -38,7 +38,8 @@ const MapPicker = dynamic(() => import("@/components/dashboard/locations/map-pic
   loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-lg flex items-center justify-center font-medium text-xs text-muted-foreground">Cargando Mapa...</div>
 });
 
-export function InstitutionForm({ id }: { id?: string }) {
+export function InstitutionForm({ id, onSuccess }: { id?: string, onSuccess?: (institution: any) => void }) {
+
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
@@ -85,10 +86,15 @@ export function InstitutionForm({ id }: { id?: string }) {
 
     if (resp.success) {
       showToast.success("Operación Exitosa", id ? "Institución actualizada correctamente." : "Institución registrada correctamente.");
-      router.push("/dashboard/geography/institutions");
+      if (onSuccess) {
+        onSuccess(resp.data);
+      } else {
+        router.push("/dashboard/geography/institutions");
+      }
     } else {
       showToast.error("Error", typeof resp.error === "string" ? resp.error : "No se pudo procesar la solicitud.");
     }
+
   };
 
   if (isFetching) {

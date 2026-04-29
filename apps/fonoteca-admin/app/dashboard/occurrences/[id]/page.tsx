@@ -56,7 +56,8 @@ export default async function OccurrenceDetailPage({
           <h3 className="text-sm font-bold border-b pb-2">Información Adicional</h3>
           <p><span className="font-bold text-muted-foreground mr-2">Registrado Por:</span>{occurrence.recordedBy}</p>
           <p><span className="font-bold text-muted-foreground mr-2">Identificado Por:</span>{occurrence.identifiedBy || "-"}</p>
-          <p><span className="font-bold text-muted-foreground mr-2">Institución:</span>{occurrence.institutionCode}</p>
+          <p><span className="font-bold text-muted-foreground mr-2">Afiliación:</span>{occurrence.institutionCode}</p>
+
           <p><span className="font-bold text-muted-foreground mr-2">Colección:</span>{occurrence.collectionCode}</p>
           <p><span className="font-bold text-muted-foreground mr-2">Observaciones:</span>{occurrence.occurrenceRemarks || "-"}</p>
         </div>
