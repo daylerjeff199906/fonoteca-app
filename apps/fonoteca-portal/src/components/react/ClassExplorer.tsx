@@ -45,7 +45,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
     const t = classTranslations[lang] || classTranslations.es;
 
     // Filter classes to show only those with count > 0
-    const displayClasses = classes.filter(c => c.count > 0).slice(0, 4);
+    const displayClasses = classes.filter(c => c.count > 0);
 
     return (
         <section className="py-20 bg-white dark:bg-[#04070a] overflow-hidden">
@@ -116,8 +116,8 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                 initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ 
-                                    delay: idx * 0.1, 
+                                transition={{
+                                    delay: idx * 0.1,
                                     duration: 0.8,
                                     ease: [0.16, 1, 0.3, 1]
                                 }}
@@ -125,22 +125,22 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                             >
                                 {/* 3D Pop-out Image - Dramatic emerging effect */}
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none z-20">
-                                    <motion.img 
+                                    <motion.img
                                         src={popoutImg}
                                         alt={name}
                                         initial={{ y: 30, opacity: 0, scale: 0.8 }}
                                         whileInView={{ y: -100, opacity: 1, scale: 1.35 }}
                                         viewport={{ once: true }}
-                                        transition={{ 
-                                            delay: idx * 0.1 + 0.3, 
-                                            duration: 1.4, 
+                                        transition={{
+                                            delay: idx * 0.1 + 0.3,
+                                            duration: 1.4,
                                             type: "spring",
                                             bounce: 0.5
                                         }}
                                         className="w-56 h-56 mx-auto object-contain drop-shadow-[0_45px_55px_rgba(0,0,0,0.9)] group-hover:scale-[1.45] transition-transform duration-700"
                                     />
                                 </div>
-                                
+
                                 {/* Content Area - Left Aligned */}
                                 <div className="relative z-30 flex flex-col items-start text-left space-y-4">
                                     <div className="space-y-1 w-full">
@@ -149,7 +149,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                         </h3>
                                         <div className="h-1.5 w-0 bg-primary group-hover:w-16 transition-all duration-500 rounded-full"></div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-3 w-full">
                                         <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-2 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-500">
                                             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>

@@ -80,11 +80,27 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
     const chartData = classData
         .filter(item => item.count > 0)
         .sort((a, b) => b.count - a.count)
-        .map((item, index) => ({
-            name: lang === 'en' ? item.title_en : lang === 'pt' ? item.title_pt : item.title_es,
-            value: item.count,
-            fill: COLORS[index % COLORS.length]
-        }));
+        .map((item, index) => {
+            // Safe JSON parsing for label_name (similar to ClassExplorer)
+            let labelObj: any = null;
+            try {
+                labelObj = typeof item.label_name === 'string' && item.label_name.startsWith('{')
+                    ? JSON.parse(item.label_name)
+                    : item.label_name;
+            } catch (e) {
+                labelObj = item.label_name;
+            }
+
+            const name = (typeof labelObj === 'object' && labelObj !== null)
+                ? (labelObj[lang] || labelObj['es'] || item.id || `Class ${index}`)
+                : (labelObj || item.id || `Class ${index}`);
+
+            return {
+                name,
+                value: item.count,
+                fill: COLORS[index % COLORS.length]
+            };
+        });
 
     if (!isMounted) return <div className="h-[600px] w-full bg-[#0c141d] animate-pulse rounded-[3rem]" />;
 

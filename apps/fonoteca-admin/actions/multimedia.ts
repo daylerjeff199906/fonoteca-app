@@ -280,3 +280,21 @@ export async function uploadToR2(formData: FormData) {
     return { error: err.message || "Failed to upload to R2" };
   }
 }
+export async function deleteFileFromR2(url: string) {
+  if (!url || !url.startsWith(R2_PUBLIC_URL)) {
+    return { success: false, error: "Invalid URL or not an R2 file" };
+  }
+
+  try {
+    const path = url.replace(`${R2_PUBLIC_URL}/`, "");
+    const command = new DeleteObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: path,
+    });
+    await r2Client.send(command);
+    return { success: true };
+  } catch (err: any) {
+    console.error("R2 Delete error:", err);
+    return { error: err.message || "Failed to delete from R2" };
+  }
+}
