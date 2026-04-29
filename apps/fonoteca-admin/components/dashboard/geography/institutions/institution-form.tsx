@@ -30,6 +30,8 @@ import { FormFooter } from "@/components/panel-admin/form-footer";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 const MapPicker = dynamic(() => import("@/components/dashboard/locations/map-picker"), {
   ssr: false,
@@ -91,12 +93,76 @@ export function InstitutionForm({ id }: { id?: string }) {
 
   if (isFetching) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground w-full">
-        <Loader2 className="h-8 w-8 animate-spin mb-4 text-primary" />
-        <span className="text-sm font-medium tracking-tight">Sincronizando datos institucionales...</span>
+      <div className="space-y-8 w-full pb-10 px-1 animate-in fade-in duration-500">
+        {/* 1. Basic Info Skeleton */}
+        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <div className="grid grid-cols-1 gap-6 pt-2">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-40" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Contact and Stats Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
+            <Skeleton className="h-4 w-32 mb-4" />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          </div>
+          <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
+            <Skeleton className="h-4 w-32 mb-4" />
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="flex gap-4">
+                <Skeleton className="h-5 w-5" />
+                <Skeleton className="h-5 w-40" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Map Skeleton */}
+        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
+          <Skeleton className="h-4 w-40 mb-4" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="lg:col-span-2">
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full pb-10 px-1">
