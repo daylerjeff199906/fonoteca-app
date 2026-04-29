@@ -171,14 +171,20 @@ export async function getTaxon(id: string) {
   return { data: (data as any) as Taxon };
 }
 
-export async function getGenera() {
+export async function getGenera(search: string = "") {
   const cookieStore = await cookies();
   const supabase = await createFonotecaServer(cookieStore);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("genera")
     .select("*, family:families(name)")
     .order("name");
+
+  if (search) {
+    query = query.ilike("name", `%${search}%`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return { data: [], error: error.message };
