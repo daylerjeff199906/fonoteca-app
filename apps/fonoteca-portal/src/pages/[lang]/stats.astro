@@ -9,11 +9,7 @@ import { getRealStats, getSpeciesByClass } from "../../data/stats";
 import logoIiap from "../../assets/logo_iiap.png";
 import { landingImages } from "../../config/landingImages";
 
-export function getStaticPaths() {
-    return LANGUAGES.map((lang) => ({
-        params: { lang },
-    }));
-}
+
 
 const { lang } = Astro.params;
 const content = translations[lang as keyof typeof translations];
