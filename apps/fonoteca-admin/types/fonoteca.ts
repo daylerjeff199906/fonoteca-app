@@ -243,3 +243,35 @@ export const TAXON_PHYLUM = {
   ECHINODERMATA: 'Echinodermata',
   PORIFERA: 'Porifera',
 } as const;
+
+export interface Address {
+  city: string;
+  address: string;
+  country: string;
+  province: string;
+}
+
+export interface Institution {
+  id: string;
+  name: string;
+  code: string;
+  additional_names: string[];
+  type: string;
+  is_active: boolean;
+  founding_year: number | null;
+  specimen_count: number;
+  description: string | null;
+  homepage_url: string | null;
+  phones: string[];
+  email: string | null;
+  display_on_nhc_portal: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  physical_address: Address;
+  mailing_address: Address;
+  created_at: string;
+  created_by: string;
+  modified_at: string;
+  modified_by: string;
+}
+

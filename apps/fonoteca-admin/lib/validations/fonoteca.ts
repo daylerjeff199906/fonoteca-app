@@ -150,3 +150,34 @@ export const multimediaSchema = z.object({
 });
 
 export type MultimediaInput = z.input<typeof multimediaSchema>;
+
+// --- Institutions ---
+export const addressSchema = z.object({
+  city: z.string().default(""),
+  address: z.string().default(""),
+  country: z.string().default("Peru"),
+  province: z.string().default(""),
+});
+
+export const institutionSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, "El nombre es requerido"),
+  code: z.string().min(1, "El código es requerido"),
+  additional_names: z.array(z.string()).default([]),
+  type: z.string().default("Fonoteca"),
+  is_active: z.boolean().default(true),
+  founding_year: numberOrNull,
+  specimen_count: z.coerce.number().default(0),
+  description: z.string().optional().nullable(),
+  homepage_url: z.string().url("URL inválida").or(z.string().length(0)).optional().nullable(),
+  phones: z.array(z.string()).default([]),
+  email: z.string().email("Email inválido").or(z.string().length(0)).optional().nullable(),
+  display_on_nhc_portal: z.boolean().default(true),
+  latitude: numberOrNull,
+  longitude: numberOrNull,
+  physical_address: addressSchema.default({}),
+  mailing_address: addressSchema.default({}),
+});
+
+export type InstitutionInput = z.infer<typeof institutionSchema>;
+
