@@ -8,17 +8,25 @@ import { getTaxon, createTaxon, updateTaxon, getGenera } from "@/actions/taxa";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
+import Link from "next/link";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { GenusForm } from "./genera/genus-form";
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info } from "lucide-react";
+import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id?: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [genera, setGenera] = useState<any[]>([]);
   const [openCombobox, setOpenCombobox] = useState(false);
+  const [searchGenus, setSearchGenus] = useState("");
+  const debouncedSearch = useDebounce(searchGenus, 400);
+  const [isFetchingGenera, setIsFetchingGenera] = useState(false);
+  const [isGenusFormOpen, setIsGenusFormOpen] = useState(false);
 
   const form = useForm<TaxonInput>({
     resolver: zodResolver(taxonSchema),
@@ -34,10 +42,14 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
   const currentScientificName = watch("scientificName");
 
   useEffect(() => {
-    getGenera().then(res => {
+    setIsFetchingGenera(true);
+    getGenera(debouncedSearch).then(res => {
+      setIsFetchingGenera(false);
       if (res.data) setGenera(res.data);
     });
+  }, [debouncedSearch]);
 
+  useEffect(() => {
     if (id) {
       setLoading(true);
       getTaxon(id).then((resp) => {
@@ -84,6 +96,7 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header Header Info context similar to detail sheets */}
@@ -159,10 +172,10 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             role="combobox"
                             className={cn(
-                              "w-full justify-between font-normal text-sm px-3 hover:bg-black/5 dark:hover:bg-white/5 border-none h-8 text-left",
+                              "w-full justify-between font-normal text-sm px-3 bg-background border-input h-9 text-left focus:ring-1 focus:ring-primary/40",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -179,31 +192,63 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Buscar género..." className="h-9" />
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            placeholder="Buscar género..."
+                            className="h-9"
+                            value={searchGenus}
+                            onValueChange={setSearchGenus}
+                          />
                           <CommandList className="max-h-[220px]">
-                            <CommandEmpty>No se encontraron géneros.</CommandEmpty>
-                            <CommandGroup>
-                              {genera.map((g) => (
-                                <CommandItem
-                                  key={g.id}
-                                  value={`${g.name} ${g.family?.name || ""}`}
-                                  onSelect={() => {
-                                    form.setValue("genus_id", g.id);
-                                    form.clearErrors("genus_id");
-                                    setOpenCombobox(false);
-                                  }}
-                                  className="py-2"
-                                >
-                                  <Check className={cn("mr-2 h-3.5 w-3.5", g.id === field.value ? "opacity-100" : "opacity-0")} />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium text-sm">{g.name}</span>
-                                    <span className="text-xs text-muted-foreground">{g.family?.name || "Sin Familia"}</span>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
+                            {isFetchingGenera ? (
+                              <div className="py-6 text-center text-sm text-muted-foreground animate-pulse">Buscando...</div>
+                            ) : (
+                              <>
+                                <CommandEmpty>No se encontraron géneros.</CommandEmpty>
+                                <CommandGroup>
+                                  {genera.map((g) => (
+                                    <CommandItem
+                                      key={g.id}
+                                      value={g.id}
+                                      onSelect={() => {
+                                        form.setValue("genus_id", g.id);
+                                        form.clearErrors("genus_id");
+                                        setOpenCombobox(false);
+                                      }}
+                                      className="py-2"
+                                    >
+                                      <Check className={cn("mr-2 h-3.5 w-3.5", g.id === field.value ? "opacity-100" : "opacity-0")} />
+                                      <div className="flex flex-col">
+                                        <span className="font-medium text-sm italic">{g.name}</span>
+                                        <span className="text-[10px] text-muted-foreground">{g.family?.name || "Sin Familia"}</span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </>
+                            )}
                           </CommandList>
+                          <div className="p-1 border-t border-muted/20 bg-muted/10 flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full text-[11px] h-7 text-primary hover:bg-primary/10 flex items-center justify-start gap-2"
+                              onClick={() => {
+                                setOpenCombobox(false);
+                                setIsGenusFormOpen(true);
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                              Añadir Nuevo Género
+                            </Button>
+                            <Link
+                              href="/dashboard/taxonomy/genera"
+                              className="text-[9px] text-muted-foreground hover:text-primary px-2 py-1 flex items-center gap-1 transition-colors"
+                              target="_blank"
+                            >
+                              Gestionar módulo de géneros →
+                            </Link>
+                          </div>
                         </Command>
                       </PopoverContent>
                     </Popover>
@@ -369,5 +414,30 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
         </div>
       </form>
     </Form>
+
+    <Sheet open={isGenusFormOpen} onOpenChange={setIsGenusFormOpen}>
+      <SheetContent className="overflow-y-auto md:min-w-[400px]">
+        <SheetHeader>
+          <SheetTitle>Nuevo Género</SheetTitle>
+        </SheetHeader>
+        <div className="py-6">
+          <GenusForm
+            id={null}
+            onSuccess={async (newId) => {
+              setIsGenusFormOpen(false);
+              const res = await getGenera("");
+              if (res.data) {
+                setGenera(res.data);
+                if (newId) {
+                  form.setValue("genus_id", newId);
+                  form.clearErrors("genus_id");
+                }
+              }
+            }}
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
