@@ -38,7 +38,12 @@ const MapPicker = dynamic(() => import("@/components/dashboard/locations/map-pic
   loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-lg flex items-center justify-center font-medium text-xs text-muted-foreground">Cargando Mapa...</div>
 });
 
-export function InstitutionForm({ id, onSuccess }: { id?: string, onSuccess?: (institution: any) => void }) {
+export function InstitutionForm({ id, onSuccess, footerVariant = "fixed" }: { 
+  id?: string, 
+  onSuccess?: (institution: any) => void,
+  footerVariant?: "fixed" | "sticky"
+}) {
+
 
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -197,13 +202,14 @@ export function InstitutionForm({ id, onSuccess }: { id?: string, onSuccess?: (i
               {...register("type")}
               className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all"
             >
-              <option value="Fonoteca">Fonoteca</option>
-              <option value="Herbario">Herbario</option>
-              <option value="Museo">Museo</option>
-              <option value="Centro de Investigación">Centro de Investigación</option>
-              <option value="Universidad">Universidad</option>
-              <option value="Colección Zoológica">Colección Zoológica</option>
+              <option value="Gubernamental">Gubernamental (Estado)</option>
+              <option value="Académica">Académica / Universidad</option>
+              <option value="ONG">No Gubernamental (ONG)</option>
+              <option value="Privada">Empresa Privada</option>
+              <option value="Investigación">Centro de Investigación</option>
+              <option value="Otro">Otro</option>
             </select>
+
           </div>
 
           <div className="flex flex-col gap-1.5 md:col-span-2">
@@ -409,7 +415,8 @@ export function InstitutionForm({ id, onSuccess }: { id?: string, onSuccess?: (i
         </div>
       </div>
 
-      <FormFooter>
+      <FormFooter variant={footerVariant}>
+
         <Button variant="outline" type="button" asChild className="h-11 px-8">
           <Link href="/dashboard/geography/institutions">Cancelar</Link>
         </Button>
@@ -426,6 +433,7 @@ export function InstitutionForm({ id, onSuccess }: { id?: string, onSuccess?: (i
           )}
         </Button>
       </FormFooter>
+
     </form>
   );
 }

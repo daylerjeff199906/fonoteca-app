@@ -532,6 +532,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           </SheetHeader>
           <div className="py-6 px-1">
             <InstitutionForm
+              footerVariant="sticky"
               onSuccess={async (newInst) => {
                 const resp = await getInstitutions({ limit: 100 });
                 setInstitutions(resp.data);
