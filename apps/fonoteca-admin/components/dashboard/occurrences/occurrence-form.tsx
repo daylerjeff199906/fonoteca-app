@@ -511,10 +511,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           </SheetHeader>
           <div className="py-6 px-1">
             <TaxonForm
+              id={null}
               onSuccess={async (newId) => {
                 const resp = await getTaxa({ limit: 100 });
                 setTaxa(resp.data);
-                setValue("taxon_id", newId);
+                if (newId) {
+                  setValue("taxon_id", newId);
+                }
                 setIsTaxonFormOpen(false);
               }}
             />
