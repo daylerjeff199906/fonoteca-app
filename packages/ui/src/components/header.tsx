@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                             alt="Logo IIAP"
                             className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
                         />
-                        <span className="text-sm md:text-base font-medium max-w-[260px] leading-tight">
+                        <span className="text-xs md:text-sm font-medium max-w-[260px] leading-tight">
                             Instituto de Investigaciones de la Amazonía Peruana
                         </span>
                     </a>
@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                             ))}
                         </nav>
                         <div className="mt-12 pt-12 border-t border-gray-100 dark:border-gray-800">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">© 2026 Instituto de Investigaciones de la Amazonía Peruana</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">© {new Date().getFullYear()} Instituto de Investigaciones de la Amazonía Peruana</p>
                         </div>
                     </div>
                 </div>

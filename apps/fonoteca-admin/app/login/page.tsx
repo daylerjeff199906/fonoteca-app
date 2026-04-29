@@ -4,9 +4,14 @@ import { cookies, headers } from 'next/headers'
 
 export default async function LoginPage() {
   const cookieStore = await cookies()
-  const supabase = await createBioIntranetServer(cookieStore)
   const host = (await headers()).get('host')
-  const isDev = host?.includes('localhost') || host?.includes('127.0.0.1')
+  const supabase = await createBioIntranetServer(cookieStore, host || undefined)
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect('/dashboard')
+  }
 
   // Consultar configuración de módulos para redirección dinámica desde la tabla public.modules
   const [{ data: moduleData }, { data: authModule }] = await Promise.all([
@@ -15,6 +20,7 @@ export default async function LoginPage() {
   ])
 
   // Determinar la URL base según el entorno
+  const isDev = host?.includes('localhost') || host?.includes('127.0.0.1')
   const baseUrl = isDev 
     ? (moduleData?.url_local || 'http://localhost:3006') 
     : (moduleData?.url_prod || 'https://fonoteca.iiap.gob.pe')

@@ -1,7 +1,9 @@
 import React from 'react';
 import { type translations } from '../../i18n/data';
-import { Search, ArrowUpRight, ArrowDownRight, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface HeroProps {
     content: typeof translations.es.hero;
@@ -31,8 +33,23 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
         { label: lang === 'es' ? 'Clases' : 'Classes', value: stats?.classes || 0, unit: 'bioma', trend: 'up' },
     ];
 
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start' }, [Autoplay({ delay: 4000 })]);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+    const onSelect = React.useCallback(() => {
+        if (!emblaApi) return;
+        setSelectedIndex(emblaApi.selectedScrollSnap());
+    }, [emblaApi]);
+
+    React.useEffect(() => {
+        if (!emblaApi) return;
+        onSelect();
+        emblaApi.on('select', onSelect);
+        emblaApi.on('reInit', onSelect);
+    }, [emblaApi, onSelect]);
+
     return (
-        <section className="relative h-screen min-h-[750px] flex flex-col bg-black overflow-hidden font-sans">
+        <section className="relative min-h-screen md:h-screen md:min-h-[750px] flex flex-col bg-black overflow-hidden font-sans">
             {/* Background Image with Cinematic Overlay */}
             <div className="absolute inset-0 z-0">
                 <img
@@ -45,14 +62,14 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
             </div>
 
             {/* Main Content Area */}
-            <div className="relative z-10 flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-20 pt-20">
+            <div className="relative z-10 flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-20 py-12 md:py-0 md:pt-20 min-h-screen md:min-h-auto">
                 <div className="container mx-auto space-y-8">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <h1 className="text-6xl md:text-8xl text-white tracking-tighter leading-[0.9]">
+                        <h1 className="text-4xl md:text-7xl text-white tracking-tighter leading-[0.9]">
                             {content.titles_animate[0].split('|')[0].trim()}
                             <span className="block text-accent-green opacity-90 font-bold">
                                 {content.titles_animate[0].split('|')[1]?.trim() || 'Portal'}
@@ -64,7 +81,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed font-light"
+                        className="text-sm md:text-lg text-gray-300 max-w-2xl leading-relaxed font-light"
                     >
                         {content.description}
                     </motion.p>
@@ -94,7 +111,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
             </div>
 
             {/* Vital Signs / Metrics Bar */}
-            <div className="relative z-10 bg-black/80 backdrop-blur-md border-t border-white/10 py-8 px-6 md:px-12 lg:px-20">
+            <div className="relative z-10 bg-black/80 backdrop-blur-md border-t border-white/10 py-6 md:py-8 px-6 md:px-12 lg:px-20">
                 <div className="max-w-[1600px] mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
@@ -106,14 +123,57 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                         </a>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-16">
+                    {/* Mobile Carousel View */}
+                    <div className="md:hidden overflow-hidden" ref={emblaRef}>
+                        <div className="flex">
+                            {metrics.map((metric, i) => (
+                                <div key={i} className="flex-[0_0_100%] min-w-0 pr-4">
+                                    <div className="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/10">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                                                {metric.label}
+                                            </h4>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                                    {metric.unit}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-baseline gap-4">
+                                            {metric.trend === 'up' ? (
+                                                <ArrowUpRight className="w-6 h-6 text-accent-green" />
+                                            ) : (
+                                                <ArrowDownRight className="w-6 h-6 text-red-500" />
+                                            )}
+                                            <span className="text-5xl font-light text-white tracking-tighter">
+                                                {metric.value.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Dots Indicator */}
+                        <div className="flex justify-center gap-2 mt-6">
+                            {metrics.map((_, i) => (
+                                <div
+                                    key={i}
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${i === selectedIndex ? 'w-6 bg-accent-green' : 'w-1.5 bg-white/20'
+                                        }`}
+                                ></div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Desktop Grid View */}
+                    <div className="hidden md:grid grid-cols-3 lg:grid-cols-5 gap-6 md:gap-16">
                         {metrics.map((metric, i) => (
                             <motion.div
                                 key={i}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.6 + (i * 0.1) }}
-                                className="space-y-4"
+                                className="space-y-2 md:space-y-4"
                             >
                                 <div className="space-y-1">
                                     <h4 className="text-sm font-bold text-white border-b border-white/10 pb-2 inline-block min-w-full">
@@ -125,7 +185,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                                         ) : (
                                             <ArrowDownRight className="w-5 h-5 text-red-500" />
                                         )}
-                                        <span className="text-4xl md:text-5xl font-light text-white tracking-tighter">
+                                        <span className="text-3xl md:text-5xl font-light text-white tracking-tighter">
                                             {metric.value.toLocaleString()}
                                         </span>
                                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">

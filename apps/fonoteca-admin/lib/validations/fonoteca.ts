@@ -10,8 +10,11 @@ const numberOrNull = z.preprocess(
 export const classSchema = z.object({
   id: z.string().uuid().optional(),
   kingdom: z.string().default("Animalia"),
-  phylum: z.string().default("Chordata"),
+  phylum: z.string().default("Chordata").nullable().optional(),
   name: z.string().min(1, "Class name is required"),
+  label_name: z.string().optional().nullable(),
+  icon: z.string().optional().nullable(),
+  image_url: z.string().optional().nullable(),
 });
 
 export type ClassInput = z.infer<typeof classSchema>;
