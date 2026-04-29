@@ -1,12 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import {
-    Bird,
-    Bug,
-    Fish,
-    Waves,
-    Dog,
-    Zap,
     ArrowRight
 } from 'lucide-react';
 
@@ -53,31 +46,21 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                 <div className="flex flex-col lg:flex-row items-center gap-12 mb-16">
                     {/* Left Side: Content */}
                     <div className="w-full lg:w-1/2 space-y-6">
-                        <motion.h2
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
+                        <h2
                             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight"
                         >
                             {t.title}
-                        </motion.h2>
-                        <motion.p
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
+                        </h2>
+                        <p
                             className="text-lg text-gray-600 dark:text-gray-400 max-w-xl leading-relaxed"
                         >
                             {t.subtitle}
-                        </motion.p>
+                        </p>
                     </div>
 
                     {/* Right Side: Feature Image */}
                     <div className="w-full lg:w-1/2">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
+                        <div
                             className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl"
                         >
                             <img
@@ -86,7 +69,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                 className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
 
@@ -110,34 +93,17 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                         const popoutImg = cls.image_url || undefined;
 
                         return (
-                            <motion.a
+                            <a
                                 key={cls.id}
                                 href={`/${lang}/species?class=${cls.id}`}
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{
-                                    delay: idx * 0.1,
-                                    duration: 0.8,
-                                    ease: [0.16, 1, 0.3, 1]
-                                }}
                                 className="group relative h-64 flex flex-col justify-end p-8 rounded-[3rem] bg-gradient-to-br from-[#0c141d] to-[#04070a] border border-white/5 hover:border-primary/40 transition-all duration-500 mt-12 mb-4"
                             >
                                 {/* 3D Pop-out Image - Dramatic emerging effect */}
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none z-20">
-                                    <motion.img
+                                    <img
                                         src={popoutImg}
                                         alt={name}
-                                        initial={{ y: 30, opacity: 0, scale: 0.8 }}
-                                        whileInView={{ y: -100, opacity: 1, scale: 1.35 }}
-                                        viewport={{ once: true }}
-                                        transition={{
-                                            delay: idx * 0.1 + 0.3,
-                                            duration: 1.4,
-                                            type: "spring",
-                                            bounce: 0.5
-                                        }}
-                                        className="w-56 h-56 mx-auto object-contain drop-shadow-[0_45px_55px_rgba(0,0,0,0.9)] group-hover:scale-[1.45] transition-transform duration-700"
+                                        className="w-56 h-56 mx-auto object-contain drop-shadow-[0_45px_55px_rgba(0,0,0,0.9)] -translate-y-[100px] scale-[1.35] group-hover:scale-[1.45] transition-transform duration-700"
                                     />
                                 </div>
 
@@ -165,7 +131,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
 
                                 {/* Deep Ambient Glow */}
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/15 transition-all duration-700"></div>
-                            </motion.a>
+                            </a>
                         );
                     })}
                 </div>
