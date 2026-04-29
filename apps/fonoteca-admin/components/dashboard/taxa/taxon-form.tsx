@@ -416,11 +416,11 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
       </Form>
 
       <Sheet open={isGenusFormOpen} onOpenChange={setIsGenusFormOpen}>
-        <SheetContent className="overflow-y-auto md:min-w-[45vw]">
+        <SheetContent className="overflow-y-auto md:min-w-[25vw]">
           <SheetHeader>
             <SheetTitle>Nuevo Género</SheetTitle>
           </SheetHeader>
-          <div className="py-6">
+          <div className="px-6">
             <GenusForm
               id={null}
               onSuccess={async (newId) => {

@@ -607,7 +607,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
           <SheetHeader className="pb-0">
             <SheetTitle>{currentTaxonId ? "Editar Taxón" : "Registrar Taxón"}</SheetTitle>
           </SheetHeader>
-          <div className="px-4 py-0 min-w-5xl">
+          <div className="px-4 py-0">
             <TaxonForm id={currentTaxonId} onSuccess={() => { setIsFormOpen(false); router.refresh(); }} />
           </div>
         </SheetContent>

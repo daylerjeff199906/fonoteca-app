@@ -237,18 +237,18 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                           </CommandGroup>
                         </CommandList>
                         <div className="p-2 border-t border-muted/20">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                              onClick={() => {
-                                setOpenTaxon(false);
-                                setIsTaxonFormOpen(true);
-                              }}
-                            >
-                              <Plus className="h-3 w-3" />
-                              Registrar Nueva Taxonomía
-                            </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                            onClick={() => {
+                              setOpenTaxon(false);
+                              setIsTaxonFormOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Registrar Nueva Taxonomía
+                          </Button>
                         </div>
                       </Command>
                     </PopoverContent>
@@ -414,11 +414,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       </form>
 
       <Sheet open={isTaxonFormOpen} onOpenChange={setIsTaxonFormOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-[540px] md:max-w-[600px]">
+        <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[40vw]">
           <SheetHeader className="pb-0">
             <SheetTitle>Registrar Taxón</SheetTitle>
           </SheetHeader>
-          <div className="px-4 py-4 min-w-5xl">
+          <div className="px-4 py-4">
             <TaxonForm
               id={null}
               onSuccess={async (newTaxonId) => {
