@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",
+    "@astrojs/vercel": "^9.0.5",
     "@fontsource/inter": "^5.1.0",
     "@repo/data": "workspace:*",
     "@repo/types": "workspace:*",

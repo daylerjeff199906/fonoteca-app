@@ -7,15 +7,7 @@ import { translations, LANGUAGES } from "../../../i18n/data";
 import { getAllSpecies } from "../../../data/species";
 import logoIiap from "../../../assets/logo_iiap.png";
 
-export async function getStaticPaths() {
-    const { species } = await getAllSpecies({ limit: 1000 });
 
-    return LANGUAGES.flatMap((lang) =>
-        species.map((s) => ({
-            params: { lang, id: s.id },
-        })),
-    );
-}
 
 const { lang, id } = Astro.params;
 const content = translations[lang as keyof typeof translations];
