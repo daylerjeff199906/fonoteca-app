@@ -177,8 +177,22 @@ export async function getGenera(search: string = "") {
 
   let query = supabase
     .from("genera")
-    .select("*, family:families(name)")
+    .select(`
+      *, 
+      family:families(
+        name, 
+        order_obj:orders(
+          name, 
+          class_obj:classes(
+            name, 
+            phylum, 
+            kingdom
+          )
+        )
+      )
+    `)
     .order("name");
+
 
   if (search) {
     query = query.ilike("name", `%${search}%`);
@@ -218,11 +232,31 @@ export async function createTaxon(input: TaxonInput) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
+  // Generate automatic taxonID if not provided
+  const scientificName = parsed.data.scientificName;
+  const parts = scientificName.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const genusPart = parts[0].substring(0, 3).toUpperCase();
+    const speciesPart = parts[1].substring(0, 3).toUpperCase();
+    const prefix = `${genusPart}${speciesPart}`;
+    
+    // Check count for sequence
+    const { count } = await supabase
+      .from("taxa")
+      .select("*", { count: "exact", head: true })
+      .ilike("taxonID", `${prefix}-%`);
+    
+    const sequence = (count || 0) + 1;
+    const formattedSequence = sequence.toString().padStart(4, '0');
+    parsed.data.taxonID = `${prefix}-${formattedSequence}`;
+  }
+
   const { data, error } = await supabase
     .from("taxa")
     .insert([parsed.data])
     .select()
     .single();
+
 
   if (error) {
     return { error: error.message };

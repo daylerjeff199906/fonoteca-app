@@ -16,7 +16,8 @@ import { GenusForm } from "./genera/genus-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info, Plus, ChevronRight, ArrowRight } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id?: string) => void }) {
@@ -121,23 +122,6 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
             <p className="text-xs text-muted-foreground mb-4">Define la taxonomía principal del taxón.</p>
 
             <div className="rounded-md border bg-card">
-              <FormField
-                control={form.control}
-                name="taxonID"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0 h-14">
-                    <div className="w-1/3 flex items-center gap-2">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Taxon ID (GUID)</FormLabel>
-                    </div>
-                    <div className="w-2/3">
-                      <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="Ex: TAX-001" className="border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/40 h-8" />
-                      </FormControl>
-                    </div>
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -165,8 +149,9 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                   <FormItem className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0 h-14">
                     <div className="w-1/3 flex items-center gap-2">
                       <FolderTree className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Género (Familia) *</FormLabel>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Género *</FormLabel>
                     </div>
+
                     <div className="w-2/3">
                       <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
                         <PopoverTrigger asChild>
@@ -179,14 +164,31 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              <span className="truncate">
+                              <span className="truncate flex items-center gap-1">
                                 {field.value
                                   ? (() => {
                                     const g = genera.find((g) => g.id === field.value);
-                                    return g ? `${g.name} (${g.family?.name || "Sin Familia"})` : "Seleccionar Género";
+                                    if (!g) return "Seleccionar Género";
+                                    const family = g.family;
+                                    const order = family?.order_obj;
+                                    const classObj = order?.class_obj;
+
+                                    return (
+                                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium overflow-hidden">
+                                        <span className="shrink-0">{classObj?.kingdom || "..."}</span>
+                                        <ChevronRight className="h-2.5 w-2.5 opacity-30" />
+                                        <span className="shrink-0">{classObj?.name || "..."}</span>
+                                        <ChevronRight className="h-2.5 w-2.5 opacity-30" />
+                                        <span className="shrink-0">{order?.name || "..."}</span>
+                                        <ChevronRight className="h-2.5 w-2.5 opacity-30" />
+                                        <span className="shrink-0 font-bold text-foreground text-xs italic">{g.name}</span>
+                                      </span>
+                                    );
+
                                   })()
                                   : "Seleccionar Género"}
                               </span>
+
                               <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
@@ -218,10 +220,20 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                                         className="py-2"
                                       >
                                         <Check className={cn("mr-2 h-3.5 w-3.5", g.id === field.value ? "opacity-100" : "opacity-0")} />
-                                        <div className="flex flex-col">
-                                          <span className="font-medium text-sm italic">{g.name}</span>
-                                          <span className="text-[10px] text-muted-foreground">{g.family?.name || "Sin Familia"}</span>
+                                        <div className="flex flex-col gap-0.5">
+                                          <div className="flex items-center gap-1 text-[9px] text-muted-foreground/80 font-medium tracking-tight">
+                                            <span>{g.family?.order_obj?.class_obj?.kingdom}</span>
+                                            <ArrowRight className="h-1 w-1 opacity-30" />
+                                            <span>{g.family?.order_obj?.class_obj?.name}</span>
+                                            <ArrowRight className="h-1 w-1 opacity-30" />
+                                            <span>{g.family?.order_obj?.name}</span>
+                                            <ArrowRight className="h-1 w-1 opacity-30" />
+                                            <span>{g.family?.name}</span>
+                                          </div>
+                                          <span className="font-semibold text-sm italic text-foreground leading-none">{g.name}</span>
                                         </div>
+
+
                                       </CommandItem>
                                     ))}
                                   </CommandGroup>
@@ -297,51 +309,6 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
             </div>
           </div>
 
-          {/* Sección: Epítetos */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Hash className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Epítetos</h3>
-            </div>
-
-            <div className="rounded-md border bg-card">
-              <FormField
-                control={form.control}
-                name="specificEpithet"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0 h-14">
-                    <div className="w-1/3 flex items-center gap-2">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Epíteto Específico</FormLabel>
-                    </div>
-                    <div className="w-2/3">
-                      <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="..." className="border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/40 h-8" />
-                      </FormControl>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="infraspecificEpithet"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0 h-14">
-                    <div className="w-1/3 flex items-center gap-2">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Epíteto Infraspecífico</FormLabel>
-                    </div>
-                    <div className="w-2/3">
-                      <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="..." className="border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/40 h-8" />
-                      </FormControl>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
 
           {/* Sección: Nombres y Autoría */}
           <div>
