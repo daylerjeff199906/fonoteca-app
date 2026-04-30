@@ -16,7 +16,8 @@ import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
-import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight } from "lucide-react";
+
 
 
 import { Button } from "@/components/ui/button";
@@ -249,6 +250,8 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                             })()
                             : "Seleccionar Taxón..."}
                         </span>
+
+
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </button>
                     </PopoverTrigger>
@@ -273,7 +276,26 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                                     t.id === field.value ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                {t.scientificName} ({t.vernacularName || "-"})
+                                <div className="flex flex-col gap-0.5 overflow-hidden">
+                                  <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
+                                    <span>{t.genus?.family?.order_obj?.class_obj?.kingdom}</span>
+                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                    <span>{t.genus?.family?.order_obj?.class_obj?.name}</span>
+                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                    <span>{t.genus?.family?.order_obj?.name}</span>
+                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                    <span>{t.genus?.family?.name}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-sm italic text-foreground leading-none">
+                                      {t.scientificName}
+                                    </span>
+
+                                    <span className="text-[10px] text-muted-foreground">({t.vernacularName || "-"})</span>
+                                  </div>
+                                </div>
+
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -297,6 +319,26 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   </Popover>
                 )}
               />
+              {watch("taxon_id") && (
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 font-medium mt-1 px-1 overflow-hidden truncate">
+                  {(() => {
+                    const t = taxa.find(t => t.id === watch("taxon_id"));
+                    if (!t) return null;
+                    return (
+                      <>
+                        <span className="shrink-0">{t.genus?.family?.order_obj?.class_obj?.kingdom}</span>
+                        <ChevronRight className="h-2 w-2 opacity-30 shrink-0" />
+                        <span className="shrink-0">{t.genus?.family?.order_obj?.class_obj?.name}</span>
+                        <ChevronRight className="h-2 w-2 opacity-30 shrink-0" />
+                        <span className="shrink-0">{t.genus?.family?.order_obj?.name}</span>
+                        <ChevronRight className="h-2 w-2 opacity-30 shrink-0" />
+                        <span className="shrink-0">{t.genus?.family?.name}</span>
+                      </>
+                    )
+                  })()}
+                </div>
+              )}
+
               {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
             </div>
 

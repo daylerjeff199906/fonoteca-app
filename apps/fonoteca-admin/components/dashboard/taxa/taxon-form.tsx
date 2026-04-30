@@ -16,7 +16,7 @@ import { GenusForm } from "./genera/genus-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info, Plus, ChevronRight, ArrowRight } from "lucide-react";
+import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info, Plus, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -221,13 +221,13 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                                       >
                                         <Check className={cn("mr-2 h-3.5 w-3.5", g.id === field.value ? "opacity-100" : "opacity-0")} />
                                         <div className="flex flex-col gap-0.5">
-                                          <div className="flex items-center gap-1 text-[9px] text-muted-foreground/80 font-medium tracking-tight">
+                                          <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-medium tracking-tight">
                                             <span>{g.family?.order_obj?.class_obj?.kingdom}</span>
-                                            <ArrowRight className="h-1 w-1 opacity-30" />
+                                            <ChevronRight className="h-2 w-2 opacity-30" />
                                             <span>{g.family?.order_obj?.class_obj?.name}</span>
-                                            <ArrowRight className="h-1 w-1 opacity-30" />
+                                            <ChevronRight className="h-2 w-2 opacity-30" />
                                             <span>{g.family?.order_obj?.name}</span>
-                                            <ArrowRight className="h-1 w-1 opacity-30" />
+                                            <ChevronRight className="h-2 w-2 opacity-30" />
                                             <span>{g.family?.name}</span>
                                           </div>
                                           <span className="font-semibold text-sm italic text-foreground leading-none">{g.name}</span>
@@ -265,43 +265,6 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                         </PopoverContent>
                       </Popover>
                       <FormMessage className="text-[10px] absolute mt-0.5" />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="taxonRank"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0 h-14">
-                    <div className="w-1/3 flex items-center gap-2">
-                      <GitBranch className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Rango Taxonómico</FormLabel>
-                    </div>
-                    <div className="w-2/3">
-                      <FormControl>
-                        <Input {...field} placeholder="species" className="border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/40 h-8" />
-                      </FormControl>
-                      <FormMessage className="text-[10px] absolute mt-0.5" />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="nomenclaturalCode"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-4 p-3 border-b border-muted/50 last:border-0 h-14">
-                    <div className="w-1/3 flex items-center gap-2">
-                      <Bookmark className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Código Nomenclatural</FormLabel>
-                    </div>
-                    <div className="w-2/3">
-                      <FormControl>
-                        <Input {...field} placeholder="ICZN" className="border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/40 h-8" />
-                      </FormControl>
                     </div>
                   </FormItem>
                 )}
