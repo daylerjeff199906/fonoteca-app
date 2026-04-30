@@ -106,6 +106,7 @@ export interface Occurrence {
   taxon_id: string;
   basisOfRecord: string;
   collection_id: string | null;
+  institution_id: string | null;
   catalogNumber: string | null;
 
   recordedBy: string;

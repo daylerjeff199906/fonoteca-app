@@ -13,7 +13,7 @@ export default async function EditOccurrencePage({
   return (
     <LayoutWrapper sectionTitle="Editar Ocurrencia">
       <div className="w-full space-y-4">
-        <OccurrenceForm id={id} />
+        <OccurrenceForm id={id} redirectUrl="/dashboard/occurrences/[id]" />
         <MultimediaSection occurrenceId={id} />
       </div>
     </LayoutWrapper>

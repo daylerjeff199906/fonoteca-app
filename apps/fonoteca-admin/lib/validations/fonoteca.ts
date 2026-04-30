@@ -109,6 +109,7 @@ export const occurrenceSchema = z.object({
   taxon_id: z.string().uuid("Invalid Taxon ID"),
   basisOfRecord: z.string().default("MachineObservation"),
   collection_id: z.string().uuid("Colección inválida").optional().nullable(),
+  institution_id: z.string().uuid("Institución inválida").optional().nullable(),
   catalogNumber: z.string().optional().nullable(),
 
   recordedBy: z.string().min(1, "Recorded By is required"),

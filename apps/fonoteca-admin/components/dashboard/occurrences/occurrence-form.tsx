@@ -135,6 +135,10 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             });
           }
 
+          if (resp.data.institution_id) {
+            setSelectedInstitutionId(resp.data.institution_id);
+          }
+
 
           if (resp.data.taxon) {
             setSelectedTaxon(resp.data.taxon as Taxon);
@@ -598,65 +602,73 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {/* Institución */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
-                <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between font-normal h-10",
-                        !selectedInstitutionId && "text-muted-foreground"
-                      )}
-                    >
-                      <span className="truncate">
-                        {selectedInstitutionId
-                          ? institutions.find(inst => inst.id === selectedInstitutionId)?.name || "Institución seleccionada"
-                          : "Seleccionar Institución..."}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Buscar institución..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontró la institución.</CommandEmpty>
-                        <CommandGroup>
-                          {institutions.map((inst) => (
-                            <CommandItem
-                              key={inst.id}
-                              value={inst.name}
-                              onSelect={() => {
-                                setSelectedInstitutionId(inst.id);
-                                setValue("collection_id", null); // Reset collection when institution changes
+                <Controller
+                  control={control}
+                  name="institution_id"
+                  render={({ field }) => (
+                    <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between font-normal h-10",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <span className="truncate">
+                            {field.value
+                              ? institutions.find(inst => inst.id === field.value)?.name || "Institución seleccionada"
+                              : "Seleccionar Institución..."}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar institución..." />
+                          <CommandList>
+                            <CommandEmpty>No se encontró la institución.</CommandEmpty>
+                            <CommandGroup>
+                              {institutions.map((inst) => (
+                                <CommandItem
+                                  key={inst.id}
+                                  value={inst.name}
+                                  onSelect={() => {
+                                    field.onChange(inst.id);
+                                    setSelectedInstitutionId(inst.id);
+                                    setValue("collection_id", null); // Reset collection when institution changes
+                                    setOpenInstitution(false);
+                                  }}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{inst.name}</span>
+                                    <span className="text-[10px] text-muted-foreground">{inst.code}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                          <div className="p-2 border-t border-muted/20">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                              onClick={() => {
                                 setOpenInstitution(false);
+                                setIsInstitutionFormOpen(true);
                               }}
                             >
-                              <div className="flex flex-col">
-                                <span className="font-medium">{inst.name}</span>
-                                <span className="text-[10px] text-muted-foreground">{inst.code}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                      <div className="p-2 border-t border-muted/20">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                          onClick={() => {
-                            setOpenInstitution(false);
-                            setIsInstitutionFormOpen(true);
-                          }}
-                        >
-                          <Plus className="h-3 w-3" />
-                          Registrar Nueva Institución
-                        </Button>
-                      </div>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                              <Plus className="h-3 w-3" />
+                              Registrar Nueva Institución
+                            </Button>
+                          </div>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors.institution_id && <p className="text-[10px] text-red-500 mt-1">{errors.institution_id.message}</p>}
               </div>
 
               {/* Colección */}
@@ -812,6 +824,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 const resp = await getInstitutions({ limit: 100 });
                 setInstitutions(resp.data);
                 setSelectedInstitutionId(newInst.id);
+                setValue("institution_id", newInst.id);
                 setValue("collection_id", null);
                 setIsInstitutionFormOpen(false);
               }}
@@ -834,6 +847,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 setCollections(resp.data);
                 setValue("collection_id", newCol.id);
                 setSelectedInstitutionId(newCol.institution_id);
+                setValue("institution_id", newCol.institution_id);
                 setIsCollectionFormOpen(false);
               }}
             />
