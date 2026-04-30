@@ -21,7 +21,7 @@ import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileT
 import { cn } from "@/lib/utils";
 import { FormSection } from "@/components/panel-admin/form-section";
 
-export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id?: string) => void }) {
+export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (taxon?: any) => void }) {
   const [loading, setLoading] = useState(false);
   const [genera, setGenera] = useState<any[]>([]);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -87,7 +87,7 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
 
     if (resp.success) {
       showToast.success("Operación Exitosa", id ? "El taxón ha sido actualizado correctamente." : "El taxón ha sido registrado en el sistema.");
-      onSuccess(resp.data?.id);
+      onSuccess(resp.data);
     } else {
       showToast.error("Error", (typeof resp.error === "string" ? resp.error : "Hubo un problema al procesar el taxón."));
     }

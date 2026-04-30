@@ -11,6 +11,7 @@ import { getInstitutions } from "@/actions/institutions";
 import { getCollections } from "@/actions/collections";
 import { getEcosystems } from "@/actions/ecosystems";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 import { showToast } from "@/lib/toast";
@@ -86,6 +87,12 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [ecosystems, setEcosystems] = useState<Ecosystem[]>([]);
   const [openEcosystem, setOpenEcosystem] = useState(false);
 
+  // Taxon Search & Pagination
+  const [taxonSearch, setTaxonSearch] = useState("");
+  const [isTaxonLoading, setIsTaxonLoading] = useState(false);
+  const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
+  const debouncedTaxonSearch = useDebounce(taxonSearch, 400);
+
 
 
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm<OccurrenceInput>({
@@ -102,7 +109,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   });
 
   useEffect(() => {
-    getTaxa({ limit: 100 }).then(resp => setTaxa(resp.data));
+    getTaxa({ limit: 20 }).then(resp => setTaxa(resp.data));
     getLocations({ limit: 100 }).then(resp => setLocations(resp.data));
     getInstitutions({ limit: 100 }).then(resp => setInstitutions(resp.data));
     getCollections({ limit: 100 }).then(resp => setCollections(resp.data));
@@ -130,6 +137,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
 
           if (resp.data.taxon) {
+            setSelectedTaxon(resp.data.taxon as Taxon);
             setTaxa(prev => {
               if (!prev.find(t => t.id === resp.data.taxon?.id)) {
                 return [resp.data.taxon as Taxon, ...prev];
@@ -152,6 +160,23 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       });
     }
   }, [id, reset]);
+
+  // Taxon Fetch on Search
+  useEffect(() => {
+    setIsTaxonLoading(true);
+    getTaxa({ 
+      limit: 20, 
+      search: debouncedTaxonSearch 
+    }).then(resp => {
+      let newTaxa = resp.data;
+      // Preserve selected taxon in list if not present
+      if (selectedTaxon && !newTaxa.find(t => t.id === selectedTaxon.id)) {
+        newTaxa = [selectedTaxon, ...newTaxa];
+      }
+      setTaxa(newTaxa);
+      setIsTaxonLoading(false);
+    });
+  }, [debouncedTaxonSearch, selectedTaxon]);
 
   const onSubmit = async (data: OccurrenceInput) => {
     setLoading(true);
@@ -265,47 +290,60 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                       >
                         <span className="truncate">
                           {field.value
-                            ? taxa.find((t) => t.id === field.value)?.scientificName || "Seleccionar Taxón..."
+                            ? selectedTaxon?.scientificName || "Seleccionar Taxón..."
                             : "Seleccionar Taxón..."}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar taxón..." />
+                      <Command shouldFilter={false}>
+                        <CommandInput 
+                          placeholder="Buscar por nombre científico o común..." 
+                          value={taxonSearch}
+                          onValueChange={setTaxonSearch}
+                        />
                         <CommandList>
-                          <CommandEmpty>No se encontró taxón.</CommandEmpty>
-                          <CommandGroup>
-                            {taxa.map((t) => (
-                              <CommandItem
-                                key={t.id}
-                                value={`${t.scientificName} ${t.vernacularName || ""}`}
-                                onSelect={() => {
-                                  field.onChange(t.id);
-                                  setOpenTaxon(false);
-                                }}
-                              >
-                                <div className="flex flex-col gap-0.5 overflow-hidden">
-                                  <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
-                                    <span>{t.genus?.family?.order_obj?.class_obj?.name}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                    <span>{t.genus?.family?.order_obj?.name}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                    <span>{t.genus?.family?.name}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                    <span>{t.genus?.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm italic text-foreground leading-none">
-                                      {t.scientificName}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground">({t.vernacularName || "-"})</span>
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                          {isTaxonLoading ? (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                              Buscando especies...
+                            </div>
+                          ) : (
+                            <>
+                              <CommandEmpty>No se encontró taxón.</CommandEmpty>
+                              <CommandGroup>
+                                {taxa.map((t) => (
+                                  <CommandItem
+                                    key={t.id}
+                                    value={t.id}
+                                    onSelect={() => {
+                                      field.onChange(t.id);
+                                      setSelectedTaxon(t);
+                                      setOpenTaxon(false);
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                                      <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
+                                        <span>{t.genus?.family?.order_obj?.class_obj?.name}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{t.genus?.family?.order_obj?.name}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{t.genus?.family?.name}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{t.genus?.name}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-sm italic text-foreground leading-none">
+                                          {t.scientificName}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground">({t.vernacularName || "-"})</span>
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </>
+                          )}
                         </CommandList>
                         <div className="p-2 border-t border-muted/20">
                           <Button
@@ -329,7 +367,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {watch("taxon_id") && (
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 font-medium mt-1 px-1 overflow-hidden truncate">
                   {(() => {
-                    const t = taxa.find(t => t.id === watch("taxon_id"));
+                    const t = selectedTaxon;
                     if (!t) return null;
                     return (
                       <>
@@ -745,11 +783,14 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <div className="py-6 px-1">
             <TaxonForm
               id={null}
-              onSuccess={async (newId) => {
-                const resp = await getTaxa({ limit: 100 });
-                setTaxa(resp.data);
-                if (newId) {
-                  setValue("taxon_id", newId);
+              onSuccess={async (newTaxon) => {
+                if (newTaxon) {
+                  setTaxa(prev => {
+                    if (!prev.find(t => t.id === newTaxon.id)) return [newTaxon, ...prev];
+                    return prev;
+                  });
+                  setValue("taxon_id", newTaxon.id);
+                  setSelectedTaxon(newTaxon);
                 }
                 setIsTaxonFormOpen(false);
               }}
