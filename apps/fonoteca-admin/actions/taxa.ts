@@ -31,12 +31,13 @@ export async function getTaxa({
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  let selectStr = "*, genus:genera(*, family:families(*))";
+  let selectStr = "*, genus:genera(*, family:families(*, order_obj:orders(*, class_obj:classes(*))))";
 
   if (kingdom || family_id) {
     // !inner join translates to filter parent when children are verified
-    selectStr = "*, genus:genera!inner(*, family:families!inner(*))";
+    selectStr = "*, genus:genera!inner(*, family:families!inner(*, order_obj:orders!inner(*, class_obj:classes!inner(*))))";
   }
+
 
   let query = supabase
     .from("taxa")
@@ -103,11 +104,12 @@ export async function getAllTaxaForExport({
   const cookieStore = await cookies();
   const supabase = await createFonotecaServer(cookieStore);
 
-  let selectStr = "*, genus:genera(*, family:families(*))";
+  let selectStr = "*, genus:genera(*, family:families(*, order_obj:orders(*, class_obj:classes(*))))";
 
   if (kingdom || family_id) {
-    selectStr = "*, genus:genera!inner(*, family:families!inner(*))";
+    selectStr = "*, genus:genera!inner(*, family:families!inner(*, order_obj:orders!inner(*, class_obj:classes!inner(*))))";
   }
+
 
   let query = supabase
     .from("taxa")
@@ -160,9 +162,10 @@ export async function getTaxon(id: string) {
 
   const { data, error } = await supabase
     .from("taxa")
-    .select("*, genus:genera(*, family:families(*))")
+    .select("*, genus:genera(*, family:families(*, order_obj:orders(*, class_obj:classes(*))))")
     .eq("id", id)
     .single();
+
 
   if (error) {
     return { error: error.message };

@@ -246,9 +246,10 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                           {field.value
                             ? (() => {
                               const t = taxa.find((t) => t.id === field.value);
-                              return t ? `${t.scientificName} (${t.vernacularName || "-"})` : "Seleccionar Taxón...";
+                              return t ? t.scientificName : "Seleccionar Taxón...";
                             })()
                             : "Seleccionar Taxón..."}
+
                         </span>
 
 
@@ -270,23 +271,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                                   setOpenTaxon(false);
                                 }}
                               >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4 shrink-0",
-                                    t.id === field.value ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
                                 <div className="flex flex-col gap-0.5 overflow-hidden">
                                   <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
-                                    <span>{t.genus?.family?.order_obj?.class_obj?.kingdom}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
                                     <span>{t.genus?.family?.order_obj?.class_obj?.name}</span>
                                     <ChevronRight className="h-1.5 w-1.5 opacity-40" />
                                     <span>{t.genus?.family?.order_obj?.name}</span>
                                     <ChevronRight className="h-1.5 w-1.5 opacity-40" />
                                     <span>{t.genus?.family?.name}</span>
+                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                    <span>{t.genus?.name}</span>
                                   </div>
-
                                   <div className="flex items-center gap-2">
                                     <span className="font-semibold text-sm italic text-foreground leading-none">
                                       {t.scientificName}
@@ -468,12 +462,6 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                               setOpenInstitution(false);
                             }}
                           >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4 shrink-0",
-                                inst.id === selectedInstitutionId ? "opacity-100" : "opacity-0"
-                              )}
-                            />
                             <div className="flex flex-col">
                               <span className="font-medium">{inst.name}</span>
                               <span className="text-[10px] text-muted-foreground">{inst.code}</span>
@@ -544,12 +532,6 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                                   setOpenCollection(false);
                                 }}
                               >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4 shrink-0",
-                                    col.id === field.value ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
                                 <div className="flex flex-col">
                                   <span className="font-medium">{col.name}</span>
                                   <span className="text-[10px] text-muted-foreground">{col.code}</span>
