@@ -105,9 +105,9 @@ export interface Occurrence {
   location_id: string | null;
   taxon_id: string;
   basisOfRecord: string;
-  institutionCode: string;
-  collectionCode: string;
+  collection_id: string | null;
   catalogNumber: string | null;
+
   recordedBy: string;
   identifiedBy: string | null;
   identificationMethod: string;
@@ -127,8 +127,10 @@ export interface Occurrence {
   taxon?: Taxon;
   location?: Location;
   event?: Event;
+  collection?: Collection;
   multimedia?: Multimedia[];
 }
+
 
 export const BASIS_OF_RECORD = {
   PRESERVED_SPECIMEN: 'PreservedSpecimen',
@@ -243,3 +245,49 @@ export const TAXON_PHYLUM = {
   ECHINODERMATA: 'Echinodermata',
   PORIFERA: 'Porifera',
 } as const;
+
+export interface Address {
+  city: string;
+  address: string;
+  country: string;
+  province: string;
+}
+
+export interface Institution {
+  id: string;
+  name: string;
+  code: string;
+  additional_names: string[];
+  type: string;
+  is_active: boolean;
+  founding_year: number | null;
+  specimen_count: number;
+  description: string | null;
+  homepage_url: string | null;
+  phones: string[];
+  email: string | null;
+  display_on_nhc_portal: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  physical_address: Address;
+  mailing_address: Address;
+  created_at: string;
+  created_by: string;
+  modified_at: string;
+  modified_by: string;
+}
+
+export interface Collection {
+  id: string;
+  institution_id: string;
+  code: string;
+  name: string;
+  registry_url: string | null;
+  record_status: "draft" | "published" | "deleted";
+  created_at: string;
+  updated_at: string;
+
+  // Joined
+  institution?: Institution;
+}
+

@@ -50,6 +50,10 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
       icon: Map,
       items: [
         {
+          title: "Instituciones",
+          url: `/dashboard/geography/institutions`,
+        },
+        {
           title: "Ubicaciones",
           url: `/dashboard/locations`,
         },

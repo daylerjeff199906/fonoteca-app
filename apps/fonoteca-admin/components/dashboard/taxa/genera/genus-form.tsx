@@ -18,7 +18,7 @@ export function GenusForm({
 }: {
   id: string | null;
   defaultValues?: Partial<GenusInput>;
-  onSuccess?: () => void;
+  onSuccess?: (id?: string) => void;
 }) {
   const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
   const [isLoadingFamilies, setIsLoadingFamilies] = useState(true);
@@ -55,7 +55,7 @@ export function GenusForm({
     if (resp.success) {
       toast.success(id ? "Género actualizado" : "Género registrado");
       reset();
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(resp.data?.id);
     } else {
       toast.error("Error al guardar el género");
     }

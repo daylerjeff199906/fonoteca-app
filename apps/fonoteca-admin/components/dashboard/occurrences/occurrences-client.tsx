@@ -91,8 +91,6 @@ export function OccurrencesClient({
         item.basisOfRecord || "",
         item.recordedBy || "",
         item.identifiedBy || "",
-        item.institutionCode || "",
-        item.collectionCode || "",
         item.catalogNumber || "",
         item.lifeStage || "",
         item.sex || "",
