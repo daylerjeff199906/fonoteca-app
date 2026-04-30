@@ -8,19 +8,24 @@ import { createOccurrence, updateOccurrence, getOccurrence } from "@/actions/occ
 import { getTaxa } from "@/actions/taxa";
 import { getLocations } from "@/actions/locations";
 import { getInstitutions } from "@/actions/institutions";
+import { getCollections } from "@/actions/collections";
 import { Input } from "@/components/ui/input";
+
 
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Location, Taxon, Institution, BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
-import { FileText, FolderTree, Calendar, Building, Building2, Check, ChevronsUpDown, Loader2, Plus, Search } from "lucide-react";
+import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
+import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus } from "lucide-react";
+
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TaxonForm } from "@/components/dashboard/taxa/taxon-form";
 import { InstitutionForm } from "@/components/dashboard/geography/institutions/institution-form";
+import { CollectionForm } from "@/components/dashboard/geography/institutions/collection-form";
 import { FormFooter } from "@/components/panel-admin/form-footer";
+
 
 import { cn } from "@/lib/utils";
 import {
@@ -46,20 +51,25 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [taxa, setTaxa] = useState<Taxon[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | null>(null);
+
   const [openTaxon, setOpenTaxon] = useState(false);
   const [openInstitution, setOpenInstitution] = useState(false);
+  const [openCollection, setOpenCollection] = useState(false);
+
   const [isTaxonFormOpen, setIsTaxonFormOpen] = useState(false);
   const [isInstitutionFormOpen, setIsInstitutionFormOpen] = useState(false);
+  const [isCollectionFormOpen, setIsCollectionFormOpen] = useState(false);
+
 
 
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm<OccurrenceInput>({
     resolver: zodResolver(occurrenceSchema) as any,
     defaultValues: {
       basisOfRecord: "MachineObservation",
-      institutionCode: "IIAP",
-      collectionCode: "Fonoteca",
-
       identificationMethod: "Manual",
+
       verification_status: "pending",
       record_status: "draft",
       event_id: defaultEventId || undefined,
@@ -70,6 +80,8 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     getTaxa({ limit: 100 }).then(resp => setTaxa(resp.data));
     getLocations({ limit: 100 }).then(resp => setLocations(resp.data));
     getInstitutions({ limit: 100 }).then(resp => setInstitutions(resp.data));
+    getCollections({ limit: 100 }).then(resp => setCollections(resp.data));
+
 
 
     if (id) {
@@ -79,6 +91,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         setIsFetching(false);
         if (resp.data) {
           reset(resp.data as any);
+
+          if (resp.data.collection) {
+            setSelectedInstitutionId(resp.data.collection.institution_id);
+            setCollections(prev => {
+              if (!prev.find(c => c.id === resp.data.collection?.id)) {
+                return [resp.data.collection as Collection, ...prev];
+              }
+              return prev;
+            });
+          }
+
 
           if (resp.data.taxon) {
             setTaxa(prev => {
@@ -127,7 +150,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     }
   };
 
-  const selectedInstitutionCode = watch("institutionCode");
+  const selectedCollectionId = watch("collection_id");
+  const filteredCollections = selectedInstitutionId
+    ? collections.filter(c => c.institution_id === selectedInstitutionId)
+    : [];
+
 
 
   if (isFetching) {
@@ -361,25 +388,27 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             <Building className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-semibold text-foreground">Afiliación Institucional</h3>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación *</label>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-2">
+            {/* Institución */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
               <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
                 <PopoverTrigger asChild>
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    role="combobox"
                     className={cn(
-                      "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
-                      !selectedInstitutionCode && "text-muted-foreground"
+                      "w-full justify-between font-normal h-10",
+                      !selectedInstitutionId && "text-muted-foreground"
                     )}
                   >
                     <span className="truncate">
-                      {selectedInstitutionCode
-                        ? institutions.find(inst => inst.code === selectedInstitutionCode)?.name || selectedInstitutionCode
-                        : "Seleccionar Afiliación..."}
+                      {selectedInstitutionId
+                        ? institutions.find(inst => inst.id === selectedInstitutionId)?.name || "Institución seleccionada"
+                        : "Seleccionar Institución..."}
                     </span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </button>
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
@@ -390,16 +419,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                         {institutions.map((inst) => (
                           <CommandItem
                             key={inst.id}
-                            value={`${inst.name} ${inst.code}`}
+                            value={inst.name}
                             onSelect={() => {
-                              setValue("institutionCode", inst.code);
+                              setSelectedInstitutionId(inst.id);
+                              setValue("collection_id", null); // Reset collection when institution changes
                               setOpenInstitution(false);
                             }}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4 shrink-0",
-                                inst.code === selectedInstitutionCode ? "opacity-100" : "opacity-0"
+                                inst.id === selectedInstitutionId ? "opacity-100" : "opacity-0"
                               )}
                             />
                             <div className="flex flex-col">
@@ -427,29 +457,89 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   </Command>
                 </PopoverContent>
               </Popover>
-              <Input
-                {...register("institutionCode")}
-                className="hidden"
-              />
-              {errors.institutionCode && <p className="text-[10px] text-red-500 mt-1">{errors.institutionCode.message}</p>}
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-tight">Código Institucional</label>
-              <Input
-                value={selectedInstitutionCode}
-                disabled
-                className="bg-muted h-9 font-bold tracking-wider"
+            {/* Colección */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Colección Biológica (Code) *</label>
+              <Controller
+                control={control}
+                name="collection_id"
+                render={({ field }) => (
+                  <Popover open={openCollection} onOpenChange={setOpenCollection}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        disabled={!selectedInstitutionId}
+                        className={cn(
+                          "w-full justify-between font-normal h-10",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate">
+                          {field.value
+                            ? collections.find(c => c.id === field.value)?.name || "Colección seleccionada"
+                            : selectedInstitutionId ? "Seleccionar Colección..." : "Primero seleccione institución"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar colección..." />
+                        <CommandList>
+                          <CommandEmpty>
+                            Sin resultados
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {filteredCollections.map((col) => (
+                              <CommandItem
+                                key={col.id}
+                                value={col.name}
+                                onSelect={() => {
+                                  field.onChange(col.id);
+                                  setOpenCollection(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4 shrink-0",
+                                    col.id === field.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{col.name}</span>
+                                  <span className="text-[10px] text-muted-foreground">{col.code}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                        <div className="p-2 border-t border-muted/20">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                            onClick={() => {
+                              setOpenCollection(false);
+                              setIsCollectionFormOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Añadir Colección
+                          </Button>
+                        </div>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
               />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Colección</label>
-              <Input {...register("collectionCode")} className="bg-background h-9 focus-visible:ring-primary/20" />
-              {errors.collectionCode && <p className="text-[10px] text-red-500 mt-1">{errors.collectionCode.message}</p>}
+              {errors.collection_id && <p className="text-[10px] text-red-500 mt-1">{errors.collection_id.message}</p>}
             </div>
           </div>
         </div>
+
 
 
         {/* 6. Observaciones y Estado del Registro */}
@@ -533,11 +623,34 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <div className="py-6 px-1">
             <InstitutionForm
               footerVariant="sticky"
+              onCancel={() => setIsInstitutionFormOpen(false)}
               onSuccess={async (newInst) => {
                 const resp = await getInstitutions({ limit: 100 });
                 setInstitutions(resp.data);
-                setValue("institutionCode", newInst.code);
+                setSelectedInstitutionId(newInst.id);
+                setValue("collection_id", null);
                 setIsInstitutionFormOpen(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isCollectionFormOpen} onOpenChange={setIsCollectionFormOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[40vw]">
+          <SheetHeader className="pb-0">
+            <SheetTitle>Registrar Nueva Colección</SheetTitle>
+          </SheetHeader>
+          <div className="py-6 px-1">
+            <CollectionForm
+              defaultInstitutionId={selectedInstitutionId || undefined}
+              onCancel={() => setIsCollectionFormOpen(false)}
+              onSuccess={async (newCol) => {
+                const resp = await getCollections({ limit: 100 });
+                setCollections(resp.data);
+                setValue("collection_id", newCol.id);
+                setSelectedInstitutionId(newCol.institution_id);
+                setIsCollectionFormOpen(false);
               }}
             />
           </div>
@@ -546,3 +659,4 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     </>
   );
 }
+

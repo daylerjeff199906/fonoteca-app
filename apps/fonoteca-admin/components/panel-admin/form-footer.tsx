@@ -16,7 +16,7 @@ export function FormFooter({ children, className, style, variant = "fixed", ...p
     return (
       <div
         className={cn(
-          "sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t bg-background/95 px-6 py-4 backdrop-blur-md -mx-6 -mb-6 mt-auto",
+          "sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t bg-background/95 px-6 py-4 backdrop-blur-md -mb-6 mt-auto",
           className
         )}
         {...props}

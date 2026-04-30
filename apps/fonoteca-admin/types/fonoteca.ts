@@ -105,9 +105,9 @@ export interface Occurrence {
   location_id: string | null;
   taxon_id: string;
   basisOfRecord: string;
-  institutionCode: string;
-  collectionCode: string;
+  collection_id: string | null;
   catalogNumber: string | null;
+
   recordedBy: string;
   identifiedBy: string | null;
   identificationMethod: string;
@@ -127,8 +127,10 @@ export interface Occurrence {
   taxon?: Taxon;
   location?: Location;
   event?: Event;
+  collection?: Collection;
   multimedia?: Multimedia[];
 }
+
 
 export const BASIS_OF_RECORD = {
   PRESERVED_SPECIMEN: 'PreservedSpecimen',
@@ -273,5 +275,19 @@ export interface Institution {
   created_by: string;
   modified_at: string;
   modified_by: string;
+}
+
+export interface Collection {
+  id: string;
+  institution_id: string;
+  code: string;
+  name: string;
+  registry_url: string | null;
+  record_status: "draft" | "published" | "deleted";
+  created_at: string;
+  updated_at: string;
+
+  // Joined
+  institution?: Institution;
 }
 

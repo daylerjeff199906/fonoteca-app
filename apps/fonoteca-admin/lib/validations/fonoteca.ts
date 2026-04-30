@@ -108,9 +108,9 @@ export const occurrenceSchema = z.object({
   location_id: z.string().uuid().optional().nullable(),
   taxon_id: z.string().uuid("Invalid Taxon ID"),
   basisOfRecord: z.string().default("MachineObservation"),
-  institutionCode: z.string().default("IIAP"),
-  collectionCode: z.string().default("Fonoteca"),
+  collection_id: z.string().uuid("Colección inválida").optional().nullable(),
   catalogNumber: z.string().optional().nullable(),
+
   recordedBy: z.string().min(1, "Recorded By is required"),
   identifiedBy: z.string().optional().nullable(),
   identificationMethod: z.string().default("Manual"),
@@ -180,4 +180,17 @@ export const institutionSchema = z.object({
 });
 
 export type InstitutionInput = z.infer<typeof institutionSchema>;
+
+// --- Collections ---
+export const collectionSchema = z.object({
+  id: z.string().uuid().optional(),
+  institution_id: z.string().uuid("ID de institución inválido"),
+  code: z.string().min(1, "El código es requerido"),
+  name: z.string().min(1, "El nombre es requerido"),
+  registry_url: z.string().url("URL inválida").or(z.string().length(0)).optional().nullable(),
+  record_status: z.enum(["draft", "published", "deleted"]).default("published"),
+});
+
+export type CollectionInput = z.infer<typeof collectionSchema>;
+
 

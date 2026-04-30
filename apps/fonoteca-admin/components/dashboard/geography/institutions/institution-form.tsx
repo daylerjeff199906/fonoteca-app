@@ -38,11 +38,13 @@ const MapPicker = dynamic(() => import("@/components/dashboard/locations/map-pic
   loading: () => <div className="h-[300px] w-full bg-muted animate-pulse rounded-lg flex items-center justify-center font-medium text-xs text-muted-foreground">Cargando Mapa...</div>
 });
 
-export function InstitutionForm({ id, onSuccess, footerVariant = "fixed" }: { 
+export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: { 
   id?: string, 
   onSuccess?: (institution: any) => void,
+  onCancel?: () => void,
   footerVariant?: "fixed" | "sticky"
 }) {
+
 
 
   const router = useRouter();
@@ -416,10 +418,16 @@ export function InstitutionForm({ id, onSuccess, footerVariant = "fixed" }: {
       </div>
 
       <FormFooter variant={footerVariant}>
+        {onCancel ? (
+          <Button variant="outline" type="button" onClick={onCancel} className="h-11 px-8">
+            Cancelar
+          </Button>
+        ) : (
+          <Button variant="outline" type="button" asChild className="h-11 px-8">
+            <Link href="/dashboard/geography/institutions">Cancelar</Link>
+          </Button>
+        )}
 
-        <Button variant="outline" type="button" asChild className="h-11 px-8">
-          <Link href="/dashboard/geography/institutions">Cancelar</Link>
-        </Button>
         <Button type="submit" disabled={loading} className="h-11 min-w-[200px] font-bold shadow-lg shadow-primary/20">
           {loading ? (
             <>

@@ -48,8 +48,10 @@ export async function getOccurrences({
         )
       ), 
       location:locations(*), 
+      collection:collections(*, institution:institutions(*)),
       multimedia(*)
     `, { count: "exact" });
+
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
@@ -132,8 +134,10 @@ export async function getOccurrence(id: string) {
         )
       ), 
       location:locations(*), 
-      event:events(*)
+      event:events(*),
+      collection:collections(*, institution:institutions(*))
     `)
+
     .eq("id", id)
     .single();
 
@@ -274,8 +278,10 @@ export async function getAllOccurrencesForExport({
         )
       ), 
       location:locations(*), 
+      collection:collections(*, institution:institutions(*)),
       multimedia(*)
     `);
+
 
   if (search) {
     query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
