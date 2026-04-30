@@ -17,7 +17,23 @@ import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS, Ecosystem } from "@/types/fonoteca";
-import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight, Trees, Globe } from "lucide-react";
+import { 
+  FileText, 
+  Calendar, 
+  Building, 
+  Check, 
+  ChevronsUpDown, 
+  Plus, 
+  ChevronRight, 
+  Trees, 
+  Globe,
+  Thermometer,
+  Droplets,
+  ArrowUp,
+  Box
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 
 
@@ -81,6 +97,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       verification_status: "pending",
       record_status: "draft",
       event_id: defaultEventId || undefined,
+      has_cloud_voucher: false,
     }
   });
 
@@ -467,8 +484,8 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           </div>
         </FormSection>
 
-        {/* 3. Temporalidad y Monitoreo */}
-        <FormSection title="Temporalidad y Monitoreo" icon={Calendar}>
+        {/* 3. Monitoreo y Variables Ambientales */}
+        <FormSection title="Monitoreo y Variables Ambientales" icon={Thermometer}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
@@ -480,147 +497,202 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
               <Input {...register("identifiedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
+
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-muted/20">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <Thermometer className="h-3.5 w-3.5" /> Temperatura (°C)
+                </label>
+                <Input type="number" step="0.1" {...register("temperature_c", { valueAsNumber: true })} placeholder="Ex: 24.5" className="h-9 bg-background/50" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <Droplets className="h-3.5 w-3.5" /> Humedad Relativa (%)
+                </label>
+                <Input type="number" step="1" {...register("relative_humidity_percent", { valueAsNumber: true })} placeholder="Ex: 85" className="h-9 bg-background/50" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <ArrowUp className="h-3.5 w-3.5" /> Elevación (m.s.n.m.)
+                </label>
+                <Input type="number" step="1" {...register("elevation_masl", { valueAsNumber: true })} placeholder="Ex: 120" className="h-9 bg-background/50" />
+              </div>
+            </div>
           </div>
         </FormSection>
 
-        {/* 4. Afiliación e Institución */}
-        <FormSection title="Afiliación Institucional" icon={Building}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Institución */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
-              <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "w-full justify-between font-normal h-10",
-                      !selectedInstitutionId && "text-muted-foreground"
-                    )}
-                  >
-                    <span className="truncate">
-                      {selectedInstitutionId
-                        ? institutions.find(inst => inst.id === selectedInstitutionId)?.name || "Institución seleccionada"
-                        : "Seleccionar Institución..."}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar institución..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontró la institución.</CommandEmpty>
-                      <CommandGroup>
-                        {institutions.map((inst) => (
-                          <CommandItem
-                            key={inst.id}
-                            value={inst.name}
-                            onSelect={() => {
-                              setSelectedInstitutionId(inst.id);
-                              setValue("collection_id", null); // Reset collection when institution changes
-                              setOpenInstitution(false);
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium">{inst.name}</span>
-                              <span className="text-[10px] text-muted-foreground">{inst.code}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                    <div className="p-2 border-t border-muted/20">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                        onClick={() => {
-                          setOpenInstitution(false);
-                          setIsInstitutionFormOpen(true);
-                        }}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Registrar Nueva Institución
-                      </Button>
-                    </div>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+        {/* 4. Testigo Físico y Afiliación */}
+        <FormSection title="Testigo Físico y Afiliación" icon={Box}>
+          <div className="space-y-6">
+            {/* Testigo Físico (Cloud Voucher) */}
+            <div className="p-4 bg-muted/30 rounded-lg border border-muted-foreground/10 space-y-4">
+              <div className="flex items-center space-x-3 group">
+                <Controller
+                  name="has_cloud_voucher"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox 
+                      id="has_cloud_voucher" 
+                      checked={field.value} 
+                      onCheckedChange={field.onChange} 
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                  )}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="has_cloud_voucher" className="text-sm font-bold cursor-pointer group-hover:text-primary transition-colors uppercase tracking-tight">Posee Testigo Físico (Voucher)</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Marque si existe un espécimen o muestra física depositada en colección.</p>
+                </div>
+              </div>
+
+              {watch("has_cloud_voucher") && (
+                <div className="flex flex-col gap-1.5 pl-7 animate-in fade-in slide-in-from-left-2 duration-200">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Número de Catálogo / Voucher *</label>
+                  <Input {...register("catalogNumber")} placeholder="Ex: MUSM-12345" className="h-9 bg-background focus-visible:ring-primary/20" />
+                  <p className="text-[9px] text-muted-foreground">Ingrese el código único asignado por la institución/colección.</p>
+                </div>
+              )}
             </div>
 
-            {/* Colección */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Colección Biológica (Code) *</label>
-              <Controller
-                control={control}
-                name="collection_id"
-                render={({ field }) => (
-                  <Popover open={openCollection} onOpenChange={setOpenCollection}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        disabled={!selectedInstitutionId}
-                        className={cn(
-                          "w-full justify-between font-normal h-10",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <span className="truncate">
-                          {field.value
-                            ? collections.find(c => c.id === field.value)?.name || "Colección seleccionada"
-                            : selectedInstitutionId ? "Seleccionar Colección..." : "Primero seleccione institución"}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar colección..." />
-                        <CommandList>
-                          <CommandEmpty>
-                            Sin resultados
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {filteredCollections.map((col) => (
-                              <CommandItem
-                                key={col.id}
-                                value={col.name}
-                                onSelect={() => {
-                                  field.onChange(col.id);
-                                  setOpenCollection(false);
-                                }}
-                              >
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{col.name}</span>
-                                  <span className="text-[10px] text-muted-foreground">{col.code}</span>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                        <div className="p-2 border-t border-muted/20">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                            onClick={() => {
-                              setOpenCollection(false);
-                              setIsCollectionFormOpen(true);
-                            }}
-                          >
-                            <Plus className="h-3 w-3" />
-                            Añadir Colección
-                          </Button>
-                        </div>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-              {errors.collection_id && <p className="text-[10px] text-red-500 mt-1">{errors.collection_id.message}</p>}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Institución */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
+                <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between font-normal h-10",
+                        !selectedInstitutionId && "text-muted-foreground"
+                      )}
+                    >
+                      <span className="truncate">
+                        {selectedInstitutionId
+                          ? institutions.find(inst => inst.id === selectedInstitutionId)?.name || "Institución seleccionada"
+                          : "Seleccionar Institución..."}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar institución..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontró la institución.</CommandEmpty>
+                        <CommandGroup>
+                          {institutions.map((inst) => (
+                            <CommandItem
+                              key={inst.id}
+                              value={inst.name}
+                              onSelect={() => {
+                                setSelectedInstitutionId(inst.id);
+                                setValue("collection_id", null); // Reset collection when institution changes
+                                setOpenInstitution(false);
+                              }}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{inst.name}</span>
+                                <span className="text-[10px] text-muted-foreground">{inst.code}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                      <div className="p-2 border-t border-muted/20">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                          onClick={() => {
+                            setOpenInstitution(false);
+                            setIsInstitutionFormOpen(true);
+                          }}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Registrar Nueva Institución
+                        </Button>
+                      </div>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Colección */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Colección Biológica (Code) *</label>
+                <Controller
+                  control={control}
+                  name="collection_id"
+                  render={({ field }) => (
+                    <Popover open={openCollection} onOpenChange={setOpenCollection}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          disabled={!selectedInstitutionId}
+                          className={cn(
+                            "w-full justify-between font-normal h-10",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <span className="truncate">
+                            {field.value
+                              ? collections.find(c => c.id === field.value)?.name || "Colección seleccionada"
+                              : selectedInstitutionId ? "Seleccionar Colección..." : "Primero seleccione institución"}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar colección..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              Sin resultados
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {filteredCollections.map((col) => (
+                                <CommandItem
+                                  key={col.id}
+                                  value={col.name}
+                                  onSelect={() => {
+                                    field.onChange(col.id);
+                                    setOpenCollection(false);
+                                  }}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{col.name}</span>
+                                    <span className="text-[10px] text-muted-foreground">{col.code}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                          <div className="p-2 border-t border-muted/20">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                              onClick={() => {
+                                setOpenCollection(false);
+                                setIsCollectionFormOpen(true);
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                              Añadir Colección
+                            </Button>
+                          </div>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors.collection_id && <p className="text-[10px] text-red-500 mt-1">{errors.collection_id.message}</p>}
+              </div>
             </div>
           </div>
         </FormSection>

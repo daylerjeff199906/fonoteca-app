@@ -121,6 +121,15 @@ export interface Occurrence {
   record_status: "draft" | "published" | "deleted";
   occurrence_date: string | null;
   ecosystem_id: string | null;
+  
+  // Environmental variables
+  temperature_c: number | null;
+  relative_humidity_percent: number | null;
+  elevation_masl: number | null;
+  
+  // Physical Voucher
+  has_cloud_voucher: boolean;
+
   created_at: string;
   updated_at: string;
 
