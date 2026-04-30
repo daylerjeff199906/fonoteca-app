@@ -21,8 +21,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormSection } from "@/components/panel-admin/form-section";
 
-export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: { 
-  id?: string | null, 
+export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: {
+  id?: string | null,
   onSuccess?: (region: any) => void,
   onCancel?: () => void,
   footerVariant?: "fixed" | "sticky"
@@ -100,7 +100,7 @@ export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fi
       <FormSection title="Detalles de la Región Natural" icon={Globe}>
         <div className="grid grid-cols-1 gap-6">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Nombre de la Región *</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Nombre de la Región *</label>
             <Input
               {...register("name")}
               placeholder="p. ej. Selva Baja, Yungas, etc."
@@ -110,7 +110,7 @@ export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fi
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
               <ImageIcon className="h-3 w-3" /> URL del Logo / Icono
             </label>
             <Input
@@ -121,7 +121,7 @@ export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fi
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
               <FileText className="h-3 w-3" /> Descripción
             </label>
             <Textarea
