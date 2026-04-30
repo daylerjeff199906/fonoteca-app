@@ -9,14 +9,15 @@ import { getTaxa } from "@/actions/taxa";
 import { getLocations } from "@/actions/locations";
 import { getInstitutions } from "@/actions/institutions";
 import { getCollections } from "@/actions/collections";
+import { getEcosystems } from "@/actions/ecosystems";
 import { Input } from "@/components/ui/input";
 
 
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
-import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight } from "lucide-react";
+import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS, Ecosystem } from "@/types/fonoteca";
+import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight, Trees } from "lucide-react";
 
 
 
@@ -25,6 +26,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { TaxonForm } from "@/components/dashboard/taxa/taxon-form";
 import { InstitutionForm } from "@/components/dashboard/geography/institutions/institution-form";
 import { CollectionForm } from "@/components/dashboard/geography/institutions/collection-form";
+import { EcosystemForm } from "@/components/dashboard/geography/ecosystems/ecosystem-form";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 
 
@@ -62,6 +64,10 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [isTaxonFormOpen, setIsTaxonFormOpen] = useState(false);
   const [isInstitutionFormOpen, setIsInstitutionFormOpen] = useState(false);
   const [isCollectionFormOpen, setIsCollectionFormOpen] = useState(false);
+  const [isEcosystemFormOpen, setIsEcosystemFormOpen] = useState(false);
+
+  const [ecosystems, setEcosystems] = useState<Ecosystem[]>([]);
+  const [openEcosystem, setOpenEcosystem] = useState(false);
 
 
 
@@ -82,6 +88,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     getLocations({ limit: 100 }).then(resp => setLocations(resp.data));
     getInstitutions({ limit: 100 }).then(resp => setInstitutions(resp.data));
     getCollections({ limit: 100 }).then(resp => setCollections(resp.data));
+    getEcosystems({ limit: 100 }).then(resp => setEcosystems(resp.data));
 
 
 
@@ -348,6 +355,84 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 ))}
               </select>
               {errors.location_id && <p className="text-[10px] text-red-500 mt-1">{errors.location_id.message}</p>}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Ecosistema Macro</label>
+              <Controller
+                control={control}
+                name="ecosystem_id"
+                render={({ field }) => (
+                  <Popover open={openEcosystem} onOpenChange={setOpenEcosystem}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate">
+                          {field.value
+                            ? ecosystems.find((e) => e.id === field.value)?.name || "Seleccionar Ecosistema..."
+                            : "Seleccionar Ecosistema..."}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar ecosistema..." />
+                        <CommandList>
+                          <CommandEmpty>No se encontró ecosistema.</CommandEmpty>
+                          <CommandGroup>
+                            {ecosystems.map((e) => (
+                              <CommandItem
+                                key={e.id}
+                                value={e.name}
+                                onSelect={() => {
+                                  field.onChange(e.id);
+                                  setOpenEcosystem(false);
+                                }}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-semibold text-sm">{e.name}</span>
+                                  <span className="text-[10px] text-muted-foreground">{e.region?.name}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                        <div className="p-2 border-t border-muted/20">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                            onClick={() => {
+                              setOpenEcosystem(false);
+                              setIsEcosystemFormOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Añadir Nuevo Ecosistema
+                          </Button>
+                        </div>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+              {errors.ecosystem_id && <p className="text-[10px] text-red-500 mt-1">{errors.ecosystem_id.message}</p>}
+            </div>
+
+            <div className="flex flex-col gap-1 lg:col-span-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Hábitat Micro (Observación Directa)</label>
+              <Input 
+                {...register("microhabitat_remarks")} 
+                placeholder="p. ej. En una rama a 3m del suelo, sobre hojarasca húmeda..." 
+                className="bg-background h-9 focus-visible:ring-primary/20" 
+              />
+              {errors.microhabitat_remarks && <p className="text-[10px] text-red-500 mt-1">{errors.microhabitat_remarks.message}</p>}
             </div>
           </div>
         </div>
@@ -675,6 +760,28 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 setValue("collection_id", newCol.id);
                 setSelectedInstitutionId(newCol.institution_id);
                 setIsCollectionFormOpen(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isEcosystemFormOpen} onOpenChange={setIsEcosystemFormOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[40vw]">
+          <SheetHeader className="pb-0">
+            <SheetTitle>Registrar Ecosistema</SheetTitle>
+          </SheetHeader>
+          <div className="py-6 px-1">
+            <EcosystemForm
+              footerVariant="sticky"
+              onCancel={() => setIsEcosystemFormOpen(false)}
+              onSuccess={async (newEco) => {
+                const resp = await getEcosystems({ limit: 100 });
+                setEcosystems(resp.data);
+                if (newEco) {
+                  setValue("ecosystem_id", newEco.id);
+                }
+                setIsEcosystemFormOpen(false);
               }}
             />
           </div>

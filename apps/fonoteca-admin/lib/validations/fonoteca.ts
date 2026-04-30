@@ -123,6 +123,8 @@ export const occurrenceSchema = z.object({
   verified_by: z.string().uuid().optional().nullable(),
   record_status: z.enum(["draft", "published", "deleted"]).default("draft"),
   occurrence_date: z.string().optional().nullable(),
+  ecosystem_id: z.string().uuid().optional().nullable(),
+  microhabitat_remarks: z.string().optional().nullable(),
 });
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;
@@ -192,5 +194,31 @@ export const collectionSchema = z.object({
 });
 
 export type CollectionInput = z.infer<typeof collectionSchema>;
+
+// --- Natural Regions ---
+export const naturalRegionSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, "El nombre es requerido"),
+  description: z.string().optional().nullable(),
+  logo_url: z.string().optional().nullable(),
+});
+
+export type NaturalRegionInput = z.infer<typeof naturalRegionSchema>;
+
+// --- Ecosystems ---
+export const ecosystemSchema = z.object({
+  id: z.string().uuid().optional(),
+  region_id: z.string().uuid("ID de Región Natural inválido"),
+  name: z.string().min(1, "El nombre es requerido"),
+  definition: z.string().min(1, "La definición es requerida"),
+  diagnostic_factors: z.array(z.string()).default([]),
+  botanical_species: z.array(z.string()).default([]),
+  sources: z.string().optional().nullable(),
+  typical_locality: z.string().optional().nullable(),
+  observation: z.string().optional().nullable(),
+  distribution_geojson: z.any().optional().nullable(),
+});
+
+export type EcosystemInput = z.infer<typeof ecosystemSchema>;
 
 
