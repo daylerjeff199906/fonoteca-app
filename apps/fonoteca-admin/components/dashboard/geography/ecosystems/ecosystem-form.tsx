@@ -115,7 +115,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
       <FormSection title="Clasificación del Hábitat" icon={Trees}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground">Región Natural *</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Región Natural *</label>
             <select
               {...register("region_id")}
               className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
@@ -129,7 +129,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground">Nombre del Hábitat *</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Nombre del Hábitat *</label>
             <Input
               {...register("name")}
               placeholder="p. ej. Bosque de terraza no inundable"
@@ -139,7 +139,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
           </div>
 
           <div className="flex flex-col gap-1.5 md:col-span-2">
-            <label className="text-[10px] font-semibold text-muted-foreground">Definición Formal *</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Definición Formal *</label>
             <Textarea
               {...register("definition")}
               placeholder="Definición científica o técnica del hábitat..."
@@ -235,15 +235,15 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
       <FormSection title="Información Complementaria" icon={FileText}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground">Localidad Típica</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Localidad Típica</label>
             <Input {...register("typical_locality")} placeholder="Lugar donde se observa comúnmente..." className="h-10 bg-background/50" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-semibold text-muted-foreground">Fuentes Bibliográficas</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Fuentes Bibliográficas</label>
             <Input {...register("sources")} placeholder="p. ej. MINAM 2019, etc." className="h-10 bg-background/50" />
           </div>
           <div className="flex flex-col gap-1.5 md:col-span-2">
-            <label className="text-[10px] font-semibold text-muted-foreground">Observaciones</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Observaciones</label>
             <Textarea {...register("observation")} placeholder="Notas adicionales..." className="min-h-[80px] bg-background/50" />
           </div>
         </div>
