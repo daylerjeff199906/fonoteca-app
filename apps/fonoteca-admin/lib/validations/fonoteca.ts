@@ -124,7 +124,6 @@ export const occurrenceSchema = z.object({
   record_status: z.enum(["draft", "published", "deleted"]).default("draft"),
   occurrence_date: z.string().optional().nullable(),
   ecosystem_id: z.string().uuid().optional().nullable(),
-  microhabitat_remarks: z.string().optional().nullable(),
 });
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;

@@ -17,7 +17,7 @@ import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS, Ecosystem } from "@/types/fonoteca";
-import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight, Trees } from "lucide-react";
+import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight, Trees, Globe } from "lucide-react";
 
 
 
@@ -343,7 +343,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
             </div>
 
-            <div className="flex flex-col gap-1 lg:col-span-2">
+            <div className="flex flex-col gap-1 lg:col-span-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
               <select
                 {...register("location_id")}
@@ -358,7 +358,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Ecosistema Macro</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Hábitat (Ecosistema)</label>
               <Controller
                 control={control}
                 name="ecosystem_id"
@@ -374,17 +374,17 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                       >
                         <span className="truncate">
                           {field.value
-                            ? ecosystems.find((e) => e.id === field.value)?.name || "Seleccionar Ecosistema..."
-                            : "Seleccionar Ecosistema..."}
+                            ? ecosystems.find((e) => e.id === field.value)?.name || "Seleccionar Hábitat..."
+                            : "Seleccionar Hábitat..."}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                       <Command>
-                        <CommandInput placeholder="Buscar ecosistema..." />
+                        <CommandInput placeholder="Buscar hábitat..." />
                         <CommandList>
-                          <CommandEmpty>No se encontró ecosistema.</CommandEmpty>
+                          <CommandEmpty>No se encontró hábitat.</CommandEmpty>
                           <CommandGroup>
                             {ecosystems.map((e) => (
                               <CommandItem
@@ -414,7 +414,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                             }}
                           >
                             <Plus className="h-3 w-3" />
-                            Añadir Nuevo Ecosistema
+                            Añadir Nuevo Hábitat
                           </Button>
                         </div>
                       </Command>
@@ -425,14 +425,14 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {errors.ecosystem_id && <p className="text-[10px] text-red-500 mt-1">{errors.ecosystem_id.message}</p>}
             </div>
 
-            <div className="flex flex-col gap-1 lg:col-span-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Hábitat Micro (Observación Directa)</label>
-              <Input 
-                {...register("microhabitat_remarks")} 
-                placeholder="p. ej. En una rama a 3m del suelo, sobre hojarasca húmeda..." 
-                className="bg-background h-9 focus-visible:ring-primary/20" 
+            <div className="flex flex-col gap-1 lg:col-span-3">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Descripción de Hábitat (Microhábitat)</label>
+              <Textarea
+                {...register("occurrenceRemarks")}
+                placeholder="Describa el hábitat o detalles extra del avistamiento (p. ej. sobre hojarasca húmeda)..."
+                className="bg-background min-h-[80px] focus-visible:ring-primary/20"
               />
-              {errors.microhabitat_remarks && <p className="text-[10px] text-red-500 mt-1">{errors.microhabitat_remarks.message}</p>}
+              {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
             </div>
           </div>
         </div>
@@ -651,21 +651,18 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
 
 
-        {/* 6. Observaciones y Estado del Registro */}
+        {/* 6. Estado del Registro y Publicación */}
         <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Descripción de Hábitat</label>
-              <Textarea
-                {...register("occurrenceRemarks")}
-                placeholder="Describa el hábitat o detalles extra del avistamiento..."
-                className="bg-background focus-visible:ring-primary/20"
-              />
-              {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-2 pb-2 border-b border-muted/20">
+              <Globe className="h-4 w-4 text-primary" />
+              <div className="flex flex-col">
+                <h3 className="text-sm font-semibold text-foreground leading-none">Estado del Registro Público</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">Defina si este registro será visible para el público general en el portal.</p>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Estado del Registro Público</label>
+            <div className="flex flex-col gap-1 pt-2">
               <Controller
                 control={control}
                 name="record_status"
@@ -769,7 +766,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       <Sheet open={isEcosystemFormOpen} onOpenChange={setIsEcosystemFormOpen}>
         <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[40vw]">
           <SheetHeader className="pb-0">
-            <SheetTitle>Registrar Ecosistema</SheetTitle>
+            <SheetTitle>Registrar Hábitat</SheetTitle>
           </SheetHeader>
           <div className="py-6 px-1">
             <EcosystemForm

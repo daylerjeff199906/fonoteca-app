@@ -121,7 +121,6 @@ export interface Occurrence {
   record_status: "draft" | "published" | "deleted";
   occurrence_date: string | null;
   ecosystem_id: string | null;
-  microhabitat_remarks: string | null;
   created_at: string;
   updated_at: string;
 

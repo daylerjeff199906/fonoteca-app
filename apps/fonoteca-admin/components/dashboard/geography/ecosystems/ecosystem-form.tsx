@@ -58,7 +58,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
         if (resp.data) {
           reset(resp.data as any);
         } else {
-          showToast.error("Error", "No se pudo cargar la información del ecosistema.");
+          showToast.error("Error", "No se pudo cargar la información del hábitat.");
         }
       });
     }
@@ -75,7 +75,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
     setLoading(false);
 
     if (resp.success) {
-      showToast.success("Operación Exitosa", id ? "Ecosistema actualizado correctamente." : "Ecosistema registrado correctamente.");
+      showToast.success("Operación Exitosa", id ? "Hábitat actualizado correctamente." : "Hábitat registrado correctamente.");
       if (onSuccess) {
         onSuccess(resp.data);
       } else {
@@ -114,7 +114,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <Trees className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Clasificación del Ecosistema</h3>
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Clasificación del Hábitat</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
@@ -133,7 +133,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nombre del Ecosistema *</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nombre del Hábitat *</label>
             <Input 
               {...register("name")} 
               placeholder="p. ej. Bosque de terraza no inundable" 
@@ -146,7 +146,7 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Definición Formal *</label>
             <Textarea
               {...register("definition")}
-              placeholder="Definición científica o técnica del ecosistema..."
+              placeholder="Definición científica o técnica del hábitat..."
               className="min-h-[100px] bg-background/50 focus-visible:ring-primary/20"
             />
             {errors.definition && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.definition.message}</p>}
@@ -311,9 +311,9 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
               Guardando...
             </>
           ) : id ? (
-            "Actualizar Ecosistema"
+            "Actualizar Hábitat"
           ) : (
-            "Registrar Ecosistema"
+            "Registrar Hábitat"
           )}
         </Button>
       </FormFooter>
