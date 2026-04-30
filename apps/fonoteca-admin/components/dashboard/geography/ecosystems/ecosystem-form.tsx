@@ -27,8 +27,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NaturalRegion } from "@/types/fonoteca";
 import { Badge } from "@/components/ui/badge";
 
-export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: { 
-  id?: string | null, 
+export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: {
+  id?: string | null,
   onSuccess?: (ecosystem: any) => void,
   onCancel?: () => void,
   footerVariant?: "fixed" | "sticky"
@@ -114,12 +114,12 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <Trees className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Clasificación del Hábitat</h3>
+          <h3 className="text-xs font-semibold text-foreground">Clasificación del Hábitat</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Región Natural *</label>
+            <label className="text-[10px] font-semibold text-muted-foreground">Región Natural *</label>
             <select
               {...register("region_id")}
               className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
@@ -133,17 +133,17 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nombre del Hábitat *</label>
-            <Input 
-              {...register("name")} 
-              placeholder="p. ej. Bosque de terraza no inundable" 
-              className="h-10 bg-background/50 focus-visible:ring-primary/20" 
+            <label className="text-[10px] font-semibold text-muted-foreground">Nombre del Hábitat *</label>
+            <Input
+              {...register("name")}
+              placeholder="p. ej. Bosque de terraza no inundable"
+              className="h-10 bg-background/50 focus-visible:ring-primary/20"
             />
             {errors.name && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.name.message}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5 md:col-span-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Definición Formal *</label>
+            <label className="text-[10px] font-semibold text-muted-foreground">Definición Formal *</label>
             <Textarea
               {...register("definition")}
               placeholder="Definición científica o técnica del hábitat..."
@@ -160,14 +160,14 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
         <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
             <Info className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Factores Diagnósticos</h3>
+            <h3 className="text-xs font-semibold text-foreground">Factores Diagnósticos</h3>
           </div>
           <div className="space-y-4 pt-2">
             <div className="flex gap-2">
-              <Input 
+              <Input
                 id="new-factor"
-                placeholder="Añadir factor..." 
-                className="h-9 bg-background/50" 
+                placeholder="Añadir factor..."
+                className="h-9 bg-background/50"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -176,9 +176,9 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
                   }
                 }}
               />
-              <Button 
-                type="button" 
-                size="sm" 
+              <Button
+                type="button"
+                size="sm"
                 variant="secondary"
                 onClick={() => {
                   const input = document.getElementById("new-factor") as HTMLInputElement;
@@ -205,14 +205,14 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
         <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
           <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
             <Trees className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Especies Botánicas Típicas</h3>
+            <h3 className="text-xs font-semibold text-foreground">Especies Botánicas Típicas</h3>
           </div>
           <div className="space-y-4 pt-2">
             <div className="flex gap-2">
-              <Input 
+              <Input
                 id="new-species"
-                placeholder="Nombre científico..." 
-                className="h-9 bg-background/50 italic" 
+                placeholder="Nombre científico..."
+                className="h-9 bg-background/50 italic"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -221,9 +221,9 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
                   }
                 }}
               />
-              <Button 
-                type="button" 
-                size="sm" 
+              <Button
+                type="button"
+                size="sm"
                 variant="secondary"
                 onClick={() => {
                   const input = document.getElementById("new-species") as HTMLInputElement;
@@ -251,19 +251,19 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <FileText className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Información Complementaria</h3>
+          <h3 className="text-xs font-semibold text-foreground">Información Complementaria</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Localidad Típica</label>
+            <label className="text-[10px] font-semibold text-muted-foreground">Localidad Típica</label>
             <Input {...register("typical_locality")} placeholder="Lugar donde se observa comúnmente..." className="h-10 bg-background/50" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Fuentes Bibliográficas</label>
+            <label className="text-[10px] font-semibold text-muted-foreground">Fuentes Bibliográficas</label>
             <Input {...register("sources")} placeholder="p. ej. MINAM 2019, etc." className="h-10 bg-background/50" />
           </div>
           <div className="flex flex-col gap-1.5 md:col-span-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Observaciones</label>
+            <label className="text-[10px] font-semibold text-muted-foreground">Observaciones</label>
             <Textarea {...register("observation")} placeholder="Notas adicionales..." className="min-h-[80px] bg-background/50" />
           </div>
         </div>
@@ -273,23 +273,23 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
       <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
         <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
           <MapIcon className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Interactividad Espacial (GeoJSON)</h3>
+          <h3 className="text-xs font-semibold text-foreground">Interactividad Espacial (GeoJSON)</h3>
         </div>
         <div className="pt-2">
-           <Textarea 
-             placeholder='{"type": "FeatureCollection", "features": [...]}' 
-             className="font-mono text-xs bg-muted/30 min-h-[100px]"
-             onChange={(e) => {
-               try {
-                 const json = JSON.parse(e.target.value);
-                 setValue("distribution_geojson", json);
-               } catch (err) {
-                 // Invalid JSON
-               }
-             }}
-             defaultValue={watch("distribution_geojson") ? JSON.stringify(watch("distribution_geojson"), null, 2) : ""}
-           />
-           <p className="text-[10px] text-muted-foreground mt-2">Pegue aquí el GeoJSON de la distribución espacial para visualizarlo en el mapa.</p>
+          <Textarea
+            placeholder='{"type": "FeatureCollection", "features": [...]}'
+            className="font-mono text-xs bg-muted/30 min-h-[100px]"
+            onChange={(e) => {
+              try {
+                const json = JSON.parse(e.target.value);
+                setValue("distribution_geojson", json);
+              } catch (err) {
+                // Invalid JSON
+              }
+            }}
+            defaultValue={watch("distribution_geojson") ? JSON.stringify(watch("distribution_geojson"), null, 2) : ""}
+          />
+          <p className="text-[10px] text-muted-foreground mt-2">Pegue aquí el GeoJSON de la distribución espacial para visualizarlo en el mapa.</p>
         </div>
       </div>
 

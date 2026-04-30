@@ -17,6 +17,7 @@ import Link from "next/link";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 import { PageHeader } from "@/components/panel-admin/page-header";
 import { Badge } from "@/components/ui/badge";
+import { EcosystemFilters } from "@/components/dashboard/geography/ecosystems/ecosystem-filters";
 
 export default async function EcosystemsPage({
   searchParams,
@@ -54,24 +55,7 @@ export default async function EcosystemsPage({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-1 items-center gap-4 min-w-[300px]">
             <SearchInput placeholder="Buscar por nombre..." />
-            <select
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 min-w-[200px]"
-              defaultValue={regionId}
-              onChange={(e) => {
-                const url = new URL(window.location.href);
-                if (e.target.value) url.searchParams.set("region_id", e.target.value);
-                else url.searchParams.delete("region_id");
-                window.location.href = url.toString();
-              }}
-              // Note: This is a server component, the onChange won't work like this. 
-              // I'll need a client component for filters if I want interactivity.
-              // For now, I'll just leave the select as a placeholder or use a Client Wrapper.
-            >
-              <option value="">Todas las regiones</option>
-              {regions.map(r => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
+            <EcosystemFilters regions={regions || []} />
           </div>
         </div>
 
@@ -81,7 +65,7 @@ export default async function EcosystemsPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ecosistema</TableHead>
+                <TableHead>Hábitat</TableHead>
                 <TableHead>Región Natural</TableHead>
                 <TableHead>Especies Botánicas</TableHead>
                 <TableHead>Mapa</TableHead>
