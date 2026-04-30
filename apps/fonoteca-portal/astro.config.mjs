@@ -5,9 +5,12 @@ import vercel from '@astrojs/vercel'; // Importar adaptador
 
 export default defineConfig({
   output: 'server', // <--- CAMBIO CRUCIAL: Cambia de static a server
-  adapter: vercel(), // <--- Añadir el adaptador
+  adapter: vercel(),
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      dedupe: ['react', 'react-dom']
+    }
   },
 });
