@@ -14,6 +14,7 @@ import Link from "next/link";
 import { MapPin, Globe, Loader2, Ruler, Mountain, AlignLeft, Info, FileText } from "lucide-react";
 import { CountryPicker } from "./country-picker";
 import { FormFooter } from "@/components/panel-admin/form-footer";
+import { FormSection } from "@/components/panel-admin/form-section";
 import { Textarea } from "@/components/ui/textarea";
 
 // Dynamic loading of the map picker to avoid SSR issues
@@ -83,13 +84,9 @@ export function LocationForm({ id }: { id?: string }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
-      {/* 1. Datos Principales */}
-      <div className="space-y-4 bg-card border rounded-lg p-5">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <MapPin className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Datos de Localidad</h3>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+      {/* 1. Datos de Localidad */}
+      <FormSection title="Datos de Localidad" icon={MapPin}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Location ID</label>
             <Input {...register("locationID")} placeholder="Ex: LOC-001" className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -113,27 +110,23 @@ export function LocationForm({ id }: { id?: string }) {
             {errors.county && <p className="text-[10px] text-red-500 mt-1">{errors.county.message}</p>}
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 2. Geografía Regional */}
-      <div className="space-y-4 bg-card border rounded-lg p-5">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <Globe className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Geografía Regional</h3>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+      <FormSection title="Geografía Regional" icon={Globe}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">País Seleccionado</label>
             <Controller
               name="country"
               control={control}
               render={({ field }) => (
-                <CountryPicker 
-                  value={field.value} 
+                <CountryPicker
+                  value={field.value}
                   onChange={(c) => {
                     field.onChange(c.name);
                     setValue("countryCode", c.code);
-                  }} 
+                  }}
                 />
               )}
             />
@@ -147,16 +140,11 @@ export function LocationForm({ id }: { id?: string }) {
             </div>
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 3. Coordenadas y Mapa */}
-      <div className="space-y-4 bg-card border rounded-lg p-5">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <Ruler className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Coordenadas de Precisión</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+      <FormSection title="Coordenadas de Precisión" icon={Ruler}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Latitud</label>
@@ -172,33 +160,29 @@ export function LocationForm({ id }: { id?: string }) {
             </div>
           </div>
           <div className="lg:col-span-2">
-            <MapPicker 
-              lat={decimalLat} 
-              lng={decimalLng} 
+            <MapPicker
+              lat={decimalLat}
+              lng={decimalLng}
               onChange={(lat, lng) => {
                 setValue("decimalLatitude", Number(lat.toFixed(6)));
                 setValue("decimalLongitude", Number(lng.toFixed(6)));
-              }} 
+              }}
             />
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 4. Ambiente */}
-      <div className="space-y-4 bg-card border rounded-lg p-5">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <Mountain className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Ambiente y Otros</h3>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+      <FormSection title="Ambiente y Otros" icon={Mountain}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1 lg:row-span-2">
             <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
               <AlignLeft className="h-3 w-3" /> Descripción Hábitat
             </label>
-            <Textarea 
-              {...register("habitat")} 
-              placeholder="Ex: Bosque de várzea inundable..." 
-              className="bg-background focus-visible:ring-primary/20 h-[100px]" 
+            <Textarea
+              {...register("habitat")}
+              placeholder="Ex: Bosque de várzea inundable..."
+              className="bg-background focus-visible:ring-primary/20 h-[100px]"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -212,7 +196,7 @@ export function LocationForm({ id }: { id?: string }) {
             </div>
           </div>
         </div>
-      </div>
+      </FormSection>
 
       <FormFooter>
         <Button variant="outline" type="button" asChild>

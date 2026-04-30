@@ -28,6 +28,7 @@ import { InstitutionForm } from "@/components/dashboard/geography/institutions/i
 import { CollectionForm } from "@/components/dashboard/geography/institutions/collection-form";
 import { EcosystemForm } from "@/components/dashboard/geography/ecosystems/ecosystem-form";
 import { FormFooter } from "@/components/panel-admin/form-footer";
+import { FormSection } from "@/components/panel-admin/form-section";
 
 
 import { cn } from "@/lib/utils";
@@ -197,13 +198,9 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
-        {/* 1. Detalles Principales */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <FileText className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Detalles de la Ocurrencia</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+        {/* 1. Detalles de la Ocurrencia */}
+        <FormSection title="Detalles de la Ocurrencia" icon={FileText}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
               <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -251,15 +248,9 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                       >
                         <span className="truncate">
                           {field.value
-                            ? (() => {
-                              const t = taxa.find((t) => t.id === field.value);
-                              return t ? t.scientificName : "Seleccionar Taxón...";
-                            })()
+                            ? taxa.find((t) => t.id === field.value)?.scientificName || "Seleccionar Taxón..."
                             : "Seleccionar Taxón..."}
-
                         </span>
-
-
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </button>
                     </PopoverTrigger>
@@ -292,11 +283,9 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                                     <span className="font-semibold text-sm italic text-foreground leading-none">
                                       {t.scientificName}
                                     </span>
-
                                     <span className="text-[10px] text-muted-foreground">({t.vernacularName || "-"})</span>
                                   </div>
                                 </div>
-
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -339,11 +328,10 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   })()}
                 </div>
               )}
-
               {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
             </div>
 
-            <div className="flex flex-col gap-1 lg:col-span-1">
+            <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
               <select
                 {...register("location_id")}
@@ -435,15 +423,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        {/* 3. Identificación y Verificación */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Check className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Identificación y Verificación</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        {/* 2. Identificación y Verificación */}
+        <FormSection title="Identificación y Verificación" icon={Check}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
               <Input {...register("identificationMethod")} className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -481,15 +465,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        {/* 4. Temporalidad y Monitoreo */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Calendar className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Monitoreo</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        {/* 3. Temporalidad y Monitoreo */}
+        <FormSection title="Temporalidad y Monitoreo" icon={Calendar}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
               <Input {...register("recordedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -501,15 +481,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               <Input {...register("identifiedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        {/* 5. Afiliación e Institución */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Building className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Afiliación Institucional</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-2">
+        {/* 4. Afiliación e Institución */}
+        <FormSection title="Afiliación Institucional" icon={Building}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Institución */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
@@ -647,48 +623,37 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {errors.collection_id && <p className="text-[10px] text-red-500 mt-1">{errors.collection_id.message}</p>}
             </div>
           </div>
-        </div>
+        </FormSection>
 
 
 
-        {/* 6. Estado del Registro y Publicación */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-start gap-2 pb-2 border-b border-muted/20">
-              <Globe className="h-4 w-4 text-primary" />
-              <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-foreground leading-none">Estado del Registro Público</h3>
-                <p className="text-[10px] text-muted-foreground mt-1">Defina si este registro será visible para el público general en el portal.</p>
+        {/* 5. Estado del Registro y Publicación */}
+        <FormSection title="Estado del Registro Público" icon={Globe}>
+          <p className="text-[10px] text-muted-foreground mb-4">Defina si este registro será visible para el público general en el portal.</p>
+          <Controller
+            control={control}
+            name="record_status"
+            render={({ field }) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
+                  <input type="radio" value="draft" checked={field.value === "draft"} onChange={field.onChange} className="sr-only" />
+                  <span className="text-sm font-bold text-amber-600">Borrador</span>
+                  <span className="text-xs text-muted-foreground mt-1">Oculto del portal público.</span>
+                </label>
+                <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
+                  <input type="radio" value="published" checked={field.value === "published"} onChange={field.onChange} className="sr-only" />
+                  <span className="text-sm font-bold text-emerald-600">Publicado</span>
+                  <span className="text-xs text-muted-foreground mt-1">Visible para todos en la web.</span>
+                </label>
+                <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
+                  <input type="radio" value="deleted" checked={field.value === "deleted"} onChange={field.onChange} className="sr-only" />
+                  <span className="text-sm font-bold text-red-600">Eliminado</span>
+                  <span className="text-xs text-muted-foreground mt-1">Archivado, no disponible.</span>
+                </label>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-1 pt-2">
-              <Controller
-                control={control}
-                name="record_status"
-                render={({ field }) => (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
-                      <input type="radio" value="draft" checked={field.value === "draft"} onChange={field.onChange} className="sr-only" />
-                      <span className="text-sm font-bold text-amber-600">Borrador</span>
-                      <span className="text-xs text-muted-foreground mt-1">Oculto del portal público.</span>
-                    </label>
-                    <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
-                      <input type="radio" value="published" checked={field.value === "published"} onChange={field.onChange} className="sr-only" />
-                      <span className="text-sm font-bold text-emerald-600">Publicado</span>
-                      <span className="text-xs text-muted-foreground mt-1">Visible para todos en la web.</span>
-                    </label>
-                    <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
-                      <input type="radio" value="deleted" checked={field.value === "deleted"} onChange={field.onChange} className="sr-only" />
-                      <span className="text-sm font-bold text-red-600">Eliminado</span>
-                      <span className="text-xs text-muted-foreground mt-1">Archivado, no disponible.</span>
-                    </label>
-                  </div>
-                )}
-              />
-            </div>
-          </div>
-        </div>
+            )}
+          />
+        </FormSection>
 
         <FormFooter>
           <Button variant="outline" type="button" asChild>

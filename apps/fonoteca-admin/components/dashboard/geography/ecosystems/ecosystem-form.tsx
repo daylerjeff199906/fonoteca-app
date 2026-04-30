@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NaturalRegion } from "@/types/fonoteca";
 import { Badge } from "@/components/ui/badge";
+import { FormSection } from "@/components/panel-admin/form-section";
 
 export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: {
   id?: string | null,
@@ -111,13 +112,8 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full pb-10">
       {/* 1. Clasificación y Nombre */}
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <Trees className="h-4 w-4 text-primary" />
-          <h3 className="text-xs font-semibold text-foreground">Clasificación del Hábitat</h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+      <FormSection title="Clasificación del Hábitat" icon={Trees}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-semibold text-muted-foreground">Región Natural *</label>
             <select
@@ -152,108 +148,92 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
             {errors.definition && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.definition.message}</p>}
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 2. Factores y Especies */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Factores Diagnósticos */}
-        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Info className="h-4 w-4 text-primary" />
-            <h3 className="text-xs font-semibold text-foreground">Factores Diagnósticos</h3>
+        <FormSection title="Factores Diagnósticos" icon={Info}>
+          <div className="flex gap-2">
+            <Input
+              id="new-factor"
+              placeholder="Añadir factor..."
+              className="h-9 bg-background/50"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addItem("diagnostic_factors", e.currentTarget.value);
+                  e.currentTarget.value = "";
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const input = document.getElementById("new-factor") as HTMLInputElement;
+                addItem("diagnostic_factors", input.value);
+                input.value = "";
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="space-y-4 pt-2">
-            <div className="flex gap-2">
-              <Input
-                id="new-factor"
-                placeholder="Añadir factor..."
-                className="h-9 bg-background/50"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addItem("diagnostic_factors", e.currentTarget.value);
-                    e.currentTarget.value = "";
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  const input = document.getElementById("new-factor") as HTMLInputElement;
-                  addItem("diagnostic_factors", input.value);
-                  input.value = "";
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {diagnosticFactors.map(factor => (
-                <Badge key={factor} variant="outline" className="flex items-center gap-1 py-1 px-2 bg-primary/5">
-                  {factor}
-                  <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeItem("diagnostic_factors", factor)} />
-                </Badge>
-              ))}
-              {diagnosticFactors.length === 0 && <p className="text-[10px] text-muted-foreground italic">No hay factores añadidos.</p>}
-            </div>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {diagnosticFactors.map(factor => (
+              <Badge key={factor} variant="outline" className="flex items-center gap-1 py-1 px-2 bg-primary/5">
+                {factor}
+                <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeItem("diagnostic_factors", factor)} />
+              </Badge>
+            ))}
+            {diagnosticFactors.length === 0 && <p className="text-[10px] text-muted-foreground italic">No hay factores añadidos.</p>}
           </div>
-        </div>
+        </FormSection>
 
         {/* Especies Botánicas */}
-        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Trees className="h-4 w-4 text-primary" />
-            <h3 className="text-xs font-semibold text-foreground">Especies Botánicas Típicas</h3>
+        <FormSection title="Especies Botánicas Típicas" icon={Trees}>
+          <div className="flex gap-2">
+            <Input
+              id="new-species"
+              placeholder="Nombre científico..."
+              className="h-9 bg-background/50 italic"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addItem("botanical_species", e.currentTarget.value);
+                  e.currentTarget.value = "";
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const input = document.getElementById("new-species") as HTMLInputElement;
+                addItem("botanical_species", input.value);
+                input.value = "";
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="space-y-4 pt-2">
-            <div className="flex gap-2">
-              <Input
-                id="new-species"
-                placeholder="Nombre científico..."
-                className="h-9 bg-background/50 italic"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addItem("botanical_species", e.currentTarget.value);
-                    e.currentTarget.value = "";
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  const input = document.getElementById("new-species") as HTMLInputElement;
-                  addItem("botanical_species", input.value);
-                  input.value = "";
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {botanicalSpecies.map(species => (
-                <Badge key={species} variant="outline" className="flex items-center gap-1 py-1 px-2 bg-emerald-500/5 italic border-emerald-500/20">
-                  {species}
-                  <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeItem("botanical_species", species)} />
-                </Badge>
-              ))}
-              {botanicalSpecies.length === 0 && <p className="text-[10px] text-muted-foreground italic">No hay especies añadidas.</p>}
-            </div>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {botanicalSpecies.map(species => (
+              <Badge key={species} variant="outline" className="flex items-center gap-1 py-1 px-2 bg-emerald-500/5 italic border-emerald-500/20">
+                {species}
+                <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeItem("botanical_species", species)} />
+              </Badge>
+            ))}
+            {botanicalSpecies.length === 0 && <p className="text-[10px] text-muted-foreground italic">No hay especies añadidas.</p>}
           </div>
-        </div>
+        </FormSection>
       </div>
 
       {/* 3. Detalles Adicionales */}
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <FileText className="h-4 w-4 text-primary" />
-          <h3 className="text-xs font-semibold text-foreground">Información Complementaria</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+      <FormSection title="Información Complementaria" icon={FileText}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-semibold text-muted-foreground">Localidad Típica</label>
             <Input {...register("typical_locality")} placeholder="Lugar donde se observa comúnmente..." className="h-10 bg-background/50" />
@@ -267,31 +247,25 @@ export function EcosystemForm({ id, onSuccess, onCancel, footerVariant = "fixed"
             <Textarea {...register("observation")} placeholder="Notas adicionales..." className="min-h-[80px] bg-background/50" />
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 4. Distribución (GeoJSON placeholder for now) */}
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <MapIcon className="h-4 w-4 text-primary" />
-          <h3 className="text-xs font-semibold text-foreground">Interactividad Espacial (GeoJSON)</h3>
-        </div>
-        <div className="pt-2">
-          <Textarea
-            placeholder='{"type": "FeatureCollection", "features": [...]}'
-            className="font-mono text-xs bg-muted/30 min-h-[100px]"
-            onChange={(e) => {
-              try {
-                const json = JSON.parse(e.target.value);
-                setValue("distribution_geojson", json);
-              } catch (err) {
-                // Invalid JSON
-              }
-            }}
-            defaultValue={watch("distribution_geojson") ? JSON.stringify(watch("distribution_geojson"), null, 2) : ""}
-          />
-          <p className="text-[10px] text-muted-foreground mt-2">Pegue aquí el GeoJSON de la distribución espacial para visualizarlo en el mapa.</p>
-        </div>
-      </div>
+      <FormSection title="Interactividad Espacial (GeoJSON)" icon={MapIcon}>
+        <Textarea
+          placeholder='{"type": "FeatureCollection", "features": [...]}'
+          className="font-mono text-xs bg-muted/30 min-h-[100px]"
+          onChange={(e) => {
+            try {
+              const json = JSON.parse(e.target.value);
+              setValue("distribution_geojson", json);
+            } catch (err) {
+              // Invalid JSON
+            }
+          }}
+          defaultValue={watch("distribution_geojson") ? JSON.stringify(watch("distribution_geojson"), null, 2) : ""}
+        />
+        <p className="text-[10px] text-muted-foreground mt-2">Pegue aquí el GeoJSON de la distribución espacial para visualizarlo en el mapa.</p>
+      </FormSection>
 
       <FormFooter variant={footerVariant}>
         {onCancel ? (

@@ -19,6 +19,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileText, Bookmark, Info, Plus, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { FormSection } from "@/components/panel-admin/form-section";
 
 export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id?: string) => void }) {
   const [loading, setLoading] = useState(false);
@@ -114,15 +115,10 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
           )}
 
           {/* Sección: Información Científica */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <FlaskConical className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Información Científica</h3>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4">Define la taxonomía principal del taxón.</p>
+          <FormSection title="Información Científica" icon={FlaskConical}>
+            <p className="text-[10px] text-muted-foreground mb-4">Define la taxonomía principal del taxón.</p>
 
-            <div className="rounded-md border bg-card">
-
+            <div className="rounded-md border bg-card overflow-hidden">
               <FormField
                 control={form.control}
                 name="scientificName"
@@ -232,8 +228,6 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                                           </div>
                                           <span className="font-semibold text-sm italic text-foreground leading-none">{g.name}</span>
                                         </div>
-
-
                                       </CommandItem>
                                     ))}
                                   </CommandGroup>
@@ -270,17 +264,11 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                 )}
               />
             </div>
-          </div>
-
+          </FormSection>
 
           {/* Sección: Nombres y Autoría */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Bookmark className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Identificación y Cita</h3>
-            </div>
-
-            <div className="rounded-md border bg-card">
+          <FormSection title="Identificación y Cita" icon={Bookmark}>
+            <div className="rounded-md border bg-card overflow-hidden">
               <FormField
                 control={form.control}
                 name="vernacularName"
@@ -335,7 +323,7 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (id
                 )}
               />
             </div>
-          </div>
+          </FormSection>
 
           <div className="flex justify-end gap-3 pt-6 border-t mt-8">
             <Button type="submit" disabled={loading} className="min-w-[140px] shadow-sm">

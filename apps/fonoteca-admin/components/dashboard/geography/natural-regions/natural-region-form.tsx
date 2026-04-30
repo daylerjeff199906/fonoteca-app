@@ -19,6 +19,7 @@ import {
 import { FormFooter } from "@/components/panel-admin/form-footer";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FormSection } from "@/components/panel-admin/form-section";
 
 export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fixed" }: { 
   id?: string | null, 
@@ -96,36 +97,31 @@ export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fi
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <Globe className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Detalles de la Región Natural</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6 pt-2">
+      <FormSection title="Detalles de la Región Natural" icon={Globe}>
+        <div className="grid grid-cols-1 gap-6">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nombre de la Región *</label>
-            <Input 
-              {...register("name")} 
-              placeholder="p. ej. Selva Baja, Yungas, etc." 
-              className="h-10 bg-background/50 focus-visible:ring-primary/20" 
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Nombre de la Región *</label>
+            <Input
+              {...register("name")}
+              placeholder="p. ej. Selva Baja, Yungas, etc."
+              className="h-10 bg-background/50 focus-visible:ring-primary/20"
             />
             {errors.name && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.name.message}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
               <ImageIcon className="h-3 w-3" /> URL del Logo / Icono
             </label>
-            <Input 
-              {...register("logo_url")} 
-              placeholder="https://..." 
-              className="h-10 bg-background/50 focus-visible:ring-primary/20" 
+            <Input
+              {...register("logo_url")}
+              placeholder="https://..."
+              className="h-10 bg-background/50 focus-visible:ring-primary/20"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
               <FileText className="h-3 w-3" /> Descripción
             </label>
             <Textarea
@@ -135,7 +131,7 @@ export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fi
             />
           </div>
         </div>
-      </div>
+      </FormSection>
 
       <FormFooter variant={footerVariant}>
         {onCancel ? (

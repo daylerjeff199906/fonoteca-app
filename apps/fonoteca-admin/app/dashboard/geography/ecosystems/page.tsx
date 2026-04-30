@@ -121,7 +121,7 @@ export default async function EcosystemsPage({
                         <DeleteButtonWithConfirm 
                           id={eco.id} 
                           onConfirm={deleteEcosystem} 
-                          itemName="ecosistema" 
+                          itemName="hábitat" 
                         />
                       </div>
                     </TableCell>
@@ -130,7 +130,7 @@ export default async function EcosystemsPage({
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-sm">
-                    No se encontraron ecosistemas.
+                    No se encontraron hábitats.
                   </TableCell>
                 </TableRow>
               )}
