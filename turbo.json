@@ -15,7 +15,7 @@
         "NEXT_PUBLIC_BIO_INTRANET_SUPABASE_ANON_KEY"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".vercel/output/**", ".next/**", "!.next/cache/**"]
     },
 
 

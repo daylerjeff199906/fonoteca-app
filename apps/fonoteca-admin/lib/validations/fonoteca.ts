@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Helper tool to handle numeric fields from HTML inputs that send empty strings.
 const numberOrNull = z.preprocess(
-  (v) => (v === "" || v === undefined || v === null ? null : v),
+  (v) => (v === "" || v === undefined || v === null || (typeof v === "number" && isNaN(v)) ? null : v),
   z.coerce.number().nullable().optional()
 );
 
@@ -109,6 +109,7 @@ export const occurrenceSchema = z.object({
   taxon_id: z.string().uuid("Invalid Taxon ID"),
   basisOfRecord: z.string().default("MachineObservation"),
   collection_id: z.string().uuid("Colección inválida").optional().nullable(),
+  institution_id: z.string().uuid("Institución inválida").optional().nullable(),
   catalogNumber: z.string().optional().nullable(),
 
   recordedBy: z.string().min(1, "Recorded By is required"),
@@ -123,6 +124,15 @@ export const occurrenceSchema = z.object({
   verified_by: z.string().uuid().optional().nullable(),
   record_status: z.enum(["draft", "published", "deleted"]).default("draft"),
   occurrence_date: z.string().optional().nullable(),
+  ecosystem_id: z.string().uuid().optional().nullable(),
+  
+  // Environmental variables
+  temperature_c: numberOrNull,
+  relative_humidity_percent: numberOrNull,
+  elevation_masl: numberOrNull,
+  
+  // Physical Voucher
+  has_cloud_voucher: z.boolean().default(false),
 });
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;
@@ -192,5 +202,31 @@ export const collectionSchema = z.object({
 });
 
 export type CollectionInput = z.infer<typeof collectionSchema>;
+
+// --- Natural Regions ---
+export const naturalRegionSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, "El nombre es requerido"),
+  description: z.string().optional().nullable(),
+  logo_url: z.string().optional().nullable(),
+});
+
+export type NaturalRegionInput = z.infer<typeof naturalRegionSchema>;
+
+// --- Ecosystems ---
+export const ecosystemSchema = z.object({
+  id: z.string().uuid().optional(),
+  region_id: z.string().uuid("ID de Región Natural inválido"),
+  name: z.string().min(1, "El nombre es requerido"),
+  definition: z.string().min(1, "La definición es requerida"),
+  diagnostic_factors: z.array(z.string()).default([]),
+  botanical_species: z.array(z.string()).default([]),
+  sources: z.string().optional().nullable(),
+  typical_locality: z.string().optional().nullable(),
+  observation: z.string().optional().nullable(),
+  distribution_geojson: z.any().optional().nullable(),
+});
+
+export type EcosystemInput = z.infer<typeof ecosystemSchema>;
 
 

@@ -10,10 +10,20 @@ import { getAllSpecies } from "../../data/species";
 import { translations, LANGUAGES } from "../../i18n/data";
 import logoIiap from "../../assets/logo_iiap.png";
 
+export const prerender = true;
 
+export async function getStaticPaths() {
+    return LANGUAGES.map((lang) => ({
+        params: { lang },
+    }));
+}
 
 const { lang } = Astro.params;
 const content = translations[lang as keyof typeof translations];
+
+if (!content) {
+    return Astro.redirect("/es/");
+}
 const { species: allSpecies } = await getAllSpecies();
 
 // Shuffle species so "Especies de la colección" shows a random subset
@@ -36,15 +46,24 @@ const statsContent = {
 
 <Layout title="Biblioteca acústica de fauna amazónica | Fonoteca" lang={lang}>
     <Header
-        client:load
+        client:only="react"
         content={content.nav}
         logoSrc={logoIiap.src}
         lang={lang}
     />
     <main>
-        <Hero client:load content={content.hero} lang={lang as string} stats={realStats} />
-        
-        <ClassExplorer client:load lang={lang as string} classes={speciesByClassData} />
+        <Hero
+            client:only="react"
+            content={content.hero}
+            lang={lang as string}
+            stats={realStats}
+        />
+
+        <ClassExplorer
+            client:only="react"
+            lang={lang as string}
+            classes={speciesByClassData}
+        />
 
         {/* Audio Archive Section - Últimas Colecciones */}
         <section
@@ -53,7 +72,7 @@ const statsContent = {
         >
             <div class="w-full container mx-auto px-6 mb-12">
                 <PlaylistCarousel
-                    client:load
+                    client:only="react"
                     allSpecies={allSpecies}
                     lang={lang as "es" | "en" | "pt"}
                     title={content.nav.library}
@@ -62,7 +81,13 @@ const statsContent = {
         </section>
 
         <section class="bg-gray-50 dark:bg-[#0c141d]">
-            <StatsChart client:visible statsContent={statsContent} chartContent={content.chart} lang={lang as string} classData={speciesByClassData} />
+            <StatsChart
+                client:only="react"
+                statsContent={statsContent}
+                chartContent={content.chart}
+                lang={lang as string}
+                classData={speciesByClassData}
+            />
         </section>
 
         {/* Especies de la colección */}
@@ -72,10 +97,14 @@ const statsContent = {
         >
             <div class="w-full container mx-auto px-6 mb-12">
                 <PlaylistCarousel
-                    client:load
+                    client:only="react"
                     allSpecies={randomSpecies}
                     lang={lang as "es" | "en" | "pt"}
-                    title={lang === 'es' ? 'Especies de la Colección' : lang === 'pt' ? 'Espécies da Coleção' : 'Collection Species'}
+                    title={lang === "es"
+                        ? "Especies de la Colección"
+                        : lang === "pt"
+                          ? "Espécies da Coleção"
+                          : "Collection Species"}
                     linkToFilter={true}
                 />
             </div>

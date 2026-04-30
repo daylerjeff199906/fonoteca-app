@@ -106,6 +106,7 @@ export interface Occurrence {
   taxon_id: string;
   basisOfRecord: string;
   collection_id: string | null;
+  institution_id: string | null;
   catalogNumber: string | null;
 
   recordedBy: string;
@@ -120,6 +121,16 @@ export interface Occurrence {
   verified_by: string | null;
   record_status: "draft" | "published" | "deleted";
   occurrence_date: string | null;
+  ecosystem_id: string | null;
+  
+  // Environmental variables
+  temperature_c: number | null;
+  relative_humidity_percent: number | null;
+  elevation_masl: number | null;
+  
+  // Physical Voucher
+  has_cloud_voucher: boolean;
+
   created_at: string;
   updated_at: string;
 
@@ -129,6 +140,34 @@ export interface Occurrence {
   event?: Event;
   collection?: Collection;
   multimedia?: Multimedia[];
+  ecosystem?: Ecosystem;
+}
+
+export interface NaturalRegion {
+  id: string;
+  name: string;
+  description: string | null;
+  logo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Ecosystem {
+  id: string;
+  region_id: string;
+  name: string;
+  definition: string;
+  diagnostic_factors: string[];
+  botanical_species: string[];
+  sources: string | null;
+  typical_locality: string | null;
+  observation: string | null;
+  distribution_geojson: any | null;
+  created_at: string;
+  updated_at: string;
+
+  // Joined
+  region?: NaturalRegion;
 }
 
 

@@ -12,14 +12,16 @@ import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { Institution } from "@/types/fonoteca";
 import { 
-  Building2, 
-  Hash, 
-  FileText, 
-  Link as LinkIcon, 
+  Building2,
+  Hash,
+  FileText,
+  Link as LinkIcon,
   Loader2,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  BookOpen
 } from "lucide-react";
+import { FormSection } from "@/components/panel-admin/form-section";
 import {
   Command,
   CommandEmpty,
@@ -95,95 +97,96 @@ export function CollectionForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
-      <div className="space-y-4 bg-card border rounded-lg p-5">
-        {!defaultInstitutionId && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Institución Propietaria *</label>
-            <Controller
-              control={control}
-              name="institution_id"
-              render={({ field }) => (
-                <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between font-normal h-10",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value
-                        ? institutions.find((inst) => inst.id === field.value)?.name
-                        : "Seleccionar institución..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                      <CommandInput placeholder="Buscar institución..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontró la institución.</CommandEmpty>
-                        <CommandGroup>
-                          {institutions.map((inst) => (
-                            <CommandItem
-                              key={inst.id}
-                              value={inst.name}
-                              onSelect={() => {
-                                setValue("institution_id", inst.id);
-                                setOpenInstitution(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  inst.id === field.value ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {inst.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-            {errors.institution_id && <p className="text-[10px] text-red-500">{errors.institution_id.message}</p>}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Nombre de la Colección *</label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input {...register("name")} placeholder="Ej: Colección Acústica..." className="pl-9 h-10" />
+      <FormSection title="Detalles de la Colección" icon={BookOpen}>
+        <div className="space-y-4">
+          {!defaultInstitutionId && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Institución Propietaria *</label>
+              <Controller
+                control={control}
+                name="institution_id"
+                render={({ field }) => (
+                  <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between font-normal h-10 bg-background/50",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value
+                          ? institutions.find((inst) => inst.id === field.value)?.name
+                          : "Seleccionar institución..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar institución..." />
+                        <CommandList>
+                          <CommandEmpty>No se encontró la institución.</CommandEmpty>
+                          <CommandGroup>
+                            {institutions.map((inst) => (
+                              <CommandItem
+                                key={inst.id}
+                                value={inst.name}
+                                onSelect={() => {
+                                  setValue("institution_id", inst.id);
+                                  setOpenInstitution(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    inst.id === field.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {inst.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+              {errors.institution_id && <p className="text-[10px] text-red-500 font-semibold mt-1">{errors.institution_id.message}</p>}
             </div>
-            {errors.name && <p className="text-[10px] text-red-500">{errors.name.message}</p>}
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nombre de la Colección *</label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
+                <Input {...register("name")} placeholder="Ej: Colección Acústica..." className="pl-9 h-10 bg-background/50 focus-visible:ring-primary/20" />
+              </div>
+              {errors.name && <p className="text-[10px] text-red-500 font-semibold mt-1">{errors.name.message}</p>}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Código *</label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
+                <Input {...register("code")} placeholder="Ej: Fonoteca" className="pl-9 h-10 bg-background/50 focus-visible:ring-primary/20" />
+              </div>
+              {errors.code && <p className="text-[10px] text-red-500 font-semibold mt-1">{errors.code.message}</p>}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Código *</label>
+          <div className="flex flex-col gap-1.5 pt-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">URL de Registro (GBIF/GRSciColl)</label>
             <div className="relative">
-              <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input {...register("code")} placeholder="Ej: Fonoteca" className="pl-9 h-10" />
+              <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
+              <Input {...register("registry_url")} placeholder="https://..." className="pl-9 h-10 bg-background/50 focus-visible:ring-primary/20" />
             </div>
-            {errors.code && <p className="text-[10px] text-red-500">{errors.code.message}</p>}
+            {errors.registry_url && <p className="text-[10px] text-red-500 font-semibold mt-1">{errors.registry_url.message}</p>}
           </div>
         </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-muted-foreground uppercase">URL de Registro (GBIF/GRSciColl)</label>
-          <div className="relative">
-            <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input {...register("registry_url")} placeholder="https://..." className="pl-9 h-10" />
-          </div>
-          {errors.registry_url && <p className="text-[10px] text-red-500">{errors.registry_url.message}</p>}
-        </div>
-      </div>
+      </FormSection>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         {onCancel && (

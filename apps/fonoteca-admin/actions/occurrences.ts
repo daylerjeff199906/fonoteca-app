@@ -49,7 +49,8 @@ export async function getOccurrences({
       ), 
       location:locations(*), 
       collection:collections(*, institution:institutions(*)),
-      multimedia(*)
+      multimedia(*),
+      ecosystem:ecosystems(*)
     `, { count: "exact" });
 
 
@@ -135,7 +136,8 @@ export async function getOccurrence(id: string) {
       ), 
       location:locations(*), 
       event:events(*),
-      collection:collections(*, institution:institutions(*))
+      collection:collections(*, institution:institutions(*)),
+      ecosystem:ecosystems(*)
     `)
 
     .eq("id", id)
@@ -279,7 +281,8 @@ export async function getAllOccurrencesForExport({
       ), 
       location:locations(*), 
       collection:collections(*, institution:institutions(*)),
-      multimedia(*)
+      multimedia(*),
+      ecosystem:ecosystems(*)
     `);
 
 

@@ -9,14 +9,32 @@ import { getTaxa } from "@/actions/taxa";
 import { getLocations } from "@/actions/locations";
 import { getInstitutions } from "@/actions/institutions";
 import { getCollections } from "@/actions/collections";
+import { getEcosystems } from "@/actions/ecosystems";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
-import { FileText, Calendar, Building, Check, ChevronsUpDown, Plus, ChevronRight } from "lucide-react";
+import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS, Ecosystem } from "@/types/fonoteca";
+import {
+  FileText,
+  Calendar,
+  Building,
+  Check,
+  ChevronsUpDown,
+  Plus,
+  ChevronRight,
+  Trees,
+  Globe,
+  Thermometer,
+  Droplets,
+  ArrowUp,
+  Box
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 
 
@@ -25,7 +43,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { TaxonForm } from "@/components/dashboard/taxa/taxon-form";
 import { InstitutionForm } from "@/components/dashboard/geography/institutions/institution-form";
 import { CollectionForm } from "@/components/dashboard/geography/institutions/collection-form";
+import { EcosystemForm } from "@/components/dashboard/geography/ecosystems/ecosystem-form";
 import { FormFooter } from "@/components/panel-admin/form-footer";
+import { FormSection } from "@/components/panel-admin/form-section";
 
 
 import { cn } from "@/lib/utils";
@@ -62,6 +82,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [isTaxonFormOpen, setIsTaxonFormOpen] = useState(false);
   const [isInstitutionFormOpen, setIsInstitutionFormOpen] = useState(false);
   const [isCollectionFormOpen, setIsCollectionFormOpen] = useState(false);
+  const [isEcosystemFormOpen, setIsEcosystemFormOpen] = useState(false);
+
+  const [ecosystems, setEcosystems] = useState<Ecosystem[]>([]);
+  const [openEcosystem, setOpenEcosystem] = useState(false);
+
+  // Taxon Search & Pagination
+  const [taxonSearch, setTaxonSearch] = useState("");
+  const [isTaxonLoading, setIsTaxonLoading] = useState(false);
+  const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
+  const debouncedTaxonSearch = useDebounce(taxonSearch, 400);
 
 
 
@@ -74,14 +104,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       verification_status: "pending",
       record_status: "draft",
       event_id: defaultEventId || undefined,
+      has_cloud_voucher: false,
     }
   });
 
   useEffect(() => {
-    getTaxa({ limit: 100 }).then(resp => setTaxa(resp.data));
+    getTaxa({ limit: 20 }).then(resp => setTaxa(resp.data));
     getLocations({ limit: 100 }).then(resp => setLocations(resp.data));
     getInstitutions({ limit: 100 }).then(resp => setInstitutions(resp.data));
     getCollections({ limit: 100 }).then(resp => setCollections(resp.data));
+    getEcosystems({ limit: 100 }).then(resp => setEcosystems(resp.data));
 
 
 
@@ -103,8 +135,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
             });
           }
 
+          if (resp.data.institution_id) {
+            setSelectedInstitutionId(resp.data.institution_id);
+          }
+
 
           if (resp.data.taxon) {
+            setSelectedTaxon(resp.data.taxon as Taxon);
             setTaxa(prev => {
               if (!prev.find(t => t.id === resp.data.taxon?.id)) {
                 return [resp.data.taxon as Taxon, ...prev];
@@ -127,6 +164,23 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       });
     }
   }, [id, reset]);
+
+  // Taxon Fetch on Search
+  useEffect(() => {
+    setIsTaxonLoading(true);
+    getTaxa({
+      limit: 20,
+      search: debouncedTaxonSearch
+    }).then(resp => {
+      let newTaxa = resp.data;
+      // Preserve selected taxon in list if not present
+      if (selectedTaxon && !newTaxa.find(t => t.id === selectedTaxon.id)) {
+        newTaxa = [selectedTaxon, ...newTaxa];
+      }
+      setTaxa(newTaxa);
+      setIsTaxonLoading(false);
+    });
+  }, [debouncedTaxonSearch, selectedTaxon]);
 
   const onSubmit = async (data: OccurrenceInput) => {
     setLoading(true);
@@ -190,13 +244,9 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
-        {/* 1. Detalles Principales */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <FileText className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Detalles de la Ocurrencia</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+        {/* 1. Detalles de la Ocurrencia */}
+        <FormSection title="Detalles de la Ocurrencia" icon={FileText}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Occurrence ID *</label>
               <Input {...register("occurrenceID")} placeholder="Ex: FON-001" className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -244,55 +294,60 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                       >
                         <span className="truncate">
                           {field.value
-                            ? (() => {
-                              const t = taxa.find((t) => t.id === field.value);
-                              return t ? t.scientificName : "Seleccionar Taxón...";
-                            })()
+                            ? selectedTaxon?.scientificName || "Seleccionar Taxón..."
                             : "Seleccionar Taxón..."}
-
                         </span>
-
-
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar taxón..." />
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar por nombre científico o común..."
+                          value={taxonSearch}
+                          onValueChange={setTaxonSearch}
+                        />
                         <CommandList>
-                          <CommandEmpty>No se encontró taxón.</CommandEmpty>
-                          <CommandGroup>
-                            {taxa.map((t) => (
-                              <CommandItem
-                                key={t.id}
-                                value={`${t.scientificName} ${t.vernacularName || ""}`}
-                                onSelect={() => {
-                                  field.onChange(t.id);
-                                  setOpenTaxon(false);
-                                }}
-                              >
-                                <div className="flex flex-col gap-0.5 overflow-hidden">
-                                  <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
-                                    <span>{t.genus?.family?.order_obj?.class_obj?.name}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                    <span>{t.genus?.family?.order_obj?.name}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                    <span>{t.genus?.family?.name}</span>
-                                    <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                    <span>{t.genus?.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm italic text-foreground leading-none">
-                                      {t.scientificName}
-                                    </span>
-
-                                    <span className="text-[10px] text-muted-foreground">({t.vernacularName || "-"})</span>
-                                  </div>
-                                </div>
-
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                          {isTaxonLoading ? (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                              Buscando especies...
+                            </div>
+                          ) : (
+                            <>
+                              <CommandEmpty>No se encontró taxón.</CommandEmpty>
+                              <CommandGroup>
+                                {taxa.map((t) => (
+                                  <CommandItem
+                                    key={t.id}
+                                    value={t.id}
+                                    onSelect={() => {
+                                      field.onChange(t.id);
+                                      setSelectedTaxon(t);
+                                      setOpenTaxon(false);
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                                      <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
+                                        <span>{t.genus?.family?.order_obj?.class_obj?.name}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{t.genus?.family?.order_obj?.name}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{t.genus?.family?.name}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{t.genus?.name}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-sm italic text-foreground leading-none">
+                                          {t.scientificName}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground">({t.vernacularName || "-"})</span>
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </>
+                          )}
                         </CommandList>
                         <div className="p-2 border-t border-muted/20">
                           <Button
@@ -316,7 +371,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {watch("taxon_id") && (
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 font-medium mt-1 px-1 overflow-hidden truncate">
                   {(() => {
-                    const t = taxa.find(t => t.id === watch("taxon_id"));
+                    const t = selectedTaxon;
                     if (!t) return null;
                     return (
                       <>
@@ -332,11 +387,10 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   })()}
                 </div>
               )}
-
               {errors.taxon_id && <p className="text-[10px] text-red-500 mt-1">{errors.taxon_id.message}</p>}
             </div>
 
-            <div className="flex flex-col gap-1 lg:col-span-2">
+            <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
               <select
                 {...register("location_id")}
@@ -349,16 +403,90 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               </select>
               {errors.location_id && <p className="text-[10px] text-red-500 mt-1">{errors.location_id.message}</p>}
             </div>
-          </div>
-        </div>
 
-        {/* 3. Identificación y Verificación */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Check className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Identificación y Verificación</h3>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Hábitat (Ecosistema)</label>
+              <Controller
+                control={control}
+                name="ecosystem_id"
+                render={({ field }) => (
+                  <Popover open={openEcosystem} onOpenChange={setOpenEcosystem}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate">
+                          {field.value
+                            ? ecosystems.find((e) => e.id === field.value)?.name || "Seleccionar Hábitat..."
+                            : "Seleccionar Hábitat..."}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar hábitat..." />
+                        <CommandList>
+                          <CommandEmpty>No se encontró hábitat.</CommandEmpty>
+                          <CommandGroup>
+                            {ecosystems.map((e) => (
+                              <CommandItem
+                                key={e.id}
+                                value={e.name}
+                                onSelect={() => {
+                                  field.onChange(e.id);
+                                  setOpenEcosystem(false);
+                                }}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-semibold text-sm">{e.name}</span>
+                                  <span className="text-[10px] text-muted-foreground">{e.region?.name}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                        <div className="p-2 border-t border-muted/20">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                            onClick={() => {
+                              setOpenEcosystem(false);
+                              setIsEcosystemFormOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Añadir Nuevo Hábitat
+                          </Button>
+                        </div>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+              {errors.ecosystem_id && <p className="text-[10px] text-red-500 mt-1">{errors.ecosystem_id.message}</p>}
+            </div>
+
+            <div className="flex flex-col gap-1 lg:col-span-3">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Descripción de Hábitat (Microhábitat)</label>
+              <Textarea
+                {...register("occurrenceRemarks")}
+                placeholder="Describa el hábitat o detalles extra del avistamiento (p. ej. sobre hojarasca húmeda)..."
+                className="bg-background min-h-[80px] focus-visible:ring-primary/20"
+              />
+              {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
+            </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        </FormSection>
+
+        {/* 2. Identificación y Verificación */}
+        <FormSection title="Identificación y Verificación" icon={Check}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
               <Input {...register("identificationMethod")} className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -396,15 +524,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        {/* 4. Temporalidad y Monitoreo */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Calendar className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Monitoreo</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        {/* 3. Monitoreo y Variables Ambientales */}
+        <FormSection title="Monitoreo y Variables Ambientales" icon={Thermometer}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
               <Input {...register("recordedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
@@ -415,198 +539,243 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
               <Input {...register("identifiedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
-          </div>
-        </div>
 
-        {/* 5. Afiliación e Institución */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Building className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Afiliación Institucional</h3>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-2">
-            {/* Institución */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
-              <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      "w-full justify-between font-normal h-10",
-                      !selectedInstitutionId && "text-muted-foreground"
-                    )}
-                  >
-                    <span className="truncate">
-                      {selectedInstitutionId
-                        ? institutions.find(inst => inst.id === selectedInstitutionId)?.name || "Institución seleccionada"
-                        : "Seleccionar Institución..."}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar institución..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontró la institución.</CommandEmpty>
-                      <CommandGroup>
-                        {institutions.map((inst) => (
-                          <CommandItem
-                            key={inst.id}
-                            value={inst.name}
-                            onSelect={() => {
-                              setSelectedInstitutionId(inst.id);
-                              setValue("collection_id", null); // Reset collection when institution changes
-                              setOpenInstitution(false);
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium">{inst.name}</span>
-                              <span className="text-[10px] text-muted-foreground">{inst.code}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                    <div className="p-2 border-t border-muted/20">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                        onClick={() => {
-                          setOpenInstitution(false);
-                          setIsInstitutionFormOpen(true);
-                        }}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Registrar Nueva Institución
-                      </Button>
-                    </div>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-muted/20">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <Thermometer className="h-3.5 w-3.5" /> Temperatura (°C)
+                </label>
+                <Input type="number" step="0.1" {...register("temperature_c")} placeholder="Ex: 24.5" className="h-9 bg-background/50" />
+              </div>
 
-            {/* Colección */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Colección Biológica (Code) *</label>
-              <Controller
-                control={control}
-                name="collection_id"
-                render={({ field }) => (
-                  <Popover open={openCollection} onOpenChange={setOpenCollection}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        disabled={!selectedInstitutionId}
-                        className={cn(
-                          "w-full justify-between font-normal h-10",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <span className="truncate">
-                          {field.value
-                            ? collections.find(c => c.id === field.value)?.name || "Colección seleccionada"
-                            : selectedInstitutionId ? "Seleccionar Colección..." : "Primero seleccione institución"}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Buscar colección..." />
-                        <CommandList>
-                          <CommandEmpty>
-                            Sin resultados
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {filteredCollections.map((col) => (
-                              <CommandItem
-                                key={col.id}
-                                value={col.name}
-                                onSelect={() => {
-                                  field.onChange(col.id);
-                                  setOpenCollection(false);
-                                }}
-                              >
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{col.name}</span>
-                                  <span className="text-[10px] text-muted-foreground">{col.code}</span>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                        <div className="p-2 border-t border-muted/20">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-                            onClick={() => {
-                              setOpenCollection(false);
-                              setIsCollectionFormOpen(true);
-                            }}
-                          >
-                            <Plus className="h-3 w-3" />
-                            Añadir Colección
-                          </Button>
-                        </div>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-              {errors.collection_id && <p className="text-[10px] text-red-500 mt-1">{errors.collection_id.message}</p>}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <Droplets className="h-3.5 w-3.5" /> Humedad Relativa (%)
+                </label>
+                <Input type="number" step="1" {...register("relative_humidity_percent")} placeholder="Ex: 85" className="h-9 bg-background/50" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
+                  <ArrowUp className="h-3.5 w-3.5" /> Elevación (m.s.n.m.)
+                </label>
+                <Input type="number" step="1" {...register("elevation_masl")} placeholder="Ex: 120" className="h-9 bg-background/50" />
+              </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
+        {/* 4. Testigo Físico y Afiliación */}
+        <FormSection title="Testigo Físico y Afiliación" icon={Box}>
+          <div className="space-y-6">
+            {/* Testigo Físico (Cloud Voucher) */}
+            <div className="p-4 bg-muted/30 rounded-lg border border-muted-foreground/10 space-y-4">
+              <div className="flex items-center space-x-3 group">
+                <Controller
+                  name="has_cloud_voucher"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="has_cloud_voucher"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                  )}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="has_cloud_voucher" className="text-sm font-bold cursor-pointer group-hover:text-primary transition-colors uppercase tracking-tight">Posee Testigo Físico (Voucher)</Label>
+                  <p className="text-[10px] text-muted-foreground italic">Marque si existe un espécimen o muestra física depositada en colección.</p>
+                </div>
+              </div>
 
-
-        {/* 6. Observaciones y Estado del Registro */}
-        <div className="space-y-4 bg-card border rounded-lg p-5">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Descripción de Hábitat</label>
-              <Textarea
-                {...register("occurrenceRemarks")}
-                placeholder="Describa el hábitat o detalles extra del avistamiento..."
-                className="bg-background focus-visible:ring-primary/20"
-              />
-              {errors.occurrenceRemarks && <p className="text-[10px] text-red-500 mt-1">{errors.occurrenceRemarks.message}</p>}
+              {watch("has_cloud_voucher") && (
+                <div className="flex flex-col gap-1.5 pl-7 animate-in fade-in slide-in-from-left-2 duration-200">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Número de Catálogo / Voucher *</label>
+                  <Input {...register("catalogNumber")} placeholder="Ex: MUSM-12345" className="h-9 bg-background focus-visible:ring-primary/20" />
+                  <p className="text-[9px] text-muted-foreground">Ingrese el código único asignado por la institución/colección.</p>
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Estado del Registro Público</label>
-              <Controller
-                control={control}
-                name="record_status"
-                render={({ field }) => (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
-                      <input type="radio" value="draft" checked={field.value === "draft"} onChange={field.onChange} className="sr-only" />
-                      <span className="text-sm font-bold text-amber-600">Borrador</span>
-                      <span className="text-xs text-muted-foreground mt-1">Oculto del portal público.</span>
-                    </label>
-                    <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
-                      <input type="radio" value="published" checked={field.value === "published"} onChange={field.onChange} className="sr-only" />
-                      <span className="text-sm font-bold text-emerald-600">Publicado</span>
-                      <span className="text-xs text-muted-foreground mt-1">Visible para todos en la web.</span>
-                    </label>
-                    <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
-                      <input type="radio" value="deleted" checked={field.value === "deleted"} onChange={field.onChange} className="sr-only" />
-                      <span className="text-sm font-bold text-red-600">Eliminado</span>
-                      <span className="text-xs text-muted-foreground mt-1">Archivado, no disponible.</span>
-                    </label>
-                  </div>
-                )}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Institución */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Afiliación (Institución) *</label>
+                <Controller
+                  control={control}
+                  name="institution_id"
+                  render={({ field }) => (
+                    <Popover open={openInstitution} onOpenChange={setOpenInstitution}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between font-normal h-10",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <span className="truncate">
+                            {field.value
+                              ? institutions.find(inst => inst.id === field.value)?.name || "Institución seleccionada"
+                              : "Seleccionar Institución..."}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar institución..." />
+                          <CommandList>
+                            <CommandEmpty>No se encontró la institución.</CommandEmpty>
+                            <CommandGroup>
+                              {institutions.map((inst) => (
+                                <CommandItem
+                                  key={inst.id}
+                                  value={inst.name}
+                                  onSelect={() => {
+                                    field.onChange(inst.id);
+                                    setSelectedInstitutionId(inst.id);
+                                    setValue("collection_id", null); // Reset collection when institution changes
+                                    setOpenInstitution(false);
+                                  }}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{inst.name}</span>
+                                    <span className="text-[10px] text-muted-foreground">{inst.code}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                          <div className="p-2 border-t border-muted/20">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                              onClick={() => {
+                                setOpenInstitution(false);
+                                setIsInstitutionFormOpen(true);
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                              Registrar Nueva Institución
+                            </Button>
+                          </div>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors.institution_id && <p className="text-[10px] text-red-500 mt-1">{errors.institution_id.message}</p>}
+              </div>
+
+              {/* Colección */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Colección Biológica (Code) *</label>
+                <Controller
+                  control={control}
+                  name="collection_id"
+                  render={({ field }) => (
+                    <Popover open={openCollection} onOpenChange={setOpenCollection}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          disabled={!selectedInstitutionId}
+                          className={cn(
+                            "w-full justify-between font-normal h-10",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <span className="truncate">
+                            {field.value
+                              ? collections.find(c => c.id === field.value)?.name || "Colección seleccionada"
+                              : selectedInstitutionId ? "Seleccionar Colección..." : "Primero seleccione institución"}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar colección..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              Sin resultados
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {filteredCollections.map((col) => (
+                                <CommandItem
+                                  key={col.id}
+                                  value={col.name}
+                                  onSelect={() => {
+                                    field.onChange(col.id);
+                                    setOpenCollection(false);
+                                  }}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{col.name}</span>
+                                    <span className="text-[10px] text-muted-foreground">{col.code}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                          <div className="p-2 border-t border-muted/20">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                              onClick={() => {
+                                setOpenCollection(false);
+                                setIsCollectionFormOpen(true);
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                              Añadir Colección
+                            </Button>
+                          </div>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors.collection_id && <p className="text-[10px] text-red-500 mt-1">{errors.collection_id.message}</p>}
+              </div>
             </div>
           </div>
-        </div>
+        </FormSection>
+
+
+
+        {/* 5. Estado del Registro y Publicación */}
+        <FormSection title="Estado del Registro Público" icon={Globe}>
+          <p className="text-[10px] text-muted-foreground mb-4">Defina si este registro será visible para el público general en el portal.</p>
+          <Controller
+            control={control}
+            name="record_status"
+            render={({ field }) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "draft" && "border-amber-500 bg-amber-500/5")}>
+                  <input type="radio" value="draft" checked={field.value === "draft"} onChange={field.onChange} className="sr-only" />
+                  <span className="text-sm font-bold text-amber-600">Borrador</span>
+                  <span className="text-xs text-muted-foreground mt-1">Oculto del portal público.</span>
+                </label>
+                <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "published" && "border-emerald-500 bg-emerald-500/5")}>
+                  <input type="radio" value="published" checked={field.value === "published"} onChange={field.onChange} className="sr-only" />
+                  <span className="text-sm font-bold text-emerald-600">Publicado</span>
+                  <span className="text-xs text-muted-foreground mt-1">Visible para todos en la web.</span>
+                </label>
+                <label className={cn("relative flex cursor-pointer flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors", field.value === "deleted" && "border-red-500 bg-red-500/5")}>
+                  <input type="radio" value="deleted" checked={field.value === "deleted"} onChange={field.onChange} className="sr-only" />
+                  <span className="text-sm font-bold text-red-600">Eliminado</span>
+                  <span className="text-xs text-muted-foreground mt-1">Archivado, no disponible.</span>
+                </label>
+              </div>
+            )}
+          />
+        </FormSection>
 
         <FormFooter>
           <Button variant="outline" type="button" asChild>
@@ -626,11 +795,14 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <div className="py-6 px-1">
             <TaxonForm
               id={null}
-              onSuccess={async (newId) => {
-                const resp = await getTaxa({ limit: 100 });
-                setTaxa(resp.data);
-                if (newId) {
-                  setValue("taxon_id", newId);
+              onSuccess={async (newTaxon) => {
+                if (newTaxon) {
+                  setTaxa(prev => {
+                    if (!prev.find(t => t.id === newTaxon.id)) return [newTaxon, ...prev];
+                    return prev;
+                  });
+                  setValue("taxon_id", newTaxon.id);
+                  setSelectedTaxon(newTaxon);
                 }
                 setIsTaxonFormOpen(false);
               }}
@@ -652,6 +824,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 const resp = await getInstitutions({ limit: 100 });
                 setInstitutions(resp.data);
                 setSelectedInstitutionId(newInst.id);
+                setValue("institution_id", newInst.id);
                 setValue("collection_id", null);
                 setIsInstitutionFormOpen(false);
               }}
@@ -674,7 +847,30 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 setCollections(resp.data);
                 setValue("collection_id", newCol.id);
                 setSelectedInstitutionId(newCol.institution_id);
+                setValue("institution_id", newCol.institution_id);
                 setIsCollectionFormOpen(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isEcosystemFormOpen} onOpenChange={setIsEcosystemFormOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[40vw]">
+          <SheetHeader className="pb-0">
+            <SheetTitle>Registrar Hábitat</SheetTitle>
+          </SheetHeader>
+          <div className="py-6 px-1">
+            <EcosystemForm
+              footerVariant="sticky"
+              onCancel={() => setIsEcosystemFormOpen(false)}
+              onSuccess={async (newEco) => {
+                const resp = await getEcosystems({ limit: 100 });
+                setEcosystems(resp.data);
+                if (newEco) {
+                  setValue("ecosystem_id", newEco.id);
+                }
+                setIsEcosystemFormOpen(false);
               }}
             />
           </div>

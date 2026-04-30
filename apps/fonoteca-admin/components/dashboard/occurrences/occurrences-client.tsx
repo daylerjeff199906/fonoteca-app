@@ -416,6 +416,7 @@ export function OccurrencesClient({
               <TableHead>Occurrence ID</TableHead>
               <TableHead>Basis</TableHead>
               <TableHead>Taxón</TableHead>
+              <TableHead>Hábitat</TableHead>
               <TableHead>Ubicación</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Registrado Por</TableHead>
@@ -469,6 +470,16 @@ export function OccurrencesClient({
                           {oc.taxon?.genus?.family?.order_obj?.class_obj?.name || "?"} / {oc.taxon?.genus?.family?.order_obj?.name || "?"} / {oc.taxon?.genus?.family?.name || "?"}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {oc.ecosystem ? (
+                        <div className="flex flex-col min-w-[120px]">
+                          <span className="text-[11px] font-semibold line-clamp-1">{oc.ecosystem.name}</span>
+                          <span className="text-[9px] text-muted-foreground line-clamp-1 italic">{oc.ecosystem.typical_locality}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">N/A</span>
+                      )}
                     </TableCell>
                     <TableCell>{oc.location?.locality || "Desconocida"}</TableCell>
                     <TableCell>

@@ -9,13 +9,29 @@ import logoIiap from "../../../assets/logo_iiap.png";
 
 
 
+export const prerender = true;
+
+export async function getStaticPaths() {
+    const { species } = await getAllSpecies();
+    
+    return LANGUAGES.flatMap((lang) => 
+        species.map((s) => ({
+            params: { lang, id: s.id },
+        }))
+    );
+}
+
 const { lang, id } = Astro.params;
 const content = translations[lang as keyof typeof translations];
+
+if (!content) {
+    return Astro.redirect("/es/");
+}
 ---
 
 <Layout title={content.nav.library} lang={lang}>
     <Header
-        client:load
+        client:only="react"
         content={content.nav}
         logoSrc={logoIiap.src}
         lang={lang}

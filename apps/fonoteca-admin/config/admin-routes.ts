@@ -54,6 +54,14 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
           url: `/dashboard/geography/institutions`,
         },
         {
+          title: "Regiones Naturales",
+          url: `/dashboard/geography/natural-regions`,
+        },
+        {
+          title: "Hábitats",
+          url: `/dashboard/geography/ecosystems`,
+        },
+        {
           title: "Ubicaciones",
           url: `/dashboard/locations`,
         },

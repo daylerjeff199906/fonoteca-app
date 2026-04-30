@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FormSection } from "@/components/panel-admin/form-section";
 
 
 const MapPicker = dynamic(() => import("@/components/dashboard/locations/map-picker"), {
@@ -180,38 +181,35 @@ export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixe
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full pb-10 px-1">
       {/* 1. Información Básica */}
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <Building2 className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Identidad Institucional</h3>
-        </div>
-        <div className="grid grid-cols-1 gap-6 pt-2">
+      <FormSection title="Identidad Institucional" icon={Building2}>
+        <div className="grid grid-cols-1 gap-6">
           <div className="flex flex-col gap-1.5 md:col-span-2">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nombre Oficial de la Institución *</label>
             <Input {...register("name")} placeholder="p. ej. Instituto de Investigaciones de la Amazonía Peruana" className="h-10 bg-background/50 focus-visible:ring-primary/20" />
             {errors.name && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.name.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Código (Acrónimo) *</label>
-            <Input {...register("code")} placeholder="p. ej. IIAP" className="h-10 uppercase font-bold tracking-wider bg-background/50 focus-visible:ring-primary/20" />
-            {errors.code && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.code.message}</p>}
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Código (Acrónimo) *</label>
+              <Input {...register("code")} placeholder="p. ej. IIAP" className="h-10 uppercase font-bold tracking-wider bg-background/50 focus-visible:ring-primary/20" />
+              {errors.code && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.code.message}</p>}
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tipo de Entidad</label>
-            <select
-              {...register("type")}
-              className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all"
-            >
-              <option value="Gubernamental">Gubernamental (Estado)</option>
-              <option value="Académica">Académica / Universidad</option>
-              <option value="ONG">No Gubernamental (ONG)</option>
-              <option value="Privada">Empresa Privada</option>
-              <option value="Investigación">Centro de Investigación</option>
-              <option value="Otro">Otro</option>
-            </select>
-
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tipo de Entidad</label>
+              <select
+                {...register("type")}
+                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all"
+              >
+                <option value="Gubernamental">Gubernamental (Estado)</option>
+                <option value="Académica">Académica / Universidad</option>
+                <option value="ONG">No Gubernamental (ONG)</option>
+                <option value="Privada">Empresa Privada</option>
+                <option value="Investigación">Centro de Investigación</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5 md:col-span-2">
@@ -227,58 +225,50 @@ export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixe
             />
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 2. Contacto y Web */}
-      <div className="grid grid-cols-1 gap-8">
-        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Mail className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Contacto Digital</h3>
+      <FormSection title="Contacto Digital" icon={Mail}>
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Correo Electrónico Institucional</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
+              <Input {...register("email")} type="email" placeholder="contacto@institucion.gob.pe" className="pl-10 h-10 bg-background/50 focus-visible:ring-primary/20" />
+            </div>
+            {errors.email && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.email.message}</p>}
           </div>
-          <div className="space-y-4 pt-2">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Correo Electrónico Institucional</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
-                <Input {...register("email")} type="email" placeholder="contacto@institucion.gob.pe" className="pl-10 h-10 bg-background/50 focus-visible:ring-primary/20" />
-              </div>
-              {errors.email && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.email.message}</p>}
-            </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Líneas Telefónicas (separadas por coma)</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
-                <Input
-                  placeholder="p. ej. +51 65 243456"
-                  className="pl-10 h-10 bg-background/50 focus-visible:ring-primary/20"
-                  onBlur={(e) => {
-                    const val = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
-                    setValue("phones", val);
-                  }}
-                  defaultValue={watch("phones")?.join(", ")}
-                />
-              </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Líneas Telefónicas (separadas por coma)</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
+              <Input
+                placeholder="p. ej. +51 65 243456"
+                className="pl-10 h-10 bg-background/50 focus-visible:ring-primary/20"
+                onBlur={(e) => {
+                  const val = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
+                  setValue("phones", val);
+                }}
+                defaultValue={watch("phones")?.join(", ")}
+              />
             </div>
+          </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Portal Web / Homepage</label>
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
-                <Input {...register("homepage_url")} placeholder="https://www.iiap.gob.pe" className="pl-10 h-10 bg-background/50 focus-visible:ring-primary/20" />
-              </div>
-              {errors.homepage_url && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.homepage_url.message}</p>}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Portal Web / Homepage</label>
+            <div className="relative">
+              <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/40" />
+              <Input {...register("homepage_url")} placeholder="https://www.iiap.gob.pe" className="pl-10 h-10 bg-background/50 focus-visible:ring-primary/20" />
             </div>
+            {errors.homepage_url && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.homepage_url.message}</p>}
           </div>
         </div>
+      </FormSection>
 
-        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <History className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Colección e Historia</h3>
-          </div>
-          <div className="space-y-4 pt-2">
+      <FormSection title="Colección e Historia" icon={History}>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                 <Calendar className="h-3 w-3" /> Año de Fundación
@@ -292,42 +282,38 @@ export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixe
               </label>
               <Input type="number" {...register("specimen_count", { valueAsNumber: true })} className="h-10 bg-background/50 focus-visible:ring-primary/20" />
             </div>
+          </div>
 
-            <div className="flex flex-col gap-4 pt-3 border-t border-muted/10">
-              <div className="flex items-center space-x-3 group">
-                <Controller
-                  name="is_active"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox id="is_active" checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500" />
-                  )}
-                />
-                <Label htmlFor="is_active" className="text-xs font-bold cursor-pointer group-hover:text-primary transition-colors">Institución Activa y Operativa</Label>
-              </div>
+          <div className="flex flex-col gap-4 pt-3 border-t border-muted/10">
+            <div className="flex items-center space-x-3 group">
+              <Controller
+                name="is_active"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox id="is_active" checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500" />
+                )}
+              />
+              <Label htmlFor="is_active" className="text-xs font-bold cursor-pointer group-hover:text-primary transition-colors">Institución Activa y Operativa</Label>
+            </div>
 
-              <div className="flex items-center space-x-3 group">
-                <Controller
-                  name="display_on_nhc_portal"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox id="display_on_nhc_portal" checked={field.value} onCheckedChange={field.onChange} />
-                  )}
-                />
-                <Label htmlFor="display_on_nhc_portal" className="text-xs font-bold cursor-pointer group-hover:text-primary transition-colors">Visible en Portal de Biodiversidad</Label>
-              </div>
+            <div className="flex items-center space-x-3 group">
+              <Controller
+                name="display_on_nhc_portal"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox id="display_on_nhc_portal" checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+              <Label htmlFor="display_on_nhc_portal" className="text-xs font-bold cursor-pointer group-hover:text-primary transition-colors">Visible en Portal de Biodiversidad</Label>
             </div>
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 3. Direcciones */}
-      <div className="grid grid-cols-1 gap-8">
-        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <MapPin className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Ubicación Principal</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-4 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <FormSection title="Ubicación Principal" icon={MapPin}>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5 md:col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Dirección Física Completa</label>
               <Input {...register("physical_address.address")} placeholder="Av. Abelardo Quiñones km 2.5" className="h-10 bg-background/50 focus-visible:ring-primary/20" />
@@ -341,14 +327,10 @@ export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixe
               <Input {...register("physical_address.province")} placeholder="Loreto" className="h-10 bg-background/50" />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-            <Globe className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Correspondencia Postal</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-4 pt-2">
+        <FormSection title="Correspondencia Postal" icon={Globe}>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5 md:col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Dirección de Envío / P.O. Box</label>
               <Input {...register("mailing_address.address")} placeholder="Apartado Postal 784" className="h-10 bg-background/50 focus-visible:ring-primary/20" />
@@ -362,17 +344,12 @@ export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixe
               <Input {...register("mailing_address.country")} defaultValue="Peru" className="h-10 bg-muted/20" readOnly />
             </div>
           </div>
-        </div>
+        </FormSection>
       </div>
 
       {/* 4. Mapa y Georreferenciación */}
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <MapIcon className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Coordenadas Geográficas</h3>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-2">
+      <FormSection title="Coordenadas Geográficas" icon={MapIcon}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-5">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Latitud Decimal</label>
@@ -400,22 +377,16 @@ export function InstitutionForm({ id, onSuccess, onCancel, footerVariant = "fixe
             />
           </div>
         </div>
-      </div>
+      </FormSection>
 
       {/* 5. Descripción */}
-      <div className="space-y-4 bg-card border rounded-lg p-6 shadow-sm border-muted/60">
-        <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
-          <FileText className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Reseña Institucional</h3>
-        </div>
-        <div className="pt-2">
-          <Textarea
-            {...register("description")}
-            placeholder="Describa brevemente la institución, su historia, áreas de investigación y la importancia de su colección..."
-            className="min-h-[160px] resize-y bg-background/50 focus-visible:ring-primary/20"
-          />
-        </div>
-      </div>
+      <FormSection title="Reseña Institucional" icon={FileText}>
+        <Textarea
+          {...register("description")}
+          placeholder="Describa brevemente la institución, su historia, áreas de investigación y la importancia de su colección..."
+          className="min-h-[160px] resize-y bg-background/50 focus-visible:ring-primary/20"
+        />
+      </FormSection>
 
       <FormFooter variant={footerVariant}>
         {onCancel ? (

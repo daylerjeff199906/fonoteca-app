@@ -9,8 +9,20 @@ import { landingImages } from "../../config/landingImages";
 
 
 
+export const prerender = true;
+
+export async function getStaticPaths() {
+    return LANGUAGES.map((lang) => ({
+        params: { lang },
+    }));
+}
+
 const { lang } = Astro.params;
 const content = translations[lang as keyof typeof translations];
+
+if (!content) {
+    return Astro.redirect("/es/");
+}
 ---
 
 <Layout
@@ -19,13 +31,14 @@ const content = translations[lang as keyof typeof translations];
     description="Contáctanos"
 >
     <Header
-        client:load
+        client:only="react"
         content={content.nav}
         logoSrc={logoIiap.src}
         lang={lang}
     />
     <main>
         <PageBanner
+            client:only="react"
             title={content.nav.contact}
             subtitle="Estamos aquí para ayudarte"
             image={landingImages.pageBanner.default}
