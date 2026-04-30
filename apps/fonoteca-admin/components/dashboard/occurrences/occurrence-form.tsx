@@ -552,14 +552,14 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
                   <Droplets className="h-3.5 w-3.5" /> Humedad Relativa (%)
                 </label>
-                <Input type="number" step="1" {...register("relative_humidity_percent", { valueAsNumber: true })} placeholder="Ex: 85" className="h-9 bg-background/50" />
+                <Input type="number" step="1" {...register("relative_humidity_percent")} placeholder="Ex: 85" className="h-9 bg-background/50" />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
                   <ArrowUp className="h-3.5 w-3.5" /> Elevación (m.s.n.m.)
                 </label>
-                <Input type="number" step="1" {...register("elevation_masl", { valueAsNumber: true })} placeholder="Ex: 120" className="h-9 bg-background/50" />
+                <Input type="number" step="1" {...register("elevation_masl")} placeholder="Ex: 120" className="h-9 bg-background/50" />
               </div>
             </div>
           </div>

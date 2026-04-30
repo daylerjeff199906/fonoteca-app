@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Helper tool to handle numeric fields from HTML inputs that send empty strings.
 const numberOrNull = z.preprocess(
-  (v) => (v === "" || v === undefined || v === null ? null : v),
+  (v) => (v === "" || v === undefined || v === null || (typeof v === "number" && isNaN(v)) ? null : v),
   z.coerce.number().nullable().optional()
 );
 
