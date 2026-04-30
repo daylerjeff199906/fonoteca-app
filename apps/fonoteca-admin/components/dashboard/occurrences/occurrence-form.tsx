@@ -18,15 +18,15 @@ import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Location, Taxon, Institution, Collection, BASIS_OF_RECORD_LABELS, Ecosystem } from "@/types/fonoteca";
-import { 
-  FileText, 
-  Calendar, 
-  Building, 
-  Check, 
-  ChevronsUpDown, 
-  Plus, 
-  ChevronRight, 
-  Trees, 
+import {
+  FileText,
+  Calendar,
+  Building,
+  Check,
+  ChevronsUpDown,
+  Plus,
+  ChevronRight,
+  Trees,
   Globe,
   Thermometer,
   Droplets,
@@ -168,9 +168,9 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   // Taxon Fetch on Search
   useEffect(() => {
     setIsTaxonLoading(true);
-    getTaxa({ 
-      limit: 20, 
-      search: debouncedTaxonSearch 
+    getTaxa({
+      limit: 20,
+      search: debouncedTaxonSearch
     }).then(resp => {
       let newTaxa = resp.data;
       // Preserve selected taxon in list if not present
@@ -302,8 +302,8 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                       <Command shouldFilter={false}>
-                        <CommandInput 
-                          placeholder="Buscar por nombre científico o común..." 
+                        <CommandInput
+                          placeholder="Buscar por nombre científico o común..."
                           value={taxonSearch}
                           onValueChange={setTaxonSearch}
                         />
@@ -545,7 +545,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                 <label className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-2">
                   <Thermometer className="h-3.5 w-3.5" /> Temperatura (°C)
                 </label>
-                <Input type="number" step="0.1" {...register("temperature_c", { valueAsNumber: true })} placeholder="Ex: 24.5" className="h-9 bg-background/50" />
+                <Input type="number" step="0.1" {...register("temperature_c")} placeholder="Ex: 24.5" className="h-9 bg-background/50" />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -575,10 +575,10 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   name="has_cloud_voucher"
                   control={control}
                   render={({ field }) => (
-                    <Checkbox 
-                      id="has_cloud_voucher" 
-                      checked={field.value} 
-                      onCheckedChange={field.onChange} 
+                    <Checkbox
+                      id="has_cloud_voucher"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                   )}
