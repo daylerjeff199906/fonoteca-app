@@ -54,13 +54,14 @@ export default async function LocationsPage({
 
       {error && <div className="text-red-500">{error}</div>}
 
-      <div className="rounded-md border">
+      <div className="rounded-md border text-xs">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Localidad</TableHead>
-              <TableHead>Estado/Provincia</TableHead>
-              <TableHead>País</TableHead>
+              <TableHead>Departamento</TableHead>
+              <TableHead>Provincia</TableHead>
+              <TableHead>Distrito</TableHead>
               <TableHead>Coordenadas</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
@@ -69,17 +70,18 @@ export default async function LocationsPage({
             {locations.length > 0 ? (
               locations.map((loc) => (
                 <TableRow key={loc.id}>
-                  <TableCell className="font-medium">{loc.locality}</TableCell>
-                  <TableCell>{loc.stateProvince || "-"}</TableCell>
-                  <TableCell>{loc.country}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-bold text-primary">{loc.locality}</TableCell>
+                  <TableCell>{loc.district?.province?.department?.name || "-"}</TableCell>
+                  <TableCell>{loc.district?.province?.name || "-"}</TableCell>
+                  <TableCell>{loc.district?.name || "-"}</TableCell>
+                  <TableCell className="font-mono text-[10px]">
                     {loc.decimalLatitude && loc.decimalLongitude
                       ? `${loc.decimalLatitude}, ${loc.decimalLongitude}`
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Link href={`/dashboard/locations/${loc.id}/edit`} className={buttonVariants({ variant: "ghost", size: "icon" })} title="Editar">
+                    <div className="flex items-center gap-1">
+                      <Link href={`/dashboard/locations/${loc.id}/edit`} className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")} title="Editar">
                         <Edit className="h-4 w-4" />
                       </Link>
                       <DeleteButtonWithConfirm 
@@ -93,7 +95,7 @@ export default async function LocationsPage({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>

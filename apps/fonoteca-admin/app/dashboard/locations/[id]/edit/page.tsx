@@ -11,16 +11,7 @@ export default async function EditLocationPage({
 
   return (
     <LayoutWrapper sectionTitle="Editar Ubicación">
-      <div className="w-full space-y-4 py-4 px-4">
-        <Breadcrumbs
-          items={[
-            { label: "Inicio", href: "/dashboard" },
-            { label: "Ubicaciones", href: "/dashboard/locations" },
-            { label: "Registrar Ubicación", href: "/dashboard/locations/create", active: true },
-          ]}
-        />
-        <LocationForm id={id} />
-      </div>
+      <LocationForm id={id} />
     </LayoutWrapper>
   );
 }

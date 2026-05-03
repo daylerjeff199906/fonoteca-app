@@ -416,7 +416,6 @@ export function OccurrencesClient({
               <TableHead>Occurrence ID</TableHead>
               <TableHead>Basis</TableHead>
               <TableHead>Taxón</TableHead>
-              <TableHead>Hábitat</TableHead>
               <TableHead>Ubicación</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Registrado Por</TableHead>
@@ -471,16 +470,6 @@ export function OccurrencesClient({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {oc.ecosystem ? (
-                        <div className="flex flex-col min-w-[120px]">
-                          <span className="text-[11px] font-semibold line-clamp-1">{oc.ecosystem.name}</span>
-                          <span className="text-[9px] text-muted-foreground line-clamp-1 italic">{oc.ecosystem.typical_locality}</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">N/A</span>
-                      )}
-                    </TableCell>
                     <TableCell>{oc.location?.locality || "Desconocida"}</TableCell>
                     <TableCell>
                       <span className="text-xs truncate">
@@ -508,7 +497,7 @@ export function OccurrencesClient({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={9} className="h-24 text-center">
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>
