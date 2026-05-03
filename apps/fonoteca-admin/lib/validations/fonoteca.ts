@@ -67,18 +67,11 @@ export type TaxonInput = z.infer<typeof taxonSchema>;
 export const locationSchema = z.object({
   id: z.string().uuid().optional(),
   locationID: z.string().optional().nullable(),
-  continent: z.string().default("South America"),
-  country: z.string().default("Peru"),
-  countryCode: z.string().default("PE"),
-  stateProvince: z.string().default("Loreto"),
-  county: z.string().optional().nullable(),
   locality: z.string().min(1, "Locality is required"),
   decimalLatitude: numberOrNull,
   decimalLongitude: numberOrNull,
   coordinateUncertaintyInMeters: numberOrNull,
-  elevation: numberOrNull,
-  elevationAccuracy: numberOrNull,
-  habitat: z.string().optional().nullable(),
+  ubigeo_district_id: z.string().length(6, "Invalid District ID").optional().nullable(),
 });
 
 export type LocationInput = z.infer<typeof locationSchema>;

@@ -41,6 +41,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TaxonForm } from "@/components/dashboard/taxa/taxon-form";
+import { LocationForm } from "@/components/dashboard/locations/location-form";
 import { InstitutionForm } from "@/components/dashboard/geography/institutions/institution-form";
 import { CollectionForm } from "@/components/dashboard/geography/institutions/collection-form";
 import { EcosystemForm } from "@/components/dashboard/geography/ecosystems/ecosystem-form";
@@ -80,6 +81,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [openCollection, setOpenCollection] = useState(false);
 
   const [isTaxonFormOpen, setIsTaxonFormOpen] = useState(false);
+  const [isLocationFormOpen, setIsLocationFormOpen] = useState(false);
   const [isInstitutionFormOpen, setIsInstitutionFormOpen] = useState(false);
   const [isCollectionFormOpen, setIsCollectionFormOpen] = useState(false);
   const [isEcosystemFormOpen, setIsEcosystemFormOpen] = useState(false);
@@ -92,6 +94,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [isTaxonLoading, setIsTaxonLoading] = useState(false);
   const [selectedTaxon, setSelectedTaxon] = useState<Taxon | null>(null);
   const debouncedTaxonSearch = useDebounce(taxonSearch, 400);
+
+  // Location Search & Pagination
+  const [locationSearch, setLocationSearch] = useState("");
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [openLocation, setOpenLocation] = useState(false);
+  const debouncedLocationSearch = useDebounce(locationSearch, 400);
 
 
 
@@ -151,6 +160,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           }
 
           if (resp.data.location) {
+            setSelectedLocation(resp.data.location as Location);
             setLocations(prev => {
               if (!prev.find(l => l.id === resp.data.location?.id)) {
                 return [resp.data.location as Location, ...prev];
@@ -164,6 +174,22 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       });
     }
   }, [id, reset]);
+
+  // Location Fetch on Search
+  useEffect(() => {
+    setIsLocationLoading(true);
+    getLocations({
+      limit: 20,
+      search: debouncedLocationSearch
+    }).then(resp => {
+      let newLocs = resp.data;
+      if (selectedLocation && !newLocs.find(l => l.id === selectedLocation.id)) {
+        newLocs = [selectedLocation, ...newLocs];
+      }
+      setLocations(newLocs);
+      setIsLocationLoading(false);
+    });
+  }, [debouncedLocationSearch, selectedLocation]);
 
   // Taxon Fetch on Search
   useEffect(() => {
@@ -392,15 +418,92 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Ubicación *</label>
-              <select
-                {...register("location_id")}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-              >
-                <option value="">Seleccionar Ubicación...</option>
-                {locations.map(l => (
-                  <option key={l.id} value={l.id}>{l.locality} ({l.stateProvince || l.country})</option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="location_id"
+                render={({ field }) => (
+                  <Popover open={openLocation} onOpenChange={setOpenLocation}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <span className="truncate">
+                          {field.value
+                            ? selectedLocation?.locality || "Seleccionar Ubicación..."
+                            : "Seleccionar Ubicación..."}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Buscar por localidad..."
+                          value={locationSearch}
+                          onValueChange={setLocationSearch}
+                        />
+                        <CommandList>
+                          {isLocationLoading ? (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                              Buscando localidades...
+                            </div>
+                          ) : (
+                            <>
+                              <CommandEmpty>No se encontró ubicación.</CommandEmpty>
+                              <CommandGroup>
+                                {locations.map((l) => (
+                                  <CommandItem
+                                    key={l.id}
+                                    value={l.id}
+                                    onSelect={() => {
+                                      field.onChange(l.id);
+                                      setSelectedLocation(l);
+                                      setOpenLocation(false);
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                                      <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-semibold tracking-tight">
+                                        <span>{l.district?.province?.department?.name || "-"}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{l.district?.province?.name || "-"}</span>
+                                        <ChevronRight className="h-1.5 w-1.5 opacity-40" />
+                                        <span>{l.district?.name || "-"}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-sm text-foreground leading-none">
+                                          {l.locality}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </>
+                          )}
+                        </CommandList>
+                        <div className="p-2 border-t border-muted/20">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs h-8 bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+                            onClick={() => {
+                              setOpenLocation(false);
+                              setIsLocationFormOpen(true);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Registrar Nueva Ubicación
+                          </Button>
+                        </div>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
               {errors.location_id && <p className="text-[10px] text-red-500 mt-1">{errors.location_id.message}</p>}
             </div>
 
@@ -489,12 +592,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Método de Identificación</label>
-              <Input {...register("identificationMethod")} className="bg-background h-9 focus-visible:ring-primary/20" />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Confianza (0-1)</label>
-              <Input type="number" step="0.01" {...register("identificationConfidence")} className="bg-background h-9 focus-visible:ring-primary/20" />
+              <select
+                {...register("identificationMethod")}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
+              >
+                <option value="Manual">Manual</option>
+                <option value="Automatica">Automática</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-1 lg:col-span-2">
@@ -792,9 +896,11 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <SheetHeader className="pb-0">
             <SheetTitle>Registrar Taxón</SheetTitle>
           </SheetHeader>
-          <div className="py-6 px-1">
+          <div className="pt-4">
             <TaxonForm
               id={null}
+              footerVariant="sticky"
+              onCancel={() => setIsTaxonFormOpen(false)}
               onSuccess={async (newTaxon) => {
                 if (newTaxon) {
                   setTaxa(prev => {
@@ -811,12 +917,38 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         </SheetContent>
       </Sheet>
 
+      <Sheet open={isLocationFormOpen} onOpenChange={setIsLocationFormOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[40vw]">
+          <SheetHeader className="pb-0">
+            <SheetTitle>Registrar Ubicación</SheetTitle>
+          </SheetHeader>
+          <div className="pt-4">
+            <LocationForm
+              id={null}
+              footerVariant="sticky"
+              onCancel={() => setIsLocationFormOpen(false)}
+              onSuccess={async (newLoc) => {
+                if (newLoc) {
+                  setLocations(prev => {
+                    if (!prev.find(l => l.id === newLoc.id)) return [newLoc, ...prev];
+                    return prev;
+                  });
+                  setValue("location_id", newLoc.id);
+                  setSelectedLocation(newLoc);
+                }
+                setIsLocationFormOpen(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={isInstitutionFormOpen} onOpenChange={setIsInstitutionFormOpen}>
         <SheetContent className="overflow-y-auto sm:max-w-[600px] md:max-w-[800px] min-w-[45vw]">
           <SheetHeader className="pb-0">
             <SheetTitle>Registrar Nueva Institución</SheetTitle>
           </SheetHeader>
-          <div className="py-6 px-1">
+          <div className="pt-4">
             <InstitutionForm
               footerVariant="sticky"
               onCancel={() => setIsInstitutionFormOpen(false)}
@@ -838,7 +970,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <SheetHeader className="pb-0">
             <SheetTitle>Registrar Nueva Colección</SheetTitle>
           </SheetHeader>
-          <div className="py-6 px-1">
+          <div className="pt-4">
             <CollectionForm
               defaultInstitutionId={selectedInstitutionId || undefined}
               onCancel={() => setIsCollectionFormOpen(false)}
@@ -860,7 +992,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <SheetHeader className="pb-0">
             <SheetTitle>Registrar Hábitat</SheetTitle>
           </SheetHeader>
-          <div className="py-6 px-1">
+          <div className="pt-4">
             <EcosystemForm
               footerVariant="sticky"
               onCancel={() => setIsEcosystemFormOpen(false)}

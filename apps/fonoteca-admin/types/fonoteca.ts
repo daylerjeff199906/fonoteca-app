@@ -1,20 +1,35 @@
+export interface UbigeoDepartment {
+  id: string;
+  name: string;
+}
+
+export interface UbigeoProvince {
+  id: string;
+  department_id: string;
+  name: string;
+  department?: UbigeoDepartment;
+}
+
+export interface UbigeoDistrict {
+  id: string;
+  province_id: string;
+  name: string;
+  province?: UbigeoProvince;
+}
+
 export interface Location {
   id: string;
   locationID: string | null;
-  continent: string;
-  country: string;
-  countryCode: string;
-  stateProvince: string | null;
-  county: string | null;
   locality: string;
   decimalLatitude: number | null;
   decimalLongitude: number | null;
   coordinateUncertaintyInMeters: number | null;
-  elevation: number | null;
-  elevationAccuracy: number | null;
-  habitat: string | null;
+  ubigeo_district_id: string | null;
   created_at: string;
   updated_at: string;
+
+  // Joins
+  district?: UbigeoDistrict;
 }
 
 export interface Class {

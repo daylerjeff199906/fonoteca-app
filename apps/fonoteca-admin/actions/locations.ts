@@ -23,10 +23,24 @@ export async function getLocations({
 
   let query = supabase
     .from("locations")
-    .select("*", { count: "exact" });
+    .select(`
+      *,
+      district:ubigeo_districts (
+        id,
+        name,
+        province:ubigeo_provinces (
+          id,
+          name,
+          department:ubigeo_departments (
+            id,
+            name
+          )
+        )
+      )
+    `, { count: "exact" });
 
   if (search) {
-    query = query.or(`locality.ilike.%${search}%,stateProvince.ilike.%${search}%,county.ilike.%${search}%`);
+    query = query.or(`locality.ilike.%${search}%`);
   }
 
   const { data, count, error } = await query
@@ -50,7 +64,21 @@ export async function getLocation(id: string) {
 
   const { data, error } = await supabase
     .from("locations")
-    .select("*")
+    .select(`
+      *,
+      district:ubigeo_districts (
+        id,
+        name,
+        province:ubigeo_provinces (
+          id,
+          name,
+          department:ubigeo_departments (
+            id,
+            name
+          )
+        )
+      )
+    `)
     .eq("id", id)
     .single();
 
@@ -59,6 +87,43 @@ export async function getLocation(id: string) {
   }
 
   return { data: (data as any) as Location };
+}
+
+export async function getUbigeoDepartments() {
+  const cookieStore = await cookies();
+  const supabase = await createFonotecaServer(cookieStore);
+
+  const { data, error } = await supabase
+    .from("ubigeo_departments")
+    .select("*")
+    .order("name");
+
+  if (error) return { error: error.message };
+  return { data };
+}
+
+export async function getUbigeoProvinces(departmentId?: string) {
+  const cookieStore = await cookies();
+  const supabase = await createFonotecaServer(cookieStore);
+
+  let query = supabase.from("ubigeo_provinces").select("*").order("name");
+  if (departmentId) query = query.eq("department_id", departmentId);
+
+  const { data, error } = await query;
+  if (error) return { error: error.message };
+  return { data };
+}
+
+export async function getUbigeoDistricts(provinceId?: string) {
+  const cookieStore = await cookies();
+  const supabase = await createFonotecaServer(cookieStore);
+
+  let query = supabase.from("ubigeo_districts").select("*").order("name");
+  if (provinceId) query = query.eq("province_id", provinceId);
+
+  const { data, error } = await query;
+  if (error) return { error: error.message };
+  return { data };
 }
 
 export async function createLocation(input: LocationInput) {

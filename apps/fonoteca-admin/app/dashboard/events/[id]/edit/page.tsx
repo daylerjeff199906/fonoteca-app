@@ -1,6 +1,5 @@
 import { EventForm } from "@/components/dashboard/events/event-form";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
-import { Breadcrumbs } from "../../../../../components/panel-admin/breadcrumbs";
 
 export default async function EditEventPage({
   params,
@@ -11,15 +10,7 @@ export default async function EditEventPage({
 
   return (
     <LayoutWrapper sectionTitle="Editar Evento">
-      <div className="space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: "Eventos", href: "/dashboard/events" },
-            { label: "Editar Evento", href: `/dashboard/events/${id}/edit`, active: true },
-          ]}
-        />
-        <EventForm id={id} />
-      </div>
+      <EventForm id={id} />
     </LayoutWrapper>
   );
 }

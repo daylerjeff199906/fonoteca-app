@@ -49,8 +49,7 @@ export async function getOccurrences({
       ), 
       location:locations(*), 
       collection:collections(*, institution:institutions(*)),
-      multimedia(*),
-      ecosystem:ecosystems(*)
+      multimedia(*)
     `, { count: "exact" });
 
 
@@ -281,8 +280,7 @@ export async function getAllOccurrencesForExport({
       ), 
       location:locations(*), 
       collection:collections(*, institution:institutions(*)),
-      multimedia(*),
-      ecosystem:ecosystems(*)
+      multimedia(*)
     `);
 
 

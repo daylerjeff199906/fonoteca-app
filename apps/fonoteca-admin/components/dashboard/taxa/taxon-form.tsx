@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { GenusForm } from "./genera/genus-form";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -20,8 +21,19 @@ import { Check, ChevronsUpDown, FlaskConical, FolderTree, GitBranch, Hash, FileT
 
 import { cn } from "@/lib/utils";
 import { FormSection } from "@/components/panel-admin/form-section";
+import { FormFooter } from "@/components/panel-admin/form-footer";
 
-export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (taxon?: any) => void }) {
+export function TaxonForm({ 
+  id, 
+  onSuccess, 
+  onCancel, 
+  footerVariant = "fixed" 
+}: { 
+  id: string | null; 
+  onSuccess: (taxon?: any) => void;
+  onCancel?: () => void;
+  footerVariant?: "fixed" | "sticky";
+}) {
   const [loading, setLoading] = useState(false);
   const [genera, setGenera] = useState<any[]>([]);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -94,7 +106,40 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (ta
   };
 
   if (loading && id) {
-    return <div className="text-center py-8 text-sm text-muted-foreground animate-pulse">Cargando datos del taxón...</div>;
+    return (
+      <div className="space-y-6 w-full animate-pulse">
+        <div className="bg-muted/30 p-4 rounded-lg border space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-7 w-48" />
+        </div>
+
+        <div className="space-y-4 bg-card border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-center justify-between gap-4 h-14 border-b border-muted/50 last:border-0">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-8 w-2/3" />
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-4 bg-card border rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center justify-between gap-4 h-14 border-b border-muted/50 last:border-0">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-8 w-2/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -325,11 +370,16 @@ export function TaxonForm({ id, onSuccess }: { id: string | null; onSuccess: (ta
             </div>
           </FormSection>
 
-          <div className="flex justify-end gap-3 pt-6 border-t mt-8">
+          <FormFooter variant={footerVariant}>
+            {onCancel && (
+              <Button variant="outline" type="button" onClick={onCancel}>
+                Cancelar
+              </Button>
+            )}
             <Button type="submit" disabled={loading} className="min-w-[140px] shadow-sm">
               {loading ? "Guardando..." : id ? "Guardar Cambios" : "Registrar"}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </Form>
 

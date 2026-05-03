@@ -65,7 +65,6 @@ export function EventsClient({ data, count }: { data: Event[]; count: number }) 
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{event.location?.locality || "Desconocida"}</span>
-                      <span className="text-xs text-muted-foreground">{event.location?.stateProvince || event.location?.country}</span>
                     </div>
                   </TableCell>
                   <TableCell>

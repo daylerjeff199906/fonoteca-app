@@ -151,7 +151,7 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
               >
                 <option value="">Seleccionar Ubicación...</option>
                 {locations.map(l => (
-                  <option key={l.id} value={l.id}>{l.locality} ({l.stateProvince || l.country})</option>
+                  <option key={l.id} value={l.id}>{l.locality}</option>
                 ))}
               </select>
               {errors.location_id && <p className="text-xs text-red-500 mt-1 px-2">{errors.location_id.message}</p>}
