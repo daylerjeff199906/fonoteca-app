@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import WaveSurfer from 'wavesurfer.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSpeciesById, type Species } from '../../data/species';
 import { translations, type Language } from '../../i18n/data';
@@ -12,7 +13,9 @@ import {
     Share2,
     ChevronRight,
     Lock,
-    Music
+    Music,
+    Activity,
+    Database
 } from 'lucide-react';
 
 interface Props {
@@ -43,6 +46,72 @@ const SectionHeader: React.FC<{
         )}
     </div>
 );
+
+const AudioListItem: React.FC<{
+    audio: any;
+    idx: number;
+    onSelect: () => void;
+}> = ({ audio, idx, onSelect }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const wavesurferRef = useRef<WaveSurfer | null>(null);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const ws = WaveSurfer.create({
+            container: containerRef.current,
+            waveColor: '#e0e0e0',
+            progressColor: '#e0e0e0',
+            cursorWidth: 0,
+            height: 80,
+            barWidth: 2,
+            barGap: 3,
+            interact: false,
+            normalize: true,
+        });
+
+        ws.load(audio.url);
+        wavesurferRef.current = ws;
+
+        return () => ws.destroy();
+    }, [audio.url]);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: idx * 0.05 }}
+            onClick={onSelect}
+            className="group relative flex items-center gap-6 p-6 rounded-2xl bg-white border border-gray-100 hover:border-accent-green/30 transition-all cursor-pointer overflow-hidden shadow-sm"
+        >
+            {/* Waveform Background */}
+            <div className="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity flex items-center">
+                <div ref={containerRef} className="w-full h-full scale-y-150" />
+            </div>
+
+            {/* Play Indicator / Icon */}
+            <div className="relative z-10 w-12 h-12 shrink-0 rounded-full bg-accent-green/10 text-accent-green flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-all shadow-sm">
+                <Music size={20} className="group-hover:animate-pulse" />
+            </div>
+
+            {/* Metadata */}
+            <div className="relative z-10 flex-1 min-w-0">
+                <h4 className="text-sm font-black text-gray-900 truncate uppercase tracking-tight">
+                    {audio.title || `Grabación ${idx + 1}`}
+                </h4>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                    {audio.description || 'Registro de campo'}
+                </p>
+            </div>
+
+            {/* Action Icon */}
+            <div className="relative z-10 w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 group-hover:border-accent-green group-hover:text-accent-green transition-all bg-white/80 backdrop-blur-sm">
+                <ChevronRight size={16} />
+            </div>
+        </motion.div>
+    );
+};
 
 export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [species, setSpecies] = useState<Species | null>(null);
@@ -196,11 +265,11 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                 <div className="container mx-auto px-6 py-12 max-w-7xl">
                     <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
                         {/* Species Circle Image */}
-                        <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 shadow-xl overflow-hidden rounded-[20%_80%_80%_20%_/_20%_20%_80%_80%] border-4 border-white animate-fade-in bg-primary-dark">
+                        <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 shadow-xl overflow-hidden rounded-2xl border-4 border-white animate-fade-in bg-gray-50 flex items-center justify-center p-2">
                             <img
                                 src={species.mainImage}
                                 alt={commonName}
-                                className="w-full h-full object-cover"
+                                className="max-w-full max-h-full object-contain"
                             />
                         </div>
 
@@ -222,24 +291,24 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 <div className="mx-auto w-10 h-10 flex items-center justify-center text-gray-400 group-hover:text-primary-dark transition-colors mb-2">
                                     <Bird size={32} />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">Mature individuals</p>
-                                <p className="text-sm font-black text-gray-800">Unknown</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Categoría' : 'Category'}</p>
+                                <p className="text-sm font-black text-gray-800">{species.category}</p>
                             </div>
 
                             <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform mb-2">
-                                    <TrendingDown size={32} />
+                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-accent-green group-hover:scale-110 transition-transform mb-2">
+                                    <Activity size={32} />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">Population trend</p>
-                                <p className="text-sm font-black text-gray-800 tracking-tight">Decreasing</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Estado' : 'Status'}</p>
+                                <p className="text-sm font-black text-gray-800 tracking-tight capitalize">{species.databaseDetails?.record_status || 'published'}</p>
                             </div>
 
                             <div className="text-center group">
-                                <div className="mx-auto w-12 h-12 rounded-full bg-[#45a45e] flex items-center justify-center text-white text-lg font-black shadow-lg mb-2 overflow-hidden ring-4 ring-white">
-                                    LC
+                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform mb-2">
+                                    <Database size={32} />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">Red List category</p>
-                                <p className="text-sm font-black text-gray-800 whitespace-nowrap">Least Concern</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Tipo de Registro' : 'Basis of Record'}</p>
+                                <p className="text-sm font-black text-gray-800 tracking-tight whitespace-nowrap">{species.databaseDetails?.basisOfRecord || 'Observation'}</p>
                             </div>
                         </div>
                     </div>
@@ -323,28 +392,52 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Distribución' : 'Distribution'}
                                 description={lang === 'es' ? 'Áreas geográficas y contexto de observación.' : 'Geographic ranges and observation context.'}
                             />
-                            <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 min-h-[400px] flex items-center justify-center relative p-8 group">
-                                <div className="text-center space-y-4 relative z-10 max-w-md">
-                                    <MapPin size={48} className="text-accent-green mx-auto animate-bounce" />
-                                    <h4 className="text-2xl font-black text-gray-900 leading-tight">
-                                        {species.location}
-                                    </h4>
-                                    <p className="text-gray-500 font-medium">
-                                        Esta especie habita predominantemente en áreas geográficas identificadas en los registros de observación.
-                                    </p>
-                                    <div className="pt-4 flex flex-wrap justify-center gap-2">
-                                        <span className="px-4 py-1.5 bg-white rounded-full border border-gray-200 text-xs font-bold text-gray-600 shadow-sm">
-                                            {species.databaseDetails?.stateProvince || 'Loreto'}
-                                        </span>
-                                        <span className="px-4 py-1.5 bg-white rounded-full border border-gray-200 text-xs font-bold text-gray-600 shadow-sm">
-                                            {species.databaseDetails?.country || 'Perú'}
-                                        </span>
-                                        {species.databaseDetails?.ecosystem_name && (
-                                            <span className="px-4 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-xs font-bold text-accent-green shadow-sm">
-                                                {species.databaseDetails.ecosystem_name}
-                                            </span>
-                                        )}
+                            <div className="bg-gray-50 rounded-md overflow-hidden border border-gray-100 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
+                                {species.databaseDetails?.decimalLatitude && species.databaseDetails?.decimalLongitude ? (
+                                    <div className="w-full h-full min-h-[400px] rounded-md overflow-hidden relative">
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            style={{ border: 0, position: 'absolute', top: 0, left: 0 }}
+                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${species.databaseDetails.decimalLongitude - 0.05},${species.databaseDetails.decimalLatitude - 0.05},${species.databaseDetails.decimalLongitude + 0.05},${species.databaseDetails.decimalLatitude + 0.05}&layer=mapnik&marker=${species.databaseDetails.decimalLatitude},${species.databaseDetails.decimalLongitude}`}
+                                            allowFullScreen
+                                        ></iframe>
                                     </div>
+                                ) : (
+                                    <div className="text-center space-y-4 relative z-10 max-w-md py-12">
+                                        <MapPin size={48} className="text-gray-300 mx-auto" />
+                                        <h4 className="text-xl font-bold text-gray-400 leading-tight">
+                                            {lang === 'es' ? 'Sin coordenadas geográficas' : 'No geographic coordinates'}
+                                        </h4>
+                                    </div>
+                                )}
+                                <div className="w-full bg-white border border-gray-100 p-4 mt-2 rounded-xl flex flex-wrap justify-between items-center gap-4">
+                                    <div className="flex-1 min-w-[200px]">
+                                        <h4 className="text-sm font-black text-gray-900">{species.location}</h4>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{species.databaseDetails?.country || 'Perú'}</span>
+                                            <span className="text-[10px] text-gray-300">•</span>
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails?.stateProvince || 'Loreto'}</span>
+                                            {species.databaseDetails?.province && (
+                                                <>
+                                                    <span className="text-[10px] text-gray-300">•</span>
+                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails.province}</span>
+                                                </>
+                                            )}
+                                            {species.databaseDetails?.district && (
+                                                <>
+                                                    <span className="text-[10px] text-gray-300">•</span>
+                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails.district}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {species.databaseDetails?.ecosystem_name && (
+                                        <span className="px-3 py-1 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green whitespace-nowrap">
+                                            {species.databaseDetails.ecosystem_name}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -358,50 +451,12 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                             <div className="grid grid-cols-1 gap-4">
                                 {species.audios.map((audio, idx) => (
-                                    <motion.div
+                                    <AudioListItem
                                         key={audio.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        onClick={() => setSelectedAudioIndex(idx)}
-                                        className="group flex items-center gap-6 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer"
-                                    >
-                                        {/* Play Indicator / Icon */}
-                                        <div className="w-12 h-12 shrink-0 rounded-full bg-accent-green/10 text-accent-green flex items-center justify-center group-hover:bg-accent-green group-hover:text-white transition-all">
-                                            <Music size={20} className="group-hover:animate-pulse" />
-                                        </div>
-
-                                        {/* Metadata */}
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="text-sm font-black text-gray-900 dark:text-white truncate">
-                                                {audio.title || (lang === 'es' ? 'Grabación' : 'Recording')} {idx + 1}
-                                            </h4>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                                                {audio.description || (lang === 'es' ? 'Registro de campo' : 'Field record')}
-                                            </p>
-                                        </div>
-
-                                        {/* Spectrogram Preview */}
-                                        <div className="hidden md:block w-32 h-12 shrink-0 rounded-lg overflow-hidden bg-black border border-gray-100 dark:border-gray-800 relative">
-                                            {audio.spectrogramImage ? (
-                                                <img
-                                                    src={audio.spectrogramImage}
-                                                    alt="Preview"
-                                                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center opacity-20">
-                                                    <div className="w-full h-px bg-accent-green/50"></div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Action Icon */}
-                                        <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 group-hover:border-accent-green group-hover:text-accent-green transition-all">
-                                            <ChevronRight size={16} />
-                                        </div>
-                                    </motion.div>
+                                        audio={audio}
+                                        idx={idx}
+                                        onSelect={() => setSelectedAudioIndex(idx)}
+                                    />
                                 ))}
                             </div>
 
@@ -481,22 +536,19 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Taxonomía Científica' : 'Scientific Taxonomy'}
                                 description={lang === 'es' ? 'Clasificación biológica jerárquica.' : 'Hierarchical biological classification.'}
                             />
-                            <div className="p-8 bg-primary-dark rounded-lg relative overflow-hidden group">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10">
-                                    {[
-                                        { label: 'KINGDOM', value: species.kingdom || 'Animalia' },
-                                        { label: 'PHYLUM', value: species.phylum },
-                                        { label: 'CLASS', value: species.class_name },
-                                        { label: 'ORDER', value: species.order },
-                                        { label: 'FAMILY', value: species.family }
-                                    ].map((item, idx) => (
-                                        <div key={idx} className="space-y-2">
-                                            <p className="text-[10px] font-black text-white/30 tracking-[0.2em]">{item.label}</p>
-                                            <p className="text-xl font-black text-white">{item.value || '-'}</p>
-                                        </div>
+                            <div className="py-6 border-b border-gray-50">
+                                <div className="flex flex-wrap items-center gap-y-3 gap-x-2 relative z-10">
+                                    {taxonomyParts.map((part, idx) => (
+                                        <React.Fragment key={idx}>
+                                            <span className={`text-[10px] md:text-xs font-black tracking-[0.2em] uppercase ${idx === taxonomyParts.length - 1 ? 'text-accent-green' : 'text-gray-400'}`}>
+                                                {part}
+                                            </span>
+                                            {idx < taxonomyParts.length - 1 && (
+                                                <div className="w-1 h-1 rounded-full bg-gray-200 mx-1" />
+                                            )}
+                                        </React.Fragment>
                                     ))}
                                 </div>
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-accent-green opacity-5 blur-[100px] rounded-full group-hover:opacity-10 transition-opacity" />
                             </div>
                         </section>
 

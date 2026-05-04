@@ -162,6 +162,8 @@ export interface Species {
         continent: string | null;
         country: string | null;
         stateProvince: string | null;
+        province: string | null;
+        district: string | null;
         locality: string | null;
         decimalLatitude: number | null;
         decimalLongitude: number | null;
@@ -452,6 +454,8 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                 continent: "South America",
                 country: "Perú",
                 stateProvince: loc?.district?.province?.department?.name || null,
+                province: loc?.district?.province?.name || null,
+                district: loc?.district?.name || null,
                 locality: loc?.locality || null,
                 decimalLatitude: loc?.decimalLatitude || null,
                 decimalLongitude: loc?.decimalLongitude || null,
@@ -675,6 +679,8 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             continent: "South America",
             country: "Perú",
             stateProvince: loc?.district?.province?.department?.name || null,
+            province: loc?.district?.province?.name || null,
+            district: loc?.district?.name || null,
             locality: loc?.locality || null,
             decimalLatitude: loc?.decimalLatitude || null,
             decimalLongitude: loc?.decimalLongitude || null,
