@@ -561,61 +561,73 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             />
 
                             {species.databaseDetails && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                    <div className="space-y-6">
-                                        <h4 className="text-sm font-black text-gray-400 tracking-widest uppercase mb-4">Identification</h4>
-                                        <div className="space-y-4">
-                                            {[
-                                                { label: 'Occurrence ID', value: species.databaseDetails.occurrenceID },
-                                                { label: 'Occurrence Date', value: species.databaseDetails.occurrence_date },
-                                                { label: 'Identified By', value: species.databaseDetails.identifiedBy },
-                                                { label: 'Method', value: species.databaseDetails.identificationMethod },
-                                                { label: 'Life Stage', value: species.databaseDetails.lifeStage },
-                                                { label: 'Sex', value: species.databaseDetails.sex },
-                                            ].map((item, idx) => (
-                                                <div key={idx} className="flex justify-between items-end gap-4 border-b border-gray-50 pb-2">
-                                                    <p className="text-xs font-bold text-gray-400 uppercase">{item.label}</p>
-                                                    <p className="text-sm font-black text-gray-900 truncate max-w-[200px]" title={item.value || '-'}>{item.value || '-'}</p>
-                                                </div>
-                                            ))}
-                                        </div>
+                                <div className="space-y-12">
+                                    <div className="overflow-hidden border border-gray-200 rounded-sm shadow-sm bg-white">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-gray-100">
+                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-200 w-1/3">Categoría / Propiedad</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-200">Valor Detallado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-sm">
+                                                {/* Identification Group */}
+                                                <tr className="bg-accent-green/10">
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200">1. Identificación y Registro</td>
+                                                </tr>
+                                                {[
+                                                    { label: 'Occurrence ID', value: species.databaseDetails.occurrenceID },
+                                                    { label: 'Occurrence Date', value: species.databaseDetails.occurrence_date },
+                                                    { label: 'Identified By', value: species.databaseDetails.identifiedBy },
+                                                    { label: 'Method', value: species.databaseDetails.identificationMethod },
+                                                    { label: 'Life Stage', value: species.databaseDetails.lifeStage },
+                                                    { label: 'Sex', value: species.databaseDetails.sex },
+                                                ].map((item, idx) => (
+                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'} hover:bg-accent-green/5 transition-colors`}>
+                                                        <td className="px-6 py-3 font-bold text-gray-400 uppercase text-[10px] border-b border-gray-100">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 border-b border-gray-100">{item.value || '-'}</td>
+                                                    </tr>
+                                                ))}
 
-                                        <h4 className="text-sm font-black text-gray-400 tracking-widest uppercase mb-4 mt-8">Environmental Context</h4>
-                                        <div className="space-y-4">
-                                            {[
-                                                { label: 'Temperature', value: species.databaseDetails.temperature_c ? `${species.databaseDetails.temperature_c} °C` : '-' },
-                                                { label: 'Humidity', value: species.databaseDetails.relative_humidity_percent ? `${species.databaseDetails.relative_humidity_percent} %` : '-' },
-                                                { label: 'Elevation', value: species.databaseDetails.elevation_masl ? `${species.databaseDetails.elevation_masl} m.s.n.m.` : '-' },
-                                            ].map((item, idx) => (
-                                                <div key={idx} className="flex justify-between items-end gap-4 border-b border-gray-50 pb-2">
-                                                    <p className="text-xs font-bold text-gray-400 uppercase">{item.label}</p>
-                                                    <p className="text-sm font-black text-gray-900">{item.value}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                                {/* Specimen Group */}
+                                                <tr className="bg-accent-green/10">
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200">2. Especimen y Colección</td>
+                                                </tr>
+                                                {[
+                                                    { label: 'Catalog Number', value: species.databaseDetails.catalogNumber },
+                                                    { label: 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
+                                                    { label: 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
+                                                    { label: 'Basis of Record', value: species.databaseDetails.basisOfRecord },
+                                                    { label: 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
+                                                    { label: 'Event Date', value: species.databaseDetails.eventDate },
+                                                    { label: 'Status', value: species.databaseDetails.record_status },
+                                                ].map((item, idx) => (
+                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'} hover:bg-accent-green/5 transition-colors`}>
+                                                        <td className="px-6 py-3 font-bold text-gray-400 uppercase text-[10px] border-b border-gray-100">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 border-b border-gray-100">{item.value || '-'}</td>
+                                                    </tr>
+                                                ))}
 
-                                    <div className="space-y-6">
-                                        <h4 className="text-sm font-black text-gray-400 tracking-widest uppercase mb-4">Specimen & Collection</h4>
-                                        <div className="space-y-4">
-                                            {[
-                                                { label: 'Catalog Number', value: species.databaseDetails.catalogNumber },
-                                                { label: 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
-                                                { label: 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
-                                                { label: 'Basis of Record', value: species.databaseDetails.basisOfRecord },
-                                                { label: 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
-                                                { label: 'Event Date', value: species.databaseDetails.eventDate },
-                                                { label: 'Status', value: species.databaseDetails.record_status },
-                                            ].map((item, idx) => (
-                                                <div key={idx} className="flex justify-between items-end gap-4 border-b border-gray-50 pb-2">
-                                                    <p className="text-xs font-bold text-gray-400 uppercase">{item.label}</p>
-                                                    <p className="text-sm font-black text-gray-900">{item.value || '-'}</p>
-                                                </div>
-                                            ))}
-                                        </div>
+                                                {/* Environment Group */}
+                                                <tr className="bg-accent-green/10">
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200">3. Contexto Ambiental</td>
+                                                </tr>
+                                                {[
+                                                    { label: 'Temperature', value: species.databaseDetails.temperature_c ? `${species.databaseDetails.temperature_c} °C` : '-' },
+                                                    { label: 'Humidity', value: species.databaseDetails.relative_humidity_percent ? `${species.databaseDetails.relative_humidity_percent} %` : '-' },
+                                                    { label: 'Elevation', value: species.databaseDetails.elevation_masl ? `${species.databaseDetails.elevation_masl} m.s.n.m.` : '-' },
+                                                ].map((item, idx) => (
+                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'} hover:bg-accent-green/5 transition-colors`}>
+                                                        <td className="px-6 py-3 font-bold text-gray-400 uppercase text-[10px] border-b border-gray-100">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 border-b border-gray-100">{item.value}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             )}
+
                         </section>
 
                         {/* CTA / Support Section */}
