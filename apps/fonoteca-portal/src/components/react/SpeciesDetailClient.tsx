@@ -51,7 +51,6 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [activeSection, setActiveSection] = useState('at-a-glance');
     const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
 
-    const content = translations[lang as keyof typeof translations];
     const currentLang = lang as Language;
 
     useEffect(() => {
@@ -59,6 +58,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
             try {
                 setLoading(true);
                 const data = await getSpeciesById(id);
+                console.log(data);
                 if (data) {
                     setSpecies(data);
 
@@ -154,8 +154,8 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const characteristics = species.characteristics ? species.characteristics[currentLang as keyof typeof species.characteristics] : undefined;
 
     const taxonomyParts = [
-        (species as any).kingdom || "Animalia",
-        (species as any).phylum,
+        species.kingdom || "Animalia",
+        species.phylum,
         species.class_name,
         species.order,
         species.family,
@@ -339,6 +339,11 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                         <span className="px-4 py-1.5 bg-white rounded-full border border-gray-200 text-xs font-bold text-gray-600 shadow-sm">
                                             {species.databaseDetails?.country || 'Perú'}
                                         </span>
+                                        {species.databaseDetails?.ecosystem_name && (
+                                            <span className="px-4 py-1.5 bg-accent-green/10 border border-accent-green/20 rounded-full text-xs font-bold text-accent-green shadow-sm">
+                                                {species.databaseDetails.ecosystem_name}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -380,9 +385,9 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                         {/* Spectrogram Preview */}
                                         <div className="hidden md:block w-32 h-12 shrink-0 rounded-lg overflow-hidden bg-black border border-gray-100 dark:border-gray-800 relative">
                                             {audio.spectrogramImage ? (
-                                                <img 
-                                                    src={audio.spectrogramImage} 
-                                                    alt="Preview" 
+                                                <img
+                                                    src={audio.spectrogramImage}
+                                                    alt="Preview"
                                                     className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
                                                 />
                                             ) : (
@@ -440,6 +445,22 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 <p className="mb-8 p-8 bg-gray-50 rounded-sm italic border-l-8 border-accent-green font-medium">
                                     {description}
                                 </p>
+                                {species.databaseDetails?.occurrenceRemarks && (
+                                    <div className="mb-4 p-6 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                        <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Observaciones de campo</h5>
+                                        <p className="text-gray-600 text-sm italic">
+                                            "{species.databaseDetails.occurrenceRemarks}"
+                                        </p>
+                                    </div>
+                                )}
+                                {species.databaseDetails?.microhabitat_remarks && (
+                                    <div className="mb-8 p-6 bg-accent-green/5 border border-accent-green/10 rounded-xl shadow-sm">
+                                        <h5 className="text-[10px] font-black text-accent-green uppercase tracking-widest mb-2">Microhábitat</h5>
+                                        <p className="text-gray-700 text-sm">
+                                            {species.databaseDetails.microhabitat_remarks}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {characteristics && characteristics.length > 0 && (
@@ -463,7 +484,8 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             <div className="p-8 bg-primary-dark rounded-lg relative overflow-hidden group">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10">
                                     {[
-                                        { label: 'KINGDOM', value: 'Animalia' },
+                                        { label: 'KINGDOM', value: species.kingdom || 'Animalia' },
+                                        { label: 'PHYLUM', value: species.phylum },
                                         { label: 'CLASS', value: species.class_name },
                                         { label: 'ORDER', value: species.order },
                                         { label: 'FAMILY', value: species.family }
@@ -493,7 +515,9 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                         <div className="space-y-4">
                                             {[
                                                 { label: 'Occurrence ID', value: species.databaseDetails.occurrenceID },
+                                                { label: 'Occurrence Date', value: species.databaseDetails.occurrence_date },
                                                 { label: 'Identified By', value: species.databaseDetails.identifiedBy },
+                                                { label: 'Method', value: species.databaseDetails.identificationMethod },
                                                 { label: 'Life Stage', value: species.databaseDetails.lifeStage },
                                                 { label: 'Sex', value: species.databaseDetails.sex },
                                             ].map((item, idx) => (
@@ -503,16 +527,33 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                 </div>
                                             ))}
                                         </div>
+
+                                        <h4 className="text-sm font-black text-gray-400 tracking-widest uppercase mb-4 mt-8">Environmental Context</h4>
+                                        <div className="space-y-4">
+                                            {[
+                                                { label: 'Temperature', value: species.databaseDetails.temperature_c ? `${species.databaseDetails.temperature_c} °C` : '-' },
+                                                { label: 'Humidity', value: species.databaseDetails.relative_humidity_percent ? `${species.databaseDetails.relative_humidity_percent} %` : '-' },
+                                                { label: 'Elevation', value: species.databaseDetails.elevation_masl ? `${species.databaseDetails.elevation_masl} m.s.n.m.` : '-' },
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="flex justify-between items-end gap-4 border-b border-gray-50 pb-2">
+                                                    <p className="text-xs font-bold text-gray-400 uppercase">{item.label}</p>
+                                                    <p className="text-sm font-black text-gray-900">{item.value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-6">
-                                        <h4 className="text-sm font-black text-gray-400 tracking-widest uppercase mb-4">Specimen Logic</h4>
+                                        <h4 className="text-sm font-black text-gray-400 tracking-widest uppercase mb-4">Specimen & Collection</h4>
                                         <div className="space-y-4">
                                             {[
                                                 { label: 'Catalog Number', value: species.databaseDetails.catalogNumber },
-                                                { label: 'Institution Code', value: species.databaseDetails.institutionCode },
-                                                { label: 'Event Date', value: species.databaseDetails.eventDate },
+                                                { label: 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
+                                                { label: 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
                                                 { label: 'Basis of Record', value: species.databaseDetails.basisOfRecord },
+                                                { label: 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
+                                                { label: 'Event Date', value: species.databaseDetails.eventDate },
+                                                { label: 'Status', value: species.databaseDetails.record_status },
                                             ].map((item, idx) => (
                                                 <div key={idx} className="flex justify-between items-end gap-4 border-b border-gray-50 pb-2">
                                                     <p className="text-xs font-bold text-gray-400 uppercase">{item.label}</p>

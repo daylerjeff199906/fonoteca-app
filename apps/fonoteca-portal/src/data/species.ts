@@ -14,23 +14,26 @@ export interface DbMultimedia {
 export interface DbLocation {
     id: string;
     locationID: string | null;
-    continent: string | null;
-    country: string | null;
-    countryCode: string | null;
-    stateProvince: string | null;
-    county: string | null;
     locality: string;
     decimalLatitude: number | null;
     decimalLongitude: number | null;
     coordinateUncertaintyInMeters: number | null;
-    elevation: number | null;
-    elevationAccuracy: number | null;
-    habitat: string | null;
     created_at: string;
+    district?: {
+        name: string;
+        province?: {
+            name: string;
+            department?: {
+                name: string;
+            }
+        }
+    }
 }
 
 export interface DbClass {
     name: string;
+    kingdom: string;
+    phylum: string | null;
 }
 
 export interface DbOrder {
@@ -60,20 +63,41 @@ export interface DbOccurrence {
     taxon_id: string;
     location_id: string;
     basisOfRecord: string;
-    institutionCode: string | null;
-    collectionCode: string | null;
     catalogNumber: string | null;
+    institutions?: {
+        name: string | null;
+        code: string | null;
+    };
+    collections?: {
+        name: string | null;
+        code: string | null;
+    };
     recordedBy: string;
     identifiedBy: string | null;
     lifeStage: string | null;
     sex: string | null;
+    record_status: "draft" | "published" | "deleted";
+    occurrence_date: string | null;
+    temperature_c: number | null;
+    relative_humidity_percent: number | null;
+    elevation_masl: number | null;
+    occurrenceRemarks: string | null;
+    microhabitat_remarks: string | null;
+    identificationMethod: string | null;
     events?: {
         eventDate: string;
         eventTime: string | null;
+        samplingProtocol: string | null;
     };
     taxa: DbTaxon;
     locations: DbLocation;
     multimedia: DbMultimedia[];
+    ecosystems?: {
+        name: string;
+        region?: {
+            name: string;
+        }
+    }
 }
 
 export interface Multimedia {
@@ -120,11 +144,15 @@ export interface Species {
     family?: string;
     order?: string;
     class_name?: string;
+    kingdom?: string;
+    phylum?: string;
     databaseDetails?: {
         occurrenceID: string | null;
         basisOfRecord: string | null;
         institutionCode: string | null;
+        institutionName: string | null;
         collectionCode: string | null;
+        collectionName: string | null;
         catalogNumber: string | null;
         eventDate: string | null;
         eventTime: string | null;
@@ -138,6 +166,16 @@ export interface Species {
         decimalLatitude: number | null;
         decimalLongitude: number | null;
         elevation: number | null;
+        record_status: string | null;
+        occurrence_date: string | null;
+        temperature_c: number | null;
+        relative_humidity_percent: number | null;
+        elevation_masl: number | null;
+        occurrenceRemarks: string | null;
+        identificationMethod: string | null;
+        samplingProtocol: string | null;
+        ecosystem_name: string | null;
+        microhabitat_remarks: string | null;
     };
 }
 
@@ -211,6 +249,24 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
             occurrenceID,
             taxon_id,
             location_id,
+            record_status,
+            occurrence_date,
+            temperature_c,
+            relative_humidity_percent,
+            elevation_masl,
+            occurrenceRemarks,
+            identificationMethod,
+            microhabitat_remarks,
+            basisOfRecord,
+            catalogNumber,
+            institutions (
+                name,
+                code
+            ),
+            collections (
+                name,
+                code
+            ),
             taxa!inner (
                 scientificName,
                 vernacularName,
@@ -221,7 +277,9 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                         orders:orders!inner (
                             name,
                             classes:classes!inner (
-                                name
+                                name,
+                                kingdom,
+                                phylum
                             )
                         )
                     )
@@ -230,10 +288,18 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
             locations!inner (*),
             events (
                 eventDate,
-                eventTime
+                eventTime,
+                samplingProtocol
+            ),
+            ecosystems (
+                name,
+                region:natural_regions (
+                    name
+                )
             ),
             multimedia${multimediaJoin}(*)
-        `, { count: 'exact' });
+        `, { count: 'exact' })
+        .eq('record_status', 'published');
 
 
     // 1. Search filter
@@ -368,24 +434,38 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
             family: taxon?.genus?.family?.name,
             order: taxon?.genus?.family?.orders?.name,
             class_name: taxon?.genus?.family?.orders?.classes?.name,
+            kingdom: taxon?.genus?.family?.orders?.classes?.kingdom,
+            phylum: taxon?.genus?.family?.orders?.classes?.phylum ?? undefined,
             databaseDetails: {
                 occurrenceID: occ.occurrenceID,
                 basisOfRecord: occ.basisOfRecord,
-                institutionCode: occ.institutionCode,
-                collectionCode: occ.collectionCode,
+                institutionCode: occ.institutions?.code || null,
+                institutionName: occ.institutions?.name || null,
+                collectionCode: occ.collections?.code || null,
+                collectionName: occ.collections?.name || null,
                 catalogNumber: occ.catalogNumber,
                 eventDate: occ.events?.eventDate || null,
                 eventTime: occ.events?.eventTime || null,
                 lifeStage: occ.lifeStage,
                 sex: occ.sex,
                 identifiedBy: occ.identifiedBy,
-                continent: loc?.continent || null,
-                country: loc?.country || null,
-                stateProvince: loc?.stateProvince || null,
+                continent: "South America",
+                country: "Perú",
+                stateProvince: loc?.district?.province?.department?.name || null,
                 locality: loc?.locality || null,
                 decimalLatitude: loc?.decimalLatitude || null,
                 decimalLongitude: loc?.decimalLongitude || null,
-                elevation: loc?.elevation || null,
+                elevation: null,
+                record_status: occ.record_status,
+                occurrence_date: occ.occurrence_date,
+                temperature_c: occ.temperature_c,
+                relative_humidity_percent: occ.relative_humidity_percent,
+                elevation_masl: occ.elevation_masl,
+                occurrenceRemarks: occ.occurrenceRemarks,
+                microhabitat_remarks: occ.microhabitat_remarks,
+                identificationMethod: occ.identificationMethod,
+                samplingProtocol: occ.events?.samplingProtocol || null,
+                ecosystem_name: occ.ecosystems?.name || null,
             }
         };
     });
@@ -404,15 +484,30 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             id,
             occurrenceID,
             basisOfRecord,
-            institutionCode,
-            collectionCode,
             catalogNumber,
+            institutions (
+                name,
+                code
+            ),
+            collections (
+                name,
+                code
+            ),
             lifeStage,
             sex,
             identifiedBy,
+            record_status,
+            occurrence_date,
+            temperature_c,
+            relative_humidity_percent,
+            elevation_masl,
+            occurrenceRemarks,
+            identificationMethod,
+            microhabitat_remarks,
             events (
                 eventDate,
-                eventTime
+                eventTime,
+                samplingProtocol
             ),
             taxa:taxa!inner(
                 scientificName,
@@ -424,20 +519,33 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
                         orders:orders!inner(
                             name,
                             classes:classes!inner(
-                                name
+                                name,
+                                kingdom,
+                                phylum
                             )
                         )
                     )
                 )
             ),
             locations:locations!inner(
-                continent,
-                country,
-                stateProvince,
                 locality,
                 decimalLatitude,
                 decimalLongitude,
-                elevation
+                district:ubigeo_districts (
+                    name,
+                    province:ubigeo_provinces (
+                        name,
+                        department:ubigeo_departments (
+                            name
+                        )
+                    )
+                )
+            ),
+            ecosystems (
+                name,
+                region:natural_regions (
+                    name
+                )
             ),
             multimedia:multimedia(
                 id,
@@ -451,7 +559,13 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             )
         `)
         .eq('id', id)
+        .eq('record_status', 'published')
         .single() as { data: DbOccurrence | null, error: any };
+
+    console.log("Occurrence data:", occurrence);
+    if (error) {
+        console.error("Supabase Error in getSpeciesById:", error);
+    }
 
     if (error || !occurrence) return undefined;
 
@@ -543,56 +657,79 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
         family: taxon?.genus?.family?.name,
         order: taxon?.genus?.family?.orders?.name,
         class_name: taxon?.genus?.family?.orders?.classes?.name,
+        kingdom: taxon?.genus?.family?.orders?.classes?.kingdom,
+        phylum: taxon?.genus?.family?.orders?.classes?.phylum ?? undefined,
         databaseDetails: {
             occurrenceID: occurrence.occurrenceID,
             basisOfRecord: occurrence.basisOfRecord,
-            institutionCode: occurrence.institutionCode,
-            collectionCode: occurrence.collectionCode,
+            institutionCode: occurrence.institutions?.code || null,
+            institutionName: occurrence.institutions?.name || null,
+            collectionCode: occurrence.collections?.code || null,
+            collectionName: occurrence.collections?.name || null,
             catalogNumber: occurrence.catalogNumber,
             eventDate: occurrence.events?.eventDate || null,
             eventTime: occurrence.events?.eventTime || null,
             lifeStage: occurrence.lifeStage,
             sex: occurrence.sex,
             identifiedBy: occurrence.identifiedBy,
-            continent: loc?.continent || null,
-            country: loc?.country || null,
-            stateProvince: loc?.stateProvince || null,
+            continent: "South America",
+            country: "Perú",
+            stateProvince: loc?.district?.province?.department?.name || null,
             locality: loc?.locality || null,
             decimalLatitude: loc?.decimalLatitude || null,
             decimalLongitude: loc?.decimalLongitude || null,
-            elevation: loc?.elevation || null,
+            elevation: null,
+            record_status: occurrence.record_status,
+            occurrence_date: occurrence.occurrence_date,
+            temperature_c: occurrence.temperature_c,
+            relative_humidity_percent: occurrence.relative_humidity_percent,
+            elevation_masl: occurrence.elevation_masl,
+            occurrenceRemarks: occurrence.occurrenceRemarks,
+            microhabitat_remarks: occurrence.microhabitat_remarks,
+            identificationMethod: occurrence.identificationMethod,
+            samplingProtocol: occurrence.events?.samplingProtocol || null,
+            ecosystem_name: occurrence.ecosystems?.name || null,
         }
     };
 }
 
 // Helper to fetch unique filter values directly from Supabase
 export async function getFilterMetaData() {
-    const { data: taxa } = await supabase
-        .from('taxa')
+    // We only want metadata from published occurrences
+    const { data: occurrences } = await supabase
+        .from('occurrences')
         .select(`
-            scientificName, 
-            vernacularName, 
-            genus:genera!inner(
-                name, 
-                family:families!inner(
+            record_status,
+            taxa (
+                scientificName, 
+                vernacularName, 
+                genus:genera (
                     name, 
-                    orders:orders!inner(
+                    family:families (
                         name, 
-                        classes:classes!inner(
-                            name
+                        orders:orders (
+                            name, 
+                            classes:classes (
+                                name
+                            )
                         )
                     )
                 )
+            ),
+            locations (
+                locality
             )
-        `) as { data: DbTaxon[] | null };
+        `)
+        .eq('record_status', 'published') as { data: any[] | null };
 
-    const { data: locs } = await supabase.from('locations').select('locality') as { data: { locality: string }[] | null };
+    const taxa = occurrences?.map(o => o.taxa).filter(Boolean) || [];
+    const locs = occurrences?.map(o => o.locations).filter(Boolean) || [];
 
-    const classes = Array.from(new Set(taxa?.map(t => t.genus?.family?.orders?.classes?.name).filter(Boolean) as string[])).sort();
-    const orders = Array.from(new Set(taxa?.map(t => t.genus?.family?.orders?.name).filter(Boolean) as string[])).sort();
-    const families = Array.from(new Set(taxa?.map(t => t.genus?.family?.name).filter(Boolean) as string[])).sort();
-    const genera = Array.from(new Set(taxa?.map(t => t.genus?.name).filter(Boolean) as string[])).sort();
-    const localities = Array.from(new Set(locs?.map(l => l.locality).filter(Boolean) as string[])).sort();
+    const classes = Array.from(new Set(taxa?.map((t: any) => t.genus?.family?.orders?.classes?.name).filter(Boolean) as string[])).sort();
+    const orders = Array.from(new Set(taxa?.map((t: any) => t.genus?.family?.orders?.name).filter(Boolean) as string[])).sort();
+    const families = Array.from(new Set(taxa?.map((t: any) => t.genus?.family?.name).filter(Boolean) as string[])).sort();
+    const genera = Array.from(new Set(taxa?.map((t: any) => t.genus?.name).filter(Boolean) as string[])).sort();
+    const localities = Array.from(new Set(locs?.map((l: any) => l.locality).filter(Boolean) as string[])).sort();
 
     return { classes, orders, families, genera, localities };
 }
