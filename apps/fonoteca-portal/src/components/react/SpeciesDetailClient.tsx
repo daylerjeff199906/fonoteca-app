@@ -29,15 +29,15 @@ const SectionHeader: React.FC<{
     badges?: string[];
     className?: string;
 }> = ({ title, description, badges, className = "" }) => (
-    <div className={`flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-100 pb-6 mb-8 ${className}`}>
+    <div className={`flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-100 dark:border-gray-800 pb-6 mb-8 ${className}`}>
         <div className="space-y-1">
-            <h3 className="text-2xl font-black text-gray-900 leading-tight">{title}</h3>
-            {description && <p className="text-gray-500 font-medium text-sm">{description}</p>}
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">{title}</h3>
+            {description && <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">{description}</p>}
         </div>
         {badges && badges.length > 0 && (
             <div className="flex gap-2">
                 {badges.map(badge => (
-                    <span key={badge} className={`px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded ${badge === 'VERIFIED' ? 'bg-accent-green text-white' : 'bg-gray-100 text-gray-400'
+                    <span key={badge} className={`px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded ${badge === 'VERIFIED' ? 'bg-accent-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
                         }`}>
                         {badge}
                     </span>
@@ -83,7 +83,7 @@ const AudioListItem: React.FC<{
             viewport={{ once: true }}
             transition={{ delay: idx * 0.05 }}
             onClick={onSelect}
-            className="group relative flex items-center gap-6 p-6 rounded-2xl bg-white border border-gray-100 hover:border-accent-green/30 transition-all cursor-pointer overflow-hidden shadow-sm"
+            className="group relative flex items-center gap-6 p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 transition-all cursor-pointer overflow-hidden shadow-sm"
         >
             {/* Waveform Background */}
             <div className="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity flex items-center">
@@ -97,16 +97,16 @@ const AudioListItem: React.FC<{
 
             {/* Metadata */}
             <div className="relative z-10 flex-1 min-w-0">
-                <h4 className="text-sm font-black text-gray-900 truncate uppercase tracking-tight">
+                <h4 className="text-sm font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">
                     {audio.title || `Grabación ${idx + 1}`}
                 </h4>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">
                     {audio.description || 'Registro de campo'}
                 </p>
             </div>
 
             {/* Action Icon */}
-            <div className="relative z-10 w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 group-hover:border-accent-green group-hover:text-accent-green transition-all bg-white/80 backdrop-blur-sm">
+            <div className="relative z-10 w-8 h-8 rounded-full border border-gray-100 dark:border-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:border-accent-green group-hover:text-accent-green transition-all bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
                 <ChevronRight size={16} />
             </div>
         </motion.div>
@@ -256,16 +256,16 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white dark:bg-gray-950">
             {/* Top Spacer for Navigation */}
             <div className="bg-primary-dark h-24 w-full"></div>
 
             {/* Header Section (Mockup Inspired) */}
-            <header className="bg-[#f4f1ea] border-b border-gray-200">
+            <header className="bg-[#f4f1ea] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                 <div className="container mx-auto px-6 py-12 max-w-7xl">
                     <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
                         {/* Species Circle Image */}
-                        <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 shadow-xl overflow-hidden rounded-2xl border-4 border-white animate-fade-in bg-gray-50 flex items-center justify-center p-2">
+                        <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 shadow-xl overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in bg-gray-50 dark:bg-gray-800 flex items-center justify-center p-2">
                             <img
                                 src={species.mainImage}
                                 alt={commonName}
@@ -275,7 +275,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                         {/* Title & Scientific Information */}
                         <div className="flex-1 text-center md:text-left space-y-4">
-                            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-serif italic text-gray-900 leading-tight">
+                            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-serif italic text-gray-900 dark:text-white leading-tight">
                                 {species.scientificName}
                             </h1>
                             <div className="space-y-1">
@@ -288,27 +288,27 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         {/* Status Indicators Area */}
                         <div className="grid grid-cols-3 gap-8 md:gap-12 xl:gap-16 shrink-0 items-center justify-center">
                             <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-gray-400 group-hover:text-primary-dark transition-colors mb-2">
+                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:text-primary-dark transition-colors mb-2">
                                     <Bird size={32} />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Categoría' : 'Category'}</p>
-                                <p className="text-sm font-black text-gray-800">{species.category}</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Categoría' : 'Category'}</p>
+                                <p className="text-sm font-black text-gray-800 dark:text-gray-200">{species.category}</p>
                             </div>
 
                             <div className="text-center group">
                                 <div className="mx-auto w-10 h-10 flex items-center justify-center text-accent-green group-hover:scale-110 transition-transform mb-2">
                                     <Activity size={32} />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Estado' : 'Status'}</p>
-                                <p className="text-sm font-black text-gray-800 tracking-tight capitalize">{species.databaseDetails?.record_status || 'published'}</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Estado' : 'Status'}</p>
+                                <p className="text-sm font-black text-gray-800 dark:text-gray-200 tracking-tight capitalize">{species.databaseDetails?.record_status || 'published'}</p>
                             </div>
 
                             <div className="text-center group">
                                 <div className="mx-auto w-10 h-10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform mb-2">
                                     <Database size={32} />
                                 </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Tipo de Registro' : 'Basis of Record'}</p>
-                                <p className="text-sm font-black text-gray-800 tracking-tight whitespace-nowrap">{species.databaseDetails?.basisOfRecord || 'Observation'}</p>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Tipo de Registro' : 'Basis of Record'}</p>
+                                <p className="text-sm font-black text-gray-800 dark:text-gray-200 tracking-tight whitespace-nowrap">{species.databaseDetails?.basisOfRecord || 'Observation'}</p>
                             </div>
                         </div>
                     </div>
@@ -331,7 +331,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             </a>
 
                             <div>
-                                <h4 className="text-[10px] font-black tracking-widest uppercase text-gray-400 mb-4 px-2">Contents</h4>
+                                <h4 className="text-[10px] font-black tracking-widest uppercase text-gray-400 dark:text-gray-500 mb-4 px-2">Contents</h4>
                                 <nav className="space-y-1">
                                     {sections.map(section => (
                                         <a
@@ -344,7 +344,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                             }}
                                             className={`group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${activeSection === section.id
                                                 ? 'bg-accent-green/10 text-accent-green'
-                                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-900'
                                                 }`}
                                         >
                                             {section.label}
@@ -354,14 +354,14 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 </nav>
                             </div>
 
-                            <hr className="border-gray-100" />
+                            <hr className="border-gray-100 dark:border-gray-800" />
 
                             <div className="space-y-4 px-2">
-                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent-green transition-colors group">
+                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
                                     <Share2 size={14} />
                                     <span>SHARE FACTSHEET</span>
                                 </button>
-                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent-green transition-colors group">
+                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
                                     <FileText size={14} />
                                     <span>CITATIONS</span>
                                 </button>
@@ -387,12 +387,12 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         </section>
 
                         {/* Section: Distribution */}
-                        <section id="distribution" className="scroll-mt-24 border-t border-gray-100 pt-16">
+                        <section id="distribution" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
                             <SectionHeader
                                 title={lang === 'es' ? 'Distribución' : 'Distribution'}
                                 description={lang === 'es' ? 'Áreas geográficas y contexto de observación.' : 'Geographic ranges and observation context.'}
                             />
-                            <div className="bg-gray-50 rounded-md overflow-hidden border border-gray-100 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
+                            <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
                                 {species.databaseDetails?.decimalLatitude && species.databaseDetails?.decimalLongitude ? (
                                     <div className="w-full h-full min-h-[400px] rounded-md overflow-hidden relative">
                                         <iframe
@@ -406,15 +406,15 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     </div>
                                 ) : (
                                     <div className="text-center space-y-4 relative z-10 max-w-md py-12">
-                                        <MapPin size={48} className="text-gray-300 mx-auto" />
-                                        <h4 className="text-xl font-bold text-gray-400 leading-tight">
+                                        <MapPin size={48} className="text-gray-300 dark:text-gray-700 mx-auto" />
+                                        <h4 className="text-xl font-bold text-gray-400 dark:text-gray-500 leading-tight">
                                             {lang === 'es' ? 'Sin coordenadas geográficas' : 'No geographic coordinates'}
                                         </h4>
                                     </div>
                                 )}
-                                <div className="w-full bg-white border border-gray-100 p-4 mt-2 rounded-xl flex flex-wrap justify-between items-center gap-4">
+                                <div className="w-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 mt-2 rounded-xl flex flex-wrap justify-between items-center gap-4">
                                     <div className="flex-1 min-w-[200px]">
-                                        <h4 className="text-sm font-black text-gray-900">{species.location}</h4>
+                                        <h4 className="text-sm font-black text-gray-900 dark:text-white">{species.location}</h4>
                                         <div className="flex flex-wrap gap-2 mt-1">
                                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{species.databaseDetails?.country || 'Perú'}</span>
                                             <span className="text-[10px] text-gray-300">•</span>
@@ -443,7 +443,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         </section>
 
                         {/* Section: Audios & Analysis */}
-                        <section id="audios" className="scroll-mt-24 border-t border-gray-100 pt-16">
+                        <section id="audios" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
                             <SectionHeader
                                 title={lang === 'es' ? 'Audios y Análisis Acústico' : 'Audios & Acoustic Analysis'}
                                 description={lang === 'es' ? 'Explora la fonología y los patrones acústicos a través de grabaciones en alta fidelidad y espectrogramas dinámicos.' : 'Explore phonology and acoustic patterns through high-fidelity recordings and dynamic spectrograms.'}
@@ -479,11 +479,11 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             {species.spectrograms && species.spectrograms.length > 0 && (
                                 <div className="pt-12 space-y-8">
                                     <div className="flex items-center gap-4">
-                                        <hr className="flex-1 border-gray-100" />
-                                        <h4 className="text-[10px] uppercase font-black tracking-widest text-gray-400">Visual Analysis Gallery</h4>
-                                        <hr className="flex-1 border-gray-100" />
+                                        <hr className="flex-1 border-gray-100 dark:border-gray-800" />
+                                        <h4 className="text-[10px] uppercase font-black tracking-widest text-gray-400 dark:text-gray-500">Visual Analysis Gallery</h4>
+                                        <hr className="flex-1 border-gray-100 dark:border-gray-800" />
                                     </div>
-                                    <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
+                                    <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800">
                                         <SpeciesGallery images={species.spectrograms.map(img => img.url)} contain />
                                     </div>
                                 </div>
@@ -491,19 +491,19 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         </section>
 
                         {/* Section: Ecology / Characteristics */}
-                        <section id="characteristics" className="scroll-mt-24 border-t border-gray-100 pt-16">
+                        <section id="characteristics" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
                             <SectionHeader
                                 title={lang === 'es' ? 'Ecología y Descripción' : 'Ecology & Description'}
                                 description={lang === 'es' ? 'Comportamiento y características físicas detalladas.' : 'Detailed behavior and physical characteristics.'}
                             />
-                            <div className="prose prose-lg text-gray-700 leading-relaxed max-w-none">
-                                <p className="mb-8 p-8 bg-gray-50 rounded-sm italic border-l-8 border-accent-green font-medium">
+                            <div className="prose prose-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-none">
+                                <p className="mb-8 p-8 bg-gray-50 dark:bg-gray-900 rounded-sm italic border-l-8 border-accent-green font-medium">
                                     {description}
                                 </p>
                                 {species.databaseDetails?.occurrenceRemarks && (
-                                    <div className="mb-4 p-6 bg-white border border-gray-100 rounded-xl shadow-sm">
-                                        <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Observaciones de campo</h5>
-                                        <p className="text-gray-600 text-sm italic">
+                                    <div className="mb-4 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+                                        <h5 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Observaciones de campo</h5>
+                                        <p className="text-gray-600 dark:text-gray-400 text-sm italic">
                                             "{species.databaseDetails.occurrenceRemarks}"
                                         </p>
                                     </div>
@@ -511,7 +511,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 {species.databaseDetails?.microhabitat_remarks && (
                                     <div className="mb-8 p-6 bg-accent-green/5 border border-accent-green/10 rounded-xl shadow-sm">
                                         <h5 className="text-[10px] font-black text-accent-green uppercase tracking-widest mb-2">Microhábitat</h5>
-                                        <p className="text-gray-700 text-sm">
+                                        <p className="text-gray-700 dark:text-gray-300 text-sm">
                                             {species.databaseDetails.microhabitat_remarks}
                                         </p>
                                     </div>
@@ -521,9 +521,9 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             {characteristics && characteristics.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {characteristics.map((char, idx) => (
-                                        <div key={idx} className="flex gap-4 p-5 bg-white rounded-xl border border-gray-100 shadow-sm items-start group hover:border-accent-green/20 transition-colors">
+                                        <div key={idx} className="flex gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm items-start group hover:border-accent-green/20 transition-colors">
                                             <div className="w-1.5 h-1.5 rounded-full bg-accent-green mt-2 group-hover:scale-150 transition-transform" />
-                                            <p className="text-sm font-medium text-gray-600 leading-relaxed">{char}</p>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed">{char}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -536,15 +536,15 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Taxonomía Científica' : 'Scientific Taxonomy'}
                                 description={lang === 'es' ? 'Clasificación biológica jerárquica.' : 'Hierarchical biological classification.'}
                             />
-                            <div className="py-6 border-b border-gray-50">
+                            <div className="py-6 border-b border-gray-50 dark:border-gray-800">
                                 <div className="flex flex-wrap items-center gap-y-3 gap-x-2 relative z-10">
                                     {taxonomyParts.map((part, idx) => (
                                         <React.Fragment key={idx}>
-                                            <span className={`text-[10px] md:text-xs font-black tracking-[0.2em] uppercase ${idx === taxonomyParts.length - 1 ? 'text-accent-green' : 'text-gray-400'}`}>
+                                            <span className={`text-[10px] md:text-xs font-black tracking-[0.2em] uppercase ${idx === taxonomyParts.length - 1 ? 'text-accent-green' : 'text-gray-400 dark:text-gray-500'}`}>
                                                 {part}
                                             </span>
                                             {idx < taxonomyParts.length - 1 && (
-                                                <div className="w-1 h-1 rounded-full bg-gray-200 mx-1" />
+                                                <div className="w-1 h-1 rounded-full bg-gray-200 dark:bg-gray-700 mx-1" />
                                             )}
                                         </React.Fragment>
                                     ))}
@@ -553,7 +553,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         </section>
 
                         {/* Section: Details del Registro */}
-                        <section id="details" className="scroll-mt-24 border-t border-gray-100 pt-16">
+                        <section id="details" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
                             <SectionHeader
                                 title={lang === 'es' ? 'Detalles del Registro' : 'Record Details'}
                                 description={lang === 'es' ? 'Metadatos técnicos y contexto del especimen observado.' : 'Technical metadata and context of the observed specimen.'}
@@ -562,18 +562,18 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                             {species.databaseDetails && (
                                 <div className="space-y-12">
-                                    <div className="overflow-hidden border border-gray-200 rounded-sm shadow-sm bg-white">
+                                    <div className="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm shadow-sm bg-white dark:bg-gray-900">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
-                                                <tr className="bg-gray-100">
-                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-200 w-1/3">Categoría / Propiedad</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-200">Valor Detallado</th>
+                                                <tr className="bg-gray-100 dark:bg-gray-800">
+                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">Categoría / Propiedad</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">Valor Detallado</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="text-sm">
                                                 {/* Identification Group */}
-                                                <tr className="bg-accent-green/10">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200">1. Identificación y Registro</td>
+                                                <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">1. Identificación y Registro</td>
                                                 </tr>
                                                 {[
                                                     { label: 'Occurrence ID', value: species.databaseDetails.occurrenceID },
@@ -583,15 +583,15 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                     { label: 'Life Stage', value: species.databaseDetails.lifeStage },
                                                     { label: 'Sex', value: species.databaseDetails.sex },
                                                 ].map((item, idx) => (
-                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'} hover:bg-accent-green/5 transition-colors`}>
-                                                        <td className="px-6 py-3 font-bold text-gray-400 uppercase text-[10px] border-b border-gray-100">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 border-b border-gray-100">{item.value || '-'}</td>
+                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                        <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
                                                     </tr>
                                                 ))}
 
                                                 {/* Specimen Group */}
-                                                <tr className="bg-accent-green/10">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200">2. Especimen y Colección</td>
+                                                <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. Especimen y Colección</td>
                                                 </tr>
                                                 {[
                                                     { label: 'Catalog Number', value: species.databaseDetails.catalogNumber },
@@ -602,24 +602,24 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                     { label: 'Event Date', value: species.databaseDetails.eventDate },
                                                     { label: 'Status', value: species.databaseDetails.record_status },
                                                 ].map((item, idx) => (
-                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'} hover:bg-accent-green/5 transition-colors`}>
-                                                        <td className="px-6 py-3 font-bold text-gray-400 uppercase text-[10px] border-b border-gray-100">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 border-b border-gray-100">{item.value || '-'}</td>
+                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                        <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
                                                     </tr>
                                                 ))}
 
                                                 {/* Environment Group */}
-                                                <tr className="bg-accent-green/10">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200">3. Contexto Ambiental</td>
+                                                <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">3. Contexto Ambiental</td>
                                                 </tr>
                                                 {[
                                                     { label: 'Temperature', value: species.databaseDetails.temperature_c ? `${species.databaseDetails.temperature_c} °C` : '-' },
                                                     { label: 'Humidity', value: species.databaseDetails.relative_humidity_percent ? `${species.databaseDetails.relative_humidity_percent} %` : '-' },
                                                     { label: 'Elevation', value: species.databaseDetails.elevation_masl ? `${species.databaseDetails.elevation_masl} m.s.n.m.` : '-' },
                                                 ].map((item, idx) => (
-                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/80'} hover:bg-accent-green/5 transition-colors`}>
-                                                        <td className="px-6 py-3 font-bold text-gray-400 uppercase text-[10px] border-b border-gray-100">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 border-b border-gray-100">{item.value}</td>
+                                                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                        <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
