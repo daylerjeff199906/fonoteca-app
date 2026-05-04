@@ -12,7 +12,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({ images, contain 
     // Filter out invalid images if needed, but we trust the data layer for now
     if (!images || images.length === 0) {
         return (
-            <div className="w-full aspect-video bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700">
+            <div className="w-full aspect-video bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700">
                 <div className="text-center">
                     <img src="/images/logo-mini.webp" className="w-16 mx-auto opacity-20 mb-2" alt="No images" />
                     <p className="text-gray-400 text-sm">No hay imágenes disponibles</p>
@@ -50,15 +50,17 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({ images, contain 
 
         if (count === 1) {
             return (
-                <div className={`${cellClass} w-full aspect-video rounded-3xl shadow-xl overflow-hidden`} onClick={() => openLightbox(0)}>
-                    <img src={images[0]} className={imgClass} alt="Gallery 1" />
+                <div className="flex justify-center bg-[#080808] rounded-md p-4 shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800" onClick={() => openLightbox(0)}>
+                    <div className="relative h-[300px] md:h-[400px] max-w-full cursor-pointer group">
+                        <img src={images[0]} className="h-full w-auto max-w-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-500" alt="Gallery 1" />
+                    </div>
                 </div>
             );
         }
 
         if (count === 2) {
             return (
-                <div className="grid grid-cols-2 gap-3 h-[300px] md:h-[400px] rounded-3xl overflow-hidden shadow-xl">
+                <div className="grid grid-cols-2 gap-3 h-[300px] md:h-[400px] rounded-md overflow-hidden shadow-xl">
                     {images.slice(0, 2).map((img, i) => (
                         <div key={i} className={`${cellClass} h-full`} onClick={() => openLightbox(i)}>
                             <img src={img} className={imgClass} alt={`Gallery ${i + 1}`} />
@@ -70,7 +72,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({ images, contain 
 
         if (count === 3) {
             return (
-                <div className="grid grid-cols-2 grid-rows-2 gap-3 h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-xl">
+                <div className="grid grid-cols-2 grid-rows-2 gap-3 h-[400px] md:h-[500px] rounded-md overflow-hidden shadow-xl">
                     <div className={`${cellClass} row-span-2 h-full`} onClick={() => openLightbox(0)}>
                         <img src={images[0]} className={imgClass} alt="Gallery 1" />
                     </div>
@@ -85,7 +87,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({ images, contain 
 
         if (count === 4) {
             return (
-                <div className="grid grid-cols-2 gap-3 h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
+                <div className="grid grid-cols-2 gap-3 h-[400px] md:h-[500px] rounded-md overflow-hidden shadow-2xl">
                     <div className={`${cellClass} h-full`} onClick={() => openLightbox(0)}>
                         <img src={images[0]} className={imgClass} alt="Gallery 1" />
                     </div>
@@ -102,7 +104,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({ images, contain 
 
         // 5 or more (Facebook Style: 2 top, 3 bottom)
         return (
-            <div className="flex flex-col gap-3 h-[500px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl bg-[#080808]">
+            <div className="flex flex-col gap-3 h-[500px] md:h-[600px] rounded-md overflow-hidden shadow-2xl bg-[#080808]">
                 {/* Top Row: 2 images */}
                 <div className="grid grid-cols-2 gap-3 h-[60%]">
                     {images.slice(0, 2).map((img, i) => (
