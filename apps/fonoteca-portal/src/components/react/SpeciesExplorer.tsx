@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../../lib/utils';
 import {
     Search,
     Filter,
@@ -8,21 +9,16 @@ import {
     ChevronDown,
     X,
     Music,
-    MapPin,
-    Play,
-    Info,
     ChevronLeft,
     ChevronRight,
     PanelLeftClose,
     PanelLeftOpen,
     RefreshCw,
-    ArrowRight,
-    Pin
 } from 'lucide-react';
 import type { Species } from '../../data/species';
 import { getAllSpecies, getFilterMetaData } from '../../data/species';
 import { useSpeciesStore } from '../../store/useSpeciesStore';
-import { SpeciesCard } from './SpeciesCard';
+import { SpeciesCard, SpeciesTableRow } from './SpeciesCard';
 
 interface SpeciesExplorerProps {
     initialData: { species: Species[], totalCount: number };
@@ -37,67 +33,108 @@ interface FilterListBoxProps {
     lang: string;
 }
 
-const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onChange, lang }) => {
+const FilterCombobox: React.FC<{
+    title: string;
+    items: string[];
+    value: string;
+    onChange: (val: string) => void;
+    lang: string;
+    disabled?: boolean;
+    allLabel?: string;
+}> = ({ title, items, value, onChange, lang, disabled, allLabel }) => {
+    const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
-    const filteredItems = items.filter(i =>
-        i.toLowerCase().includes(search.toLowerCase()) || i === 'All'
-    );
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const defaultAll = allLabel || (lang === 'es' ? 'Todos' : 'All');
+
+    const filteredItems = useMemo(() =>
+        items.filter(item =>
+            item.toLowerCase().includes(search.toLowerCase()) || item === 'All'
+        ), [items, search]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
-        <div className="space-y-2">
-            <h3 className="font-semibold text-gray-400 dark:text-gray-500 text-[10px] uppercase tracking-wider px-1">{title}</h3>
-            <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-1 bg-white dark:bg-[#0c141d]">
-                <div className="relative">
-                    <Search className="w-3 h-3 absolute left-2 top-1.5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder={lang === 'es' ? 'Filtrar...' : 'Search...'}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-7 pr-2 py-1 text-xs bg-transparent outline-none border-b border-gray-50 dark:border-gray-800 text-gray-800 dark:text-gray-200"
-                    />
-                </div>
-                <ul className="max-h-32 min-h-[40px] overflow-y-auto mt-1 space-y-0.5 custom-scrollbar">
-                    {filteredItems.map(item => (
-                        <li key={item}>
-                            <button
-                                onClick={() => onChange(item)}
-                                className={`w-full text-left px-2 py-1 rounded-lg text-[11px] cursor-pointer transition-all ${value === item
-                                    ? 'bg-accent-green text-white font-medium'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                    }`}
-                            >
-                                {item === 'All' ? (lang === 'es' ? 'Todas' : 'All') : item}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </div>
-    );
-};
+        <div className="flex flex-col gap-1.5 mb-4 relative" ref={containerRef}>
+            <label className="text-[11px] font-medium text-[#0c141d] dark:text-gray-300 px-0.5">
+                {title}
+            </label>
 
-const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
-    const [isOpen, setIsOpen] = useState(true);
-    return (
-        <div className="border border-gray-100 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#121b28] overflow-hidden">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-4 py-3 flex items-center justify-between text-left text-[11px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-800/10 hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors"
+            <div
+                className={cn(
+                    "relative group transition-all",
+                    disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+                )}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
             >
-                <span>{title}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
+                <div className={cn(
+                    "w-full flex items-center justify-between bg-white dark:bg-[#0c141d] border rounded-lg py-2 px-3 text-xs transition-all",
+                    isOpen ? "border-accent-green ring-1 ring-accent-green/20" : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                )}>
+                    <span className={cn("truncate", value === 'All' ? "text-gray-400" : "text-[#0c141d] dark:text-gray-100 font-medium")}>
+                        {value === 'All' ? defaultAll : value}
+                    </span>
+                    <Search className="w-3.5 h-3.5 text-gray-400" />
+                </div>
+            </div>
+
+            <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800 rounded-md overflow-hidden flex flex-col"
                     >
-                        <div className="p-4 space-y-5">
-                            {children}
+                        <div className="p-2 border-b border-gray-50 dark:border-gray-800/50 flex flex-col gap-2 bg-gray-50/30 dark:bg-gray-900/30">
+                            <div className="relative">
+                                <Search className="w-3.5 h-3.5 absolute right-3 top-2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder={lang === 'es' ? 'Buscar...' : 'Search...'}
+                                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg pl-3 pr-9 py-1.5 text-[11px] outline-none focus:border-accent-green transition-colors text-gray-700 dark:text-gray-300"
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto p-1.5 custom-scrollbar">
+                            {filteredItems.length > 0 ? (
+                                filteredItems.map(item => (
+                                    <button
+                                        key={item}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onChange(item);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={cn(
+                                            "w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all",
+                                            value === item
+                                                ? "bg-accent-green/10 text-accent-green font-bold"
+                                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        )}
+                                    >
+                                        {item === 'All' ? defaultAll : item}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="px-3 py-6 text-[11px] text-gray-400 text-center">
+                                    {lang === 'es' ? 'No hay resultados' : 'No results found'}
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}
@@ -105,6 +142,17 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }>
         </div>
     );
 };
+
+const SidebarSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div className="space-y-3">
+        <h3 className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-1">
+            {title}
+        </h3>
+        <div className="space-y-4">
+            {children}
+        </div>
+    </div>
+);
 
 // Removed QueryProvider - using direct state management with Supabase
 
@@ -135,7 +183,8 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
     const [filterMeta, setFilterMeta] = useState<{
-        classes: string[], orders: string[], families: string[], genera: string[], localities: string[]
+        classes: string[], orders: string[], families: string[], genera: string[], localities: string[],
+        taxonomyPaths?: Array<{ class: string | null, order: string | null, family: string | null, genus: string | null }>
     } | null>(null);
 
     // 1. URL Synchronization on mount
@@ -237,11 +286,36 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     ]);
 
     // Dynamic Lists for filters (from metadata)
+    const taxonomyPaths = filterMeta?.taxonomyPaths || [];
     const locations = useMemo(() => ['All', ...(filterMeta?.localities || [])], [filterMeta]);
-    const classes = useMemo(() => ['All', ...(filterMeta?.classes || [])], [filterMeta]);
-    const orders = useMemo(() => ['All', ...(filterMeta?.orders || [])], [filterMeta]);
-    const families = useMemo(() => ['All', ...(filterMeta?.families || [])], [filterMeta]);
-    const genera = useMemo(() => ['All', ...(filterMeta?.genera || [])], [filterMeta]);
+    const availableClasses = useMemo(() => ['All', ...(filterMeta?.classes || [])], [filterMeta]);
+
+    const availableOrders = useMemo(() => {
+        if (!filterMeta) return ['All'];
+        if (selectedClass === 'All') return ['All', ...filterMeta.orders];
+        const validOrders = taxonomyPaths.filter(p => p.class === selectedClass).map(p => p.order).filter(Boolean) as string[];
+        return ['All', ...Array.from(new Set(validOrders)).sort()];
+    }, [filterMeta, selectedClass, taxonomyPaths]);
+
+    const availableFamilies = useMemo(() => {
+        if (!filterMeta) return ['All'];
+        if (selectedOrder === 'All') return ['All', ...filterMeta.families];
+        const validFamilies = taxonomyPaths.filter(p =>
+            p.order === selectedOrder && (selectedClass === 'All' || p.class === selectedClass)
+        ).map(p => p.family).filter(Boolean) as string[];
+        return ['All', ...Array.from(new Set(validFamilies)).sort()];
+    }, [filterMeta, selectedOrder, selectedClass, taxonomyPaths]);
+
+    const availableGenera = useMemo(() => {
+        if (!filterMeta) return ['All'];
+        if (selectedFamily === 'All') return ['All', ...filterMeta.genera];
+        const validGenera = taxonomyPaths.filter(p =>
+            p.family === selectedFamily &&
+            (selectedOrder === 'All' || p.order === selectedOrder) &&
+            (selectedClass === 'All' || p.class === selectedClass)
+        ).map(p => p.genus).filter(Boolean) as string[];
+        return ['All', ...Array.from(new Set(validGenera)).sort()];
+    }, [filterMeta, selectedFamily, selectedOrder, selectedClass, taxonomyPaths]);
 
     const playAudio = (species: Species) => {
         // Handled directly inside SpeciesCard via custom events to trigger PersistentPlayer
@@ -270,33 +344,30 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     if (!isHydrated) return null;
 
     const SidebarContent = () => (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f172a] lg:bg-transparent">
-            {/* Header for Mobile Sheet */}
-            <div className="flex items-center justify-between p-6 lg:hidden border-b border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col h-full bg-white dark:bg-[#121b28]">
+            {/* Header for Mobile Sheet & Desktop */}
+            <div className="flex items-center justify-between p-4 lg:p-5 border-b border-gray-100 dark:border-gray-800 shrink-0">
                 <div className="flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-accent-green" />
-                    <h2 className="font-bold text-lg">Filtros</h2>
+                    <Filter className="w-4 h-4 text-accent-green" />
+                    <h2 className="font-bold text-xs uppercase tracking-wider">{lang === 'es' ? 'Filtros' : 'Filters'}</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    {isSidebarCollapsed && typeof window !== 'undefined' && window.innerWidth >= 1024 && (
-                        <button
-                            onClick={() => {
-                                setIsSidebarCollapsed(false);
-                                setIsMobileSheetOpen(false);
-                            }}
-                            className="p-2 rounded-full hover:bg-accent-green/10 text-accent-green transition-colors"
-                            title="Restaurar posición"
-                        >
-                            <Pin className="w-5 h-5" />
-                        </button>
-                    )}
-                    <button onClick={() => setIsMobileSheetOpen(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    {/* Desktop Close Button */}
+                    <button
+                        onClick={() => setIsSidebarCollapsed(true)}
+                        className="hidden lg:flex p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-500 transition-colors"
+                        title={lang === 'es' ? 'Contraer panel' : 'Collapse panel'}
+                    >
+                        <PanelLeftClose className="w-4 h-4" />
+                    </button>
+                    {/* Mobile Close Button */}
+                    <button onClick={() => setIsMobileSheetOpen(false)} className="lg:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 lg:p-0 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {/* Active Filters Summary */}
                 {(selectedLocation !== 'All' || selectedClass !== 'All' || selectedOrder !== 'All' || selectedFamily !== 'All' || selectedGenus !== 'All' || onlyWithAudio || searchTerm) && (
                     <div className="mb-4 p-4 rounded-2xl bg-accent-green/5 border border-accent-green/10">
@@ -355,34 +426,62 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     </div>
                 )}
 
-                <div className="space-y-4 pb-10 lg:pb-0">
-                    <CollapsibleSection title={lang === 'es' ? 'Taxonomía' : 'Taxonomy'}>
-                        <FilterListBox title="Clase" items={classes} value={selectedClass} onChange={setSelectedClass} lang={lang} />
-                        <FilterListBox title="Orden" items={orders} value={selectedOrder} onChange={setSelectedOrder} lang={lang} />
-                        <FilterListBox title="Familia" items={families} value={selectedFamily} onChange={setSelectedFamily} lang={lang} />
-                        <FilterListBox title="Género" items={genera} value={selectedGenus} onChange={setSelectedGenus} lang={lang} />
-                    </CollapsibleSection>
-
-                    <CollapsibleSection title={lang === 'es' ? 'Localidad' : 'Location'}>
-                        <div className="grid grid-cols-1 gap-1">
-                            {locations.map(loc => (
-                                <button
-                                    key={loc}
-                                    onClick={() => setSelectedLocation(loc)}
-                                    className={`px-3 py-2 rounded-xl text-[11px] text-left transition-all ${selectedLocation === loc
-                                        ? 'bg-accent-green text-white shadow-accent-green/20'
-                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
-                                >
-                                    {loc === 'All' ? (lang === 'es' ? 'Todas' : 'All') : loc}
-                                </button>
-                            ))}
+                <div className="space-y-8 pb-10 lg:pb-0">
+                    <SidebarSection title={lang === 'es' ? 'Taxonomía' : 'Taxonomy'}>
+                        <div className="space-y-1">
+                            <FilterCombobox
+                                title="Clase"
+                                items={availableClasses}
+                                value={selectedClass}
+                                onChange={(val) => { setSelectedClass(val); setSelectedOrder('All'); setSelectedFamily('All'); setSelectedGenus('All'); }}
+                                lang={lang}
+                                allLabel={lang === 'es' ? 'Todas las clases' : 'All classes'}
+                            />
+                            <FilterCombobox
+                                title="Orden"
+                                items={availableOrders}
+                                value={selectedOrder}
+                                onChange={(val) => { setSelectedOrder(val); setSelectedFamily('All'); setSelectedGenus('All'); }}
+                                lang={lang}
+                                disabled={selectedClass === 'All'}
+                                allLabel={lang === 'es' ? 'Todas las órdenes' : 'All orders'}
+                            />
+                            <FilterCombobox
+                                title="Familia"
+                                items={availableFamilies}
+                                value={selectedFamily}
+                                onChange={(val) => { setSelectedFamily(val); setSelectedGenus('All'); }}
+                                lang={lang}
+                                disabled={selectedOrder === 'All' || selectedClass === 'All'}
+                                allLabel={lang === 'es' ? 'Todas las familias' : 'All families'}
+                            />
+                            <FilterCombobox
+                                title="Género"
+                                items={availableGenera}
+                                value={selectedGenus}
+                                onChange={setSelectedGenus}
+                                lang={lang}
+                                disabled={selectedFamily === 'All' || selectedOrder === 'All' || selectedClass === 'All'}
+                                allLabel={lang === 'es' ? 'Todos los géneros' : 'All genera'}
+                            />
                         </div>
-                    </CollapsibleSection>
+                    </SidebarSection>
 
-                    <CollapsibleSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
+                    <SidebarSection title={lang === 'es' ? 'Localidad' : 'Location'}>
+                        <FilterCombobox
+                            title="Localidad"
+                            items={locations}
+                            value={selectedLocation}
+                            onChange={setSelectedLocation}
+                            lang={lang}
+                            allLabel={lang === 'es' ? 'Todas las localidades' : 'All locations'}
+                        />
+                    </SidebarSection>
+
+                    <SidebarSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
                         <button
                             onClick={() => setOnlyWithAudio(!onlyWithAudio)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
                         >
                             <div className="flex items-center gap-2">
                                 <Music className="w-3.5 h-3.5" />
@@ -392,14 +491,14 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 {onlyWithAudio && <X className="w-3 h-3 text-white" />}
                             </div>
                         </button>
-                    </CollapsibleSection>
+                    </SidebarSection>
                 </div>
             </div>
         </div>
     );
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8 min-h-[800px]">
+        <div className="flex flex-col lg:flex-row min-h-[800px] w-full">
             {/* Mobile/Sheet component */}
             <AnimatePresence>
                 {isMobileSheetOpen && (
@@ -409,14 +508,14 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsMobileSheetOpen(false)}
-                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:bg-black/40"
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
                         />
                         <motion.aside
                             initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white dark:bg-[#0f172a] z-[101]"
+                            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white dark:bg-[#0f172a] z-[101] lg:hidden"
                         >
                             <SidebarContent />
                         </motion.aside>
@@ -424,33 +523,36 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                 )}
             </AnimatePresence>
 
-            {/* Desktop Sidebar (Togglable) */}
-            <aside className={`hidden lg:block sticky top-24 h-fit transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-0 opacity-0 -translate-x-10 pointer-events-none' : 'w-[280px] opacity-100 translate-x-0'}`}>
-                <SidebarContent />
+            {/* Desktop Sidebar (Admin Panel Style) */}
+            <aside className={`hidden lg:flex flex-col sticky top-24 h-[calc(100vh-6rem)] transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#121b28] overflow-hidden rounded-none shadow-none ${isSidebarCollapsed ? 'w-0 opacity-0 pointer-events-none border-none' : 'w-[280px] opacity-100 flex-shrink-0'}`}>
+                <div className="w-[280px] h-full flex flex-col">
+                    <SidebarContent />
+                </div>
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 space-y-6">
+            <div className="flex-1 min-w-0 transition-all duration-300 flex flex-col">
                 {/* Header Control Bar */}
-                <div className="bg-white dark:bg-[#121b28] p-4 rounded-3xl border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="sticky top-[64px] lg:top-20 z-40 bg-white/95 dark:bg-[#121b28]/95 backdrop-blur-md p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all rounded-none shadow-none w-full">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="flex items-center gap-1.5 p-1 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                            {(isSidebarCollapsed || (typeof window !== 'undefined' && window.innerWidth < 1024)) && (
+                            {/* Mobile Filter Button */}
+                            <button
+                                onClick={() => setIsMobileSheetOpen(true)}
+                                className="lg:hidden p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-accent-green transition-all"
+                                title={lang === 'es' ? "Abrir filtros" : "Open filters"}
+                            >
+                                <Filter className="w-5 h-5" />
+                            </button>
+
+                            {/* Desktop Filter Toggle Button (only shows when collapsed) */}
+                            {isSidebarCollapsed && (
                                 <button
-                                    onClick={() => setIsMobileSheetOpen(true)}
-                                    className="p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-accent-green transition-all"
-                                    title={lang === 'es' ? "Abrir filtros" : "Open filters"}
+                                    onClick={() => setIsSidebarCollapsed(false)}
+                                    className="hidden lg:flex p-2.5 rounded-xl bg-white dark:bg-gray-800 text-accent-green shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                                    title={lang === 'es' ? "Mostrar panel de filtros" : "Show filters panel"}
                                 >
-                                    <Filter className="w-5 h-5" />
-                                </button>
-                            )}
-                            {typeof window !== 'undefined' && window.innerWidth >= 1024 && (
-                                <button
-                                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                                    className={`p-2.5 rounded-xl transition-all ${!isSidebarCollapsed ? 'bg-white dark:bg-gray-800 text-accent-green shadow-sm' : 'text-gray-500 hover:text-accent-green'}`}
-                                    title={isSidebarCollapsed ? "Restaurar panel fijo" : "Contraer panel"}
-                                >
-                                    {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+                                    <PanelLeftOpen className="w-5 h-5" />
                                 </button>
                             )}
                         </div>
@@ -462,7 +564,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 placeholder={lang === 'es' ? 'Buscar especies...' : 'Search species...'}
-                                className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 focus:ring-2 focus:ring-accent-green outline-none text-sm transition-shadow"
+                                className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 focus:ring-2 focus:ring-accent-green outline-none text-sm transition-shadow"
                             />
                             {searchInput && (
                                 <button onClick={() => { setSearchInput(''); setSearchTerm(''); }} className="absolute right-3 top-2.5 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
@@ -501,93 +603,122 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     </div>
                 </div>
 
-                {/* Loading State */}
-                {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} className="bg-white dark:bg-[#121b28] rounded-3xl h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="relative">
-                        {isFetching && (
-                            <div className="absolute top-0 right-0 z-10 p-2">
-                                <RefreshCw className="w-4 h-4 text-accent-green animate-spin" />
-                            </div>
-                        )}
-
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={viewMode}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.3 }}
-                                className={viewMode === 'grid'
-                                    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-6`
-                                    : "flex flex-col gap-4"
-                                }
-                            >
-                                {species.length > 0 ? (
-                                    species.map(s => (
-                                        <SpeciesCard
-                                            key={s.id}
-                                            species={s}
-                                            viewMode={viewMode}
-                                            lang={lang}
-                                        />
-                                    ))
-                                ) : (
-                                    <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
-                                        <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
-                                            <Search className="w-8 h-8 text-gray-300" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-xl">{lang === 'es' ? 'No se encontraron especies' : 'No species found'}</h3>
-                                            <p className="text-gray-500 max-w-xs">{lang === 'es' ? 'Intenta con otros filtros o términos de búsqueda.' : 'Try adjusting your filters or search terms.'}</p>
-                                        </div>
-                                        <button onClick={clearFilters} className="text-accent-green font-bold hover:underline">
-                                            {lang === 'es' ? 'Limpiar filtros' : 'Clear filters'}
-                                        </button>
-                                    </div>
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="mt-12 flex justify-center items-center gap-2">
-                                <button
-                                    disabled={page === 1}
-                                    onClick={() => setPage(page - 1)}
-                                    className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 disabled:opacity-30 disabled:hover:bg-white transition-all hover:bg-gray-50"
-                                >
-                                    <ChevronLeft className="w-5 h-5" />
-                                </button>
-
-                                <div className="flex gap-1.5 px-4">
-                                    {Array.from({ length: totalPages }).map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setPage(i + 1)}
-                                            className={`w-9 h-9 rounded-xl font-bold text-xs transition-all ${page === i + 1 ? 'bg-accent-green text-white scale-110' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50'}`}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
+                <div className="p-4 lg:p-6 space-y-6 flex-1">
+                    {/* Loading State */}
+                    {isLoading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                <div key={i} className="bg-white dark:bg-[#121b28] rounded-3xl h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            {isFetching && (
+                                <div className="absolute top-0 right-0 z-10 p-2">
+                                    <RefreshCw className="w-4 h-4 text-accent-green animate-spin" />
                                 </div>
+                            )}
 
-                                <button
-                                    disabled={page === totalPages}
-                                    onClick={() => setPage(page + 1)}
-                                    className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 disabled:opacity-30 disabled:hover:bg-white transition-all hover:bg-gray-50"
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={viewMode}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.3 }}
+                                    className={viewMode === 'grid'
+                                        ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4 container mx-auto pb-4`
+                                        : "w-full overflow-hidden container mx-auto pb-4"
+                                    }
                                 >
-                                    <ChevronRight className="w-5 h-5" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
+                                    {species.length > 0 ? (
+                                        viewMode === 'list' ? (
+                                            <div className="w-full overflow-x-auto bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800">
+                                                <table className="w-full text-left border-collapse">
+                                                    <thead>
+                                                        <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Img</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Científico' : 'Scientific Name'}</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Común' : 'Common Name'}</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Familia</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Localidad</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {species.map(s => (
+                                                            <SpeciesTableRow
+                                                                key={s.id}
+                                                                species={s}
+                                                                lang={lang}
+                                                            />
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            species.map(s => (
+                                                <SpeciesCard
+                                                    key={s.id}
+                                                    species={s}
+                                                    viewMode={viewMode}
+                                                    lang={lang}
+                                                />
+                                            ))
+                                        )
+                                    ) : (
+                                        <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
+                                            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
+                                                <Search className="w-8 h-8 text-gray-300" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-xl">{lang === 'es' ? 'No se encontraron especies' : 'No species found'}</h3>
+                                                <p className="text-gray-500 max-w-xs">{lang === 'es' ? 'Intenta con otros filtros o términos de búsqueda.' : 'Try adjusting your filters or search terms.'}</p>
+                                            </div>
+                                            <button onClick={clearFilters} className="text-accent-green font-bold hover:underline">
+                                                {lang === 'es' ? 'Limpiar filtros' : 'Clear filters'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </AnimatePresence>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="mt-8 flex flex-wrap justify-end items-center gap-4 text-sm text-gray-700 dark:text-gray-300 pb-8 container mx-auto">
+                                    <div>
+                                        {lang === 'es' ? 'Mostrando' : 'Showing'} {(page - 1) * ITEMS_PER_PAGE + 1} - {Math.min(page * ITEMS_PER_PAGE, totalCount)} {lang === 'es' ? 'de' : 'of'} {totalCount} {lang === 'es' ? 'resultados' : 'results'} ({lang === 'es' ? 'Página' : 'Page'} {page} {lang === 'es' ? 'de' : 'of'} {totalPages})
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span>{lang === 'es' ? 'Filas por página' : 'Rows per page'}</span>
+                                            <select className="border border-gray-200 dark:border-gray-700 rounded-md bg-transparent px-2 py-1 outline-none text-gray-700 dark:text-gray-300">
+                                                <option value="20">20</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                disabled={page === 1}
+                                                onClick={() => setPage(page - 1)}
+                                                className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                            <span className="font-medium px-2">{page} / {totalPages}</span>
+                                            <button
+                                                disabled={page === totalPages}
+                                                onClick={() => setPage(page + 1)}
+                                                className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
