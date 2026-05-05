@@ -424,9 +424,9 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 space-y-6 w-full overflow-hidden transition-all duration-300 p-4">
+            <div className="flex-1 min-w-0 transition-all duration-300 flex flex-col">
                 {/* Header Control Bar */}
-                <div className={`bg-white dark:bg-[#121b28] p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all rounded-none shadow-none z-30 ${isSidebarCollapsed ? 'sticky top-24' : ''}`}>
+                <div className="sticky top-[64px] lg:top-20 z-40 bg-white/95 dark:bg-[#121b28]/95 backdrop-blur-md p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all rounded-none shadow-none w-full">
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="flex items-center gap-1.5 p-1 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
                             {/* Mobile Filter Button */}
@@ -496,120 +496,122 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     </div>
                 </div>
 
-                {/* Loading State */}
-                {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} className="bg-white dark:bg-[#121b28] rounded-3xl h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="relative">
-                        {isFetching && (
-                            <div className="absolute top-0 right-0 z-10 p-2">
-                                <RefreshCw className="w-4 h-4 text-accent-green animate-spin" />
-                            </div>
-                        )}
+                <div className="p-4 lg:p-6 space-y-6 flex-1">
+                    {/* Loading State */}
+                    {isLoading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                <div key={i} className="bg-white dark:bg-[#121b28] rounded-3xl h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="relative">
+                            {isFetching && (
+                                <div className="absolute top-0 right-0 z-10 p-2">
+                                    <RefreshCw className="w-4 h-4 text-accent-green animate-spin" />
+                                </div>
+                            )}
 
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={viewMode}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.3 }}
-                                className={viewMode === 'grid'
-                                    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4 container mx-auto pb-4`
-                                    : "w-full overflow-hidden container mx-auto pb-4"
-                                }
-                            >
-                                {species.length > 0 ? (
-                                    viewMode === 'list' ? (
-                                        <div className="w-full overflow-x-auto bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800">
-                                            <table className="w-full text-left border-collapse">
-                                                <thead>
-                                                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Img</th>
-                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Científico' : 'Scientific Name'}</th>
-                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Común' : 'Common Name'}</th>
-                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Familia</th>
-                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Localidad</th>
-                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {species.map(s => (
-                                                        <SpeciesTableRow
-                                                            key={s.id}
-                                                            species={s}
-                                                            lang={lang}
-                                                        />
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={viewMode}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.3 }}
+                                    className={viewMode === 'grid'
+                                        ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4 container mx-auto pb-4`
+                                        : "w-full overflow-hidden container mx-auto pb-4"
+                                    }
+                                >
+                                    {species.length > 0 ? (
+                                        viewMode === 'list' ? (
+                                            <div className="w-full overflow-x-auto bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800">
+                                                <table className="w-full text-left border-collapse">
+                                                    <thead>
+                                                        <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Img</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Científico' : 'Scientific Name'}</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Común' : 'Common Name'}</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Familia</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Localidad</th>
+                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {species.map(s => (
+                                                            <SpeciesTableRow
+                                                                key={s.id}
+                                                                species={s}
+                                                                lang={lang}
+                                                            />
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            species.map(s => (
+                                                <SpeciesCard
+                                                    key={s.id}
+                                                    species={s}
+                                                    viewMode={viewMode}
+                                                    lang={lang}
+                                                />
+                                            ))
+                                        )
                                     ) : (
-                                        species.map(s => (
-                                            <SpeciesCard
-                                                key={s.id}
-                                                species={s}
-                                                viewMode={viewMode}
-                                                lang={lang}
-                                            />
-                                        ))
-                                    )
-                                ) : (
-                                    <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
-                                        <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
-                                            <Search className="w-8 h-8 text-gray-300" />
+                                        <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
+                                            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
+                                                <Search className="w-8 h-8 text-gray-300" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-xl">{lang === 'es' ? 'No se encontraron especies' : 'No species found'}</h3>
+                                                <p className="text-gray-500 max-w-xs">{lang === 'es' ? 'Intenta con otros filtros o términos de búsqueda.' : 'Try adjusting your filters or search terms.'}</p>
+                                            </div>
+                                            <button onClick={clearFilters} className="text-accent-green font-bold hover:underline">
+                                                {lang === 'es' ? 'Limpiar filtros' : 'Clear filters'}
+                                            </button>
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-xl">{lang === 'es' ? 'No se encontraron especies' : 'No species found'}</h3>
-                                            <p className="text-gray-500 max-w-xs">{lang === 'es' ? 'Intenta con otros filtros o términos de búsqueda.' : 'Try adjusting your filters or search terms.'}</p>
-                                        </div>
-                                        <button onClick={clearFilters} className="text-accent-green font-bold hover:underline">
-                                            {lang === 'es' ? 'Limpiar filtros' : 'Clear filters'}
-                                        </button>
-                                    </div>
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
+                                    )}
+                                </motion.div>
+                            </AnimatePresence>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="mt-8 flex flex-wrap justify-end items-center gap-4 text-sm text-gray-700 dark:text-gray-300 pb-8 container mx-auto">
-                                <div>
-                                    {lang === 'es' ? 'Mostrando' : 'Showing'} {(page - 1) * ITEMS_PER_PAGE + 1} - {Math.min(page * ITEMS_PER_PAGE, totalCount)} {lang === 'es' ? 'de' : 'of'} {totalCount} {lang === 'es' ? 'resultados' : 'results'} ({lang === 'es' ? 'Página' : 'Page'} {page} {lang === 'es' ? 'de' : 'of'} {totalPages})
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <span>{lang === 'es' ? 'Filas por página' : 'Rows per page'}</span>
-                                        <select className="border border-gray-200 dark:border-gray-700 rounded-md bg-transparent px-2 py-1 outline-none text-gray-700 dark:text-gray-300">
-                                            <option value="20">20</option>
-                                        </select>
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="mt-8 flex flex-wrap justify-end items-center gap-4 text-sm text-gray-700 dark:text-gray-300 pb-8 container mx-auto">
+                                    <div>
+                                        {lang === 'es' ? 'Mostrando' : 'Showing'} {(page - 1) * ITEMS_PER_PAGE + 1} - {Math.min(page * ITEMS_PER_PAGE, totalCount)} {lang === 'es' ? 'de' : 'of'} {totalCount} {lang === 'es' ? 'resultados' : 'results'} ({lang === 'es' ? 'Página' : 'Page'} {page} {lang === 'es' ? 'de' : 'of'} {totalPages})
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            disabled={page === 1}
-                                            onClick={() => setPage(page - 1)}
-                                            className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
-                                        >
-                                            <ChevronLeft className="w-4 h-4" />
-                                        </button>
-                                        <span className="font-medium px-2">{page} / {totalPages}</span>
-                                        <button
-                                            disabled={page === totalPages}
-                                            onClick={() => setPage(page + 1)}
-                                            className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
-                                        >
-                                            <ChevronRight className="w-4 h-4" />
-                                        </button>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span>{lang === 'es' ? 'Filas por página' : 'Rows per page'}</span>
+                                            <select className="border border-gray-200 dark:border-gray-700 rounded-md bg-transparent px-2 py-1 outline-none text-gray-700 dark:text-gray-300">
+                                                <option value="20">20</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                disabled={page === 1}
+                                                onClick={() => setPage(page - 1)}
+                                                className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                            <span className="font-medium px-2">{page} / {totalPages}</span>
+                                            <button
+                                                disabled={page === totalPages}
+                                                onClick={() => setPage(page + 1)}
+                                                className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

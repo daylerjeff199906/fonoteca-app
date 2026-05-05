@@ -114,7 +114,7 @@ export const SpeciesTableRow: React.FC<SpeciesCardProps> = ({ species, lang }) =
             <td className="p-3">
                 <div className="flex flex-col">
                     <span className="text-sm font-serif italic text-gray-900 dark:text-white group-hover:text-accent-green transition-colors">{species.scientificName}</span>
-                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">{species.category}</span>
+                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">{species.class_name}</span>
                 </div>
             </td>
             <td className="p-3 text-sm text-gray-600 dark:text-gray-400">{commonName || '-'}</td>
@@ -253,7 +253,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                         {species.scientificName}
                     </h4>
                     {species.location && species.location !== 'All' && (
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 line-clamp-2">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs mt-2 line-clamp-2">
                             {species.location}
                         </p>
                     )}
