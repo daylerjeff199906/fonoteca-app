@@ -740,7 +740,7 @@ export async function getFilterMetaData() {
             return JSON.stringify({ class: className || null, order: orderName || null, family: familyName || null, genus: genusName || null });
         }
         return null;
-    }).filter(Boolean))).map((str: string) => JSON.parse(str));
+    }).filter((t): t is string => Boolean(t)))).map((str) => JSON.parse(str));
 
     const classes = Array.from(new Set(taxonomyPaths.map((p: any) => p.class).filter(Boolean))).sort() as string[];
     const orders = Array.from(new Set(taxonomyPaths.map((p: any) => p.order).filter(Boolean))).sort() as string[];
