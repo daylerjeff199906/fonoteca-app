@@ -8,21 +8,16 @@ import {
     ChevronDown,
     X,
     Music,
-    MapPin,
-    Play,
-    Info,
     ChevronLeft,
     ChevronRight,
     PanelLeftClose,
     PanelLeftOpen,
     RefreshCw,
-    ArrowRight,
-    Pin
 } from 'lucide-react';
 import type { Species } from '../../data/species';
 import { getAllSpecies, getFilterMetaData } from '../../data/species';
 import { useSpeciesStore } from '../../store/useSpeciesStore';
-import { SpeciesCard } from './SpeciesCard';
+import { SpeciesCard, SpeciesTableRow } from './SpeciesCard';
 
 interface SpeciesExplorerProps {
     initialData: { species: Species[], totalCount: number };
@@ -46,7 +41,7 @@ const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onCh
     return (
         <div className="space-y-2">
             <h3 className="font-semibold text-gray-400 dark:text-gray-500 text-[10px] uppercase tracking-wider px-1">{title}</h3>
-            <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-1 bg-white dark:bg-[#0c141d]">
+            <div className="border border-gray-100 dark:border-gray-800 rounded-none p-1 bg-white dark:bg-[#0c141d]">
                 <div className="relative">
                     <Search className="w-3 h-3 absolute left-2 top-1.5 text-gray-400" />
                     <input
@@ -62,7 +57,7 @@ const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onCh
                         <li key={item}>
                             <button
                                 onClick={() => onChange(item)}
-                                className={`w-full text-left px-2 py-1 rounded-lg text-[11px] cursor-pointer transition-all ${value === item
+                                className={`w-full text-left px-2 py-1 rounded-none text-[11px] cursor-pointer transition-all ${value === item
                                     ? 'bg-accent-green text-white font-medium'
                                     : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
                                     }`}
@@ -80,7 +75,7 @@ const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onCh
 const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
     const [isOpen, setIsOpen] = useState(true);
     return (
-        <div className="border border-gray-100 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#121b28] overflow-hidden">
+        <div className="border border-gray-100 dark:border-gray-800 rounded-none bg-white dark:bg-[#121b28] overflow-hidden">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full px-4 py-3 flex items-center justify-between text-left text-[11px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-800/10 hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors"
@@ -270,33 +265,30 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     if (!isHydrated) return null;
 
     const SidebarContent = () => (
-        <div className="flex flex-col h-full bg-white dark:bg-[#0f172a] lg:bg-transparent">
-            {/* Header for Mobile Sheet */}
-            <div className="flex items-center justify-between p-6 lg:hidden border-b border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col h-full bg-white dark:bg-[#121b28]">
+            {/* Header for Mobile Sheet & Desktop */}
+            <div className="flex items-center justify-between p-4 lg:p-5 border-b border-gray-100 dark:border-gray-800 shrink-0">
                 <div className="flex items-center gap-2">
                     <Filter className="w-5 h-5 text-accent-green" />
-                    <h2 className="font-bold text-lg">Filtros</h2>
+                    <h2 className="font-bold text-sm uppercase tracking-wider">{lang === 'es' ? 'Filtros' : 'Filters'}</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                    {isSidebarCollapsed && typeof window !== 'undefined' && window.innerWidth >= 1024 && (
-                        <button
-                            onClick={() => {
-                                setIsSidebarCollapsed(false);
-                                setIsMobileSheetOpen(false);
-                            }}
-                            className="p-2 rounded-full hover:bg-accent-green/10 text-accent-green transition-colors"
-                            title="Restaurar posición"
-                        >
-                            <Pin className="w-5 h-5" />
-                        </button>
-                    )}
-                    <button onClick={() => setIsMobileSheetOpen(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    {/* Desktop Close Button */}
+                    <button
+                        onClick={() => setIsSidebarCollapsed(true)}
+                        className="hidden lg:flex p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-500 transition-colors"
+                        title={lang === 'es' ? 'Contraer panel' : 'Collapse panel'}
+                    >
+                        <PanelLeftClose className="w-4 h-4" />
+                    </button>
+                    {/* Mobile Close Button */}
+                    <button onClick={() => setIsMobileSheetOpen(false)} className="lg:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 lg:p-0 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {/* Active Filters Summary */}
                 {(selectedLocation !== 'All' || selectedClass !== 'All' || selectedOrder !== 'All' || selectedFamily !== 'All' || selectedGenus !== 'All' || onlyWithAudio || searchTerm) && (
                     <div className="mb-4 p-4 rounded-2xl bg-accent-green/5 border border-accent-green/10">
@@ -309,43 +301,43 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                             {searchTerm && (
-                                <div className="px-2 py-0.5 bg-white dark:bg-gray-800 text-[10px] rounded-md border border-gray-100 dark:border-gray-700 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-white dark:bg-gray-800 text-[10px] rounded-none border border-gray-100 dark:border-gray-700 flex items-center gap-1">
                                     <span className="max-w-[70px] truncate text-gray-700 dark:text-gray-300">"{searchTerm}"</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer text-gray-400 hover:text-red-500" onClick={() => { setSearchInput(''); setSearchTerm(''); }} />
                                 </div>
                             )}
                             {selectedClass !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedClass}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedClass('All')} />
                                 </div>
                             )}
                             {selectedOrder !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedOrder}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedOrder('All')} />
                                 </div>
                             )}
                             {selectedFamily !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedFamily}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedFamily('All')} />
                                 </div>
                             )}
                             {selectedGenus !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedGenus}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedGenus('All')} />
                                 </div>
                             )}
                             {selectedLocation !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedLocation}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedLocation('All')} />
                                 </div>
                             )}
                             {onlyWithAudio && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
                                     <Music className="w-2.5 h-2.5" />
                                     <span>Audio</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setOnlyWithAudio(false)} />
@@ -369,7 +361,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 <button
                                     key={loc}
                                     onClick={() => setSelectedLocation(loc)}
-                                    className={`px-3 py-2 rounded-xl text-[11px] text-left transition-all ${selectedLocation === loc
+                                    className={`px-3 py-2 rounded-none text-[11px] text-left transition-all ${selectedLocation === loc
                                         ? 'bg-accent-green text-white shadow-accent-green/20'
                                         : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
                                 >
@@ -382,13 +374,13 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     <CollapsibleSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
                         <button
                             onClick={() => setOnlyWithAudio(!onlyWithAudio)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-none text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
                         >
                             <div className="flex items-center gap-2">
                                 <Music className="w-3.5 h-3.5" />
                                 <span>{lang === 'es' ? 'Solo con Audio' : 'With Audio Only'}</span>
                             </div>
-                            <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-colors ${onlyWithAudio ? 'bg-accent-green border-accent-green' : 'border-gray-300'}`}>
+                            <div className={`w-4 h-4 rounded-none border flex items-center justify-center transition-colors ${onlyWithAudio ? 'bg-accent-green border-accent-green' : 'border-gray-300'}`}>
                                 {onlyWithAudio && <X className="w-3 h-3 text-white" />}
                             </div>
                         </button>
@@ -399,7 +391,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     );
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8 min-h-[800px]">
+        <div className="flex flex-col lg:flex-row min-h-[800px] w-full">
             {/* Mobile/Sheet component */}
             <AnimatePresence>
                 {isMobileSheetOpen && (
@@ -409,14 +401,14 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsMobileSheetOpen(false)}
-                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:bg-black/40"
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
                         />
                         <motion.aside
                             initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white dark:bg-[#0f172a] z-[101]"
+                            className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white dark:bg-[#0f172a] z-[101] lg:hidden"
                         >
                             <SidebarContent />
                         </motion.aside>
@@ -424,33 +416,36 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                 )}
             </AnimatePresence>
 
-            {/* Desktop Sidebar (Togglable) */}
-            <aside className={`hidden lg:block sticky top-24 h-fit transition-all duration-500 ease-in-out ${isSidebarCollapsed ? 'w-0 opacity-0 -translate-x-10 pointer-events-none' : 'w-[280px] opacity-100 translate-x-0'}`}>
-                <SidebarContent />
+            {/* Desktop Sidebar (Admin Panel Style) */}
+            <aside className={`hidden lg:flex flex-col sticky top-24 h-[calc(100vh-6rem)] transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#121b28] overflow-hidden rounded-none shadow-none ${isSidebarCollapsed ? 'w-0 opacity-0 pointer-events-none border-none' : 'w-[280px] opacity-100 flex-shrink-0'}`}>
+                <div className="w-[280px] h-full flex flex-col">
+                    <SidebarContent />
+                </div>
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 space-y-6">
+            <div className="flex-1 space-y-6 w-full overflow-hidden transition-all duration-300">
                 {/* Header Control Bar */}
-                <div className="bg-white dark:bg-[#121b28] p-4 rounded-3xl border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className={`bg-white dark:bg-[#121b28] p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all rounded-none shadow-none z-30 ${isSidebarCollapsed ? 'sticky top-24' : ''}`}>
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                        <div className="flex items-center gap-1.5 p-1 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                            {(isSidebarCollapsed || (typeof window !== 'undefined' && window.innerWidth < 1024)) && (
+                        <div className="flex items-center gap-1.5 p-1 bg-gray-50/50 dark:bg-gray-900/50 rounded-none border border-gray-100 dark:border-gray-800">
+                            {/* Mobile Filter Button */}
+                            <button
+                                onClick={() => setIsMobileSheetOpen(true)}
+                                className="lg:hidden p-2.5 rounded-none hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-accent-green transition-all"
+                                title={lang === 'es' ? "Abrir filtros" : "Open filters"}
+                            >
+                                <Filter className="w-5 h-5" />
+                            </button>
+
+                            {/* Desktop Filter Toggle Button (only shows when collapsed) */}
+                            {isSidebarCollapsed && (
                                 <button
-                                    onClick={() => setIsMobileSheetOpen(true)}
-                                    className="p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-accent-green transition-all"
-                                    title={lang === 'es' ? "Abrir filtros" : "Open filters"}
+                                    onClick={() => setIsSidebarCollapsed(false)}
+                                    className="hidden lg:flex p-2.5 rounded-none bg-white dark:bg-gray-800 text-accent-green shadow-none hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                                    title={lang === 'es' ? "Mostrar panel de filtros" : "Show filters panel"}
                                 >
-                                    <Filter className="w-5 h-5" />
-                                </button>
-                            )}
-                            {typeof window !== 'undefined' && window.innerWidth >= 1024 && (
-                                <button
-                                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                                    className={`p-2.5 rounded-xl transition-all ${!isSidebarCollapsed ? 'bg-white dark:bg-gray-800 text-accent-green shadow-sm' : 'text-gray-500 hover:text-accent-green'}`}
-                                    title={isSidebarCollapsed ? "Restaurar panel fijo" : "Contraer panel"}
-                                >
-                                    {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+                                    <PanelLeftOpen className="w-5 h-5" />
                                 </button>
                             )}
                         </div>
@@ -462,7 +457,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 placeholder={lang === 'es' ? 'Buscar especies...' : 'Search species...'}
-                                className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 focus:ring-2 focus:ring-accent-green outline-none text-sm transition-shadow"
+                                className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 rounded-none border border-gray-100 dark:border-gray-800 focus:ring-2 focus:ring-accent-green outline-none text-sm transition-shadow"
                             />
                             {searchInput && (
                                 <button onClick={() => { setSearchInput(''); setSearchTerm(''); }} className="absolute right-3 top-2.5 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
@@ -473,7 +468,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
 
                         <button
                             onClick={() => fetchData(true)}
-                            className={`p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all ${(isFetching || isLoading) ? 'animate-spin text-accent-green' : 'text-gray-500'}`}
+                            className={`p-2.5 rounded-none border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all ${(isFetching || isLoading) ? 'animate-spin text-accent-green' : 'text-gray-500'}`}
                             disabled={isLoading || isFetching}
                         >
                             <RefreshCw className="w-5 h-5" />
@@ -481,16 +476,16 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     </div>
 
                     <div className="flex items-center gap-4 w-full md:w-auto border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-800 pt-4 md:pt-0 md:pl-4">
-                        <div className="flex items-center gap-1.5 p-1 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-1.5 p-1 bg-gray-50 dark:bg-gray-900 rounded-none border border-gray-100 dark:border-gray-800">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className={`p-2 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`p-2 rounded-none transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 <LayoutGrid className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`p-2 rounded-none transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 <List className="w-4 h-4" />
                             </button>
@@ -503,9 +498,9 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
 
                 {/* Loading State */}
                 {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} className="bg-white dark:bg-[#121b28] rounded-3xl h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
+                            <div key={i} className="bg-white dark:bg-[#121b28] rounded-none h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
                         ))}
                     </div>
                 ) : (
@@ -524,20 +519,46 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.3 }}
                                 className={viewMode === 'grid'
-                                    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-5' : 'xl:grid-cols-4'} gap-6`
-                                    : "flex flex-col gap-4"
+                                    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4`
+                                    : "w-full overflow-hidden"
                                 }
                             >
                                 {species.length > 0 ? (
-                                    species.map(s => (
-                                        <SpeciesCard
-                                            key={s.id}
-                                            species={s}
-                                            viewMode={viewMode}
-                                            lang={lang}
-                                        />
-                                    ))
-                                ) : (
+                                    viewMode === 'list' ? (
+                                        <div className="w-full overflow-x-auto bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Img</th>
+                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Científico' : 'Scientific Name'}</th>
+                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Común' : 'Common Name'}</th>
+                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Familia</th>
+                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Localidad</th>
+                                                        <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
+                                                     </tr>
+                                                 </thead>
+                                                 <tbody>
+                                                     {species.map(s => (
+                                                         <SpeciesTableRow
+                                                             key={s.id}
+                                                             species={s}
+                                                             lang={lang}
+                                                         />
+                                                     ))}
+                                                 </tbody>
+                                             </table>
+                                         </div>
+                                     ) : (
+                                         species.map(s => (
+                                             <SpeciesCard
+                                                 key={s.id}
+                                                 species={s}
+                                                 viewMode={viewMode}
+                                                 lang={lang}
+                                             />
+                                         ))
+                                     )
+                                 ) : (
                                     <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
                                         <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
                                             <Search className="w-8 h-8 text-gray-300" />
@@ -560,7 +581,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 <button
                                     disabled={page === 1}
                                     onClick={() => setPage(page - 1)}
-                                    className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 disabled:opacity-30 disabled:hover:bg-white transition-all hover:bg-gray-50"
+                                    className="p-2 rounded-none bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 disabled:opacity-30 disabled:hover:bg-white transition-all hover:bg-gray-50"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
@@ -570,7 +591,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                         <button
                                             key={i}
                                             onClick={() => setPage(i + 1)}
-                                            className={`w-9 h-9 rounded-xl font-bold text-xs transition-all ${page === i + 1 ? 'bg-accent-green text-white scale-110' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50'}`}
+                                            className={`w-9 h-9 rounded-none font-bold text-xs transition-all ${page === i + 1 ? 'bg-accent-green text-white scale-110' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50'}`}
                                         >
                                             {i + 1}
                                         </button>

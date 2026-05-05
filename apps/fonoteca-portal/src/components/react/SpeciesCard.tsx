@@ -65,6 +65,82 @@ const MediaViewer: React.FC<{
     );
 };
 
+export const SpeciesTableRow: React.FC<SpeciesCardProps> = ({ species, lang }) => {
+    const detailLink = `/${lang}/species/${species.id}`;
+    const [isLoaded, setIsLoaded] = useState(false);
+    
+    const commonName = useMemo(() => {
+        if (lang === 'en') return species.commonName_en;
+        if (lang === 'pt') return species.commonName_pt;
+        return species.commonName_es;
+    }, [species, lang]);
+
+    const onPlay = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (species.audios.length === 0) return;
+        const audio = species.audios[0];
+        const allMediaImages = [
+            ...(species.galleryImages?.map(img => img.url) || []),
+            ...(species.spectrograms?.map(img => img.url) || [])
+        ].filter(Boolean);
+
+        const event = new CustomEvent('play-audio', {
+            detail: {
+                title: audio.title || 'Canto',
+                artist: `${commonName} (${species.scientificName})`,
+                url: audio.url,
+                image: species.mainImage || '/images/logo-mini.webp',
+                spectrogram: audio.spectrogramImage,
+                images: allMediaImages
+            }
+        });
+        window.dispatchEvent(event);
+    };
+
+    return (
+        <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group">
+            <td className="p-3">
+                <div className="w-10 h-10 rounded-none overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                    <MediaViewer
+                        src={species.mainImage || '/images/logo-mini.webp'}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        isLoaded={isLoaded}
+                        onLoaded={() => setIsLoaded(true)}
+                    />
+                </div>
+            </td>
+            <td className="p-3">
+                <div className="flex flex-col">
+                    <span className="text-sm font-serif italic text-gray-900 dark:text-white group-hover:text-accent-green transition-colors">{species.scientificName}</span>
+                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">{species.category}</span>
+                </div>
+            </td>
+            <td className="p-3 text-sm text-gray-600 dark:text-gray-400">{commonName || '-'}</td>
+            <td className="p-3 text-sm text-gray-600 dark:text-gray-400">{species.family}</td>
+            <td className="p-3 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-gray-400" />
+                    <span className="truncate max-w-[150px]">{species.location}</span>
+                </div>
+            </td>
+            <td className="p-3 text-right">
+                <div className="flex items-center justify-end gap-2">
+                    {species.audios.length > 0 && (
+                        <button onClick={onPlay} className="p-2 rounded-none bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-all">
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                        </button>
+                    )}
+                    <a href={detailLink} className="p-2 rounded-none bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-accent-green transition-all">
+                        <Info className="w-3.5 h-3.5" />
+                    </a>
+                </div>
+            </td>
+        </tr>
+    );
+};
+
 export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'grid', lang, linkToFilter = false }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const coverImage = species.mainImage || '/images/logo-mini.webp';
@@ -116,9 +192,9 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
         return (
             <motion.div
                 layout
-                className="bg-white dark:bg-[#121b28] p-3 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center gap-4 hover:border-accent-green/30 hover:shadow-sm transition-all group flex-wrap md:flex-nowrap"
+                className="bg-white dark:bg-[#121b28] p-3 rounded-none border border-gray-100 dark:border-gray-800 flex items-center gap-4 hover:border-accent-green/30 hover:shadow-none transition-all group flex-wrap md:flex-nowrap"
             >
-                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-50 dark:bg-gray-900 border border-gray-50 dark:border-gray-800 relative">
+                <div className="w-12 h-12 rounded-none overflow-hidden flex-shrink-0 bg-gray-50 dark:bg-gray-900 border border-gray-50 dark:border-gray-800 relative">
                     <MediaViewer
                         src={coverImage}
                         alt=""
@@ -133,11 +209,11 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                 </div>
                 <div className="flex items-center gap-2 pr-2">
                     {species.audios.length > 0 && (
-                        <button onClick={onPlay} className="p-2 rounded-xl bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-all">
+                        <button onClick={onPlay} className="p-2 rounded-none bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-all">
                             <Play className="w-4 h-4 fill-current" />
                         </button>
                     )}
-                    <a href={detailLink} className="p-2 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-accent-green transition-all">
+                    <a href={detailLink} className="p-2 rounded-none bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-accent-green transition-all">
                         <Info className="w-4 h-4" />
                     </a>
                 </div>
@@ -148,7 +224,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
     return (
         <motion.div
             layout
-            className="group bg-white dark:bg-[#121b28] rounded-xl border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 transition-all duration-500 relative flex flex-col overflow-hidden shadow-sm hover:shadow-xl"
+            className="group bg-white dark:bg-[#121b28] rounded-none border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 transition-all duration-500 relative flex flex-col overflow-hidden shadow-none hover:shadow-none"
         >
             <div className="aspect-[6/5] relative bg-gray-50 dark:bg-gray-900 overflow-hidden">
                 <MediaViewer
@@ -162,7 +238,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     {species.audios.length > 0 && (
                         <button
                             onClick={onPlay}
-                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-2xl hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2 font-bold text-xs"
+                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-none hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2 font-bold text-xs"
                         >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             {lang === 'es' ? 'Escuchar' : lang === 'pt' ? 'Ouvir' : 'Listen'}
