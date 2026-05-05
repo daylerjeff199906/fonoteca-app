@@ -68,7 +68,7 @@ const MediaViewer: React.FC<{
 export const SpeciesTableRow: React.FC<SpeciesCardProps> = ({ species, lang }) => {
     const detailLink = `/${lang}/species/${species.id}`;
     const [isLoaded, setIsLoaded] = useState(false);
-    
+
     const commonName = useMemo(() => {
         if (lang === 'en') return species.commonName_en;
         if (lang === 'pt') return species.commonName_pt;
@@ -101,7 +101,7 @@ export const SpeciesTableRow: React.FC<SpeciesCardProps> = ({ species, lang }) =
     return (
         <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors group">
             <td className="p-3">
-                <div className="w-10 h-10 rounded-none overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
                     <MediaViewer
                         src={species.mainImage || '/images/logo-mini.webp'}
                         alt=""
@@ -128,11 +128,11 @@ export const SpeciesTableRow: React.FC<SpeciesCardProps> = ({ species, lang }) =
             <td className="p-3 text-right">
                 <div className="flex items-center justify-end gap-2">
                     {species.audios.length > 0 && (
-                        <button onClick={onPlay} className="p-2 rounded-none bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-all">
+                        <button onClick={onPlay} className="p-2 rounded-lg bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-all">
                             <Play className="w-3.5 h-3.5 fill-current" />
                         </button>
                     )}
-                    <a href={detailLink} className="p-2 rounded-none bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-accent-green transition-all">
+                    <a href={detailLink} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-accent-green transition-all">
                         <Info className="w-3.5 h-3.5" />
                     </a>
                 </div>
@@ -222,9 +222,9 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
     }
 
     return (
-        <motion.div
-            layout
-            className="group bg-white dark:bg-[#121b28] rounded-none border border-gray-100 dark:border-gray-800 hover:border-accent-green/30 transition-all duration-500 relative flex flex-col overflow-hidden shadow-none hover:shadow-none"
+        <a
+            href={detailLink}
+            className="group block bg-[#fbfbf9] dark:bg-[#121b28] rounded-2xl transition-all duration-300 relative flex flex-col overflow-hidden shadow-none border-none"
         >
             <div className="aspect-[6/5] relative bg-gray-50 dark:bg-gray-900 overflow-hidden">
                 <MediaViewer
@@ -234,11 +234,11 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     isLoaded={isLoaded}
                     onLoaded={() => setIsLoaded(true)}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                     {species.audios.length > 0 && (
                         <button
                             onClick={onPlay}
-                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-none hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2 font-bold text-xs"
+                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-xl hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2 font-bold text-xs"
                         >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             {lang === 'es' ? 'Escuchar' : lang === 'pt' ? 'Ouvir' : 'Listen'}
@@ -247,28 +247,28 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                 </div>
             </div>
 
-            <div className="p-5 flex-1 flex flex-col relative">
+            <div className="py-5 flex-1 flex flex-col relative bg-[#fbfbf9] dark:bg-[#121b28]">
                 <div className="mb-4">
-                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-[0.2em] mb-2 block">
-                        {categoryTitles[species.category] || species.category}
-                    </span>
-                    <h4 className="text-gray-900 italic font-serif dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-1 text-lg">
+                    <h4 className="text-[#0c141d] italic font-serif dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-2 text-xl">
                         {species.scientificName}
                     </h4>
+                    {species.location && species.location !== 'All' && (
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 line-clamp-2">
+                            {species.location}
+                        </p>
+                    )}
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
-                    <div className="flex items-center gap-1.5 text-gray-500 overflow-hidden">
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="text-[10px] font-bold tracking-tight truncate uppercase">{species.location}</span>
+                <div className="mt-auto flex items-center gap-3 pt-4">
+                    <div className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center group-hover:bg-[#0c141d] group-hover:border-[#0c141d] transition-colors">
+                        <ArrowRight className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-white transition-colors" />
                     </div>
-                    <a href={detailLink} className="text-[10px] font-black uppercase tracking-widest text-accent-green hover:text-accent-green/80 flex items-center gap-1.5 transition-colors">
-                        {lang === 'es' ? 'Detalles' : lang === 'pt' ? 'Detalhes' : 'Details'}
-                        <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
+                    <span className="text-sm font-bold text-[#0c141d] dark:text-white group-hover:text-accent-green transition-colors">
+                        {lang === 'es' ? 'Leer más' : lang === 'pt' ? 'Leia mais' : 'Read more'}
+                    </span>
                 </div>
             </div>
-        </motion.div>
+        </a>
     );
 
 };

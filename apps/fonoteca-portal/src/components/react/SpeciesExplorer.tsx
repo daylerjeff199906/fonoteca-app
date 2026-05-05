@@ -41,7 +41,7 @@ const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onCh
     return (
         <div className="space-y-2">
             <h3 className="font-semibold text-gray-400 dark:text-gray-500 text-[10px] uppercase tracking-wider px-1">{title}</h3>
-            <div className="border border-gray-100 dark:border-gray-800 rounded-none p-1 bg-white dark:bg-[#0c141d]">
+            <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-1 bg-white dark:bg-[#0c141d]">
                 <div className="relative">
                     <Search className="w-3 h-3 absolute left-2 top-1.5 text-gray-400" />
                     <input
@@ -57,7 +57,7 @@ const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onCh
                         <li key={item}>
                             <button
                                 onClick={() => onChange(item)}
-                                className={`w-full text-left px-2 py-1 rounded-none text-[11px] cursor-pointer transition-all ${value === item
+                                className={`w-full text-left px-2 py-1 rounded-lg text-[11px] cursor-pointer transition-all ${value === item
                                     ? 'bg-accent-green text-white font-medium'
                                     : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
                                     }`}
@@ -301,43 +301,43 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                             {searchTerm && (
-                                <div className="px-2 py-0.5 bg-white dark:bg-gray-800 text-[10px] rounded-none border border-gray-100 dark:border-gray-700 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-white dark:bg-gray-800 text-[10px] rounded-md border border-gray-100 dark:border-gray-700 flex items-center gap-1">
                                     <span className="max-w-[70px] truncate text-gray-700 dark:text-gray-300">"{searchTerm}"</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer text-gray-400 hover:text-red-500" onClick={() => { setSearchInput(''); setSearchTerm(''); }} />
                                 </div>
                             )}
                             {selectedClass !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedClass}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedClass('All')} />
                                 </div>
                             )}
                             {selectedOrder !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedOrder}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedOrder('All')} />
                                 </div>
                             )}
                             {selectedFamily !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedFamily}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedFamily('All')} />
                                 </div>
                             )}
                             {selectedGenus !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedGenus}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedGenus('All')} />
                                 </div>
                             )}
                             {selectedLocation !== 'All' && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
                                     <span>{selectedLocation}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedLocation('All')} />
                                 </div>
                             )}
                             {onlyWithAudio && (
-                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-none border border-accent-green/20 flex items-center gap-1">
+                                <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
                                     <Music className="w-2.5 h-2.5" />
                                     <span>Audio</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setOnlyWithAudio(false)} />
@@ -361,7 +361,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 <button
                                     key={loc}
                                     onClick={() => setSelectedLocation(loc)}
-                                    className={`px-3 py-2 rounded-none text-[11px] text-left transition-all ${selectedLocation === loc
+                                    className={`px-3 py-2 rounded-xl text-[11px] text-left transition-all ${selectedLocation === loc
                                         ? 'bg-accent-green text-white shadow-accent-green/20'
                                         : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
                                 >
@@ -374,13 +374,13 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     <CollapsibleSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
                         <button
                             onClick={() => setOnlyWithAudio(!onlyWithAudio)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-none text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
                         >
                             <div className="flex items-center gap-2">
                                 <Music className="w-3.5 h-3.5" />
                                 <span>{lang === 'es' ? 'Solo con Audio' : 'With Audio Only'}</span>
                             </div>
-                            <div className={`w-4 h-4 rounded-none border flex items-center justify-center transition-colors ${onlyWithAudio ? 'bg-accent-green border-accent-green' : 'border-gray-300'}`}>
+                            <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-colors ${onlyWithAudio ? 'bg-accent-green border-accent-green' : 'border-gray-300'}`}>
                                 {onlyWithAudio && <X className="w-3 h-3 text-white" />}
                             </div>
                         </button>
@@ -424,15 +424,15 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 space-y-6 w-full overflow-hidden transition-all duration-300">
+            <div className="flex-1 space-y-6 w-full overflow-hidden transition-all duration-300 p-4">
                 {/* Header Control Bar */}
                 <div className={`bg-white dark:bg-[#121b28] p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all rounded-none shadow-none z-30 ${isSidebarCollapsed ? 'sticky top-24' : ''}`}>
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                        <div className="flex items-center gap-1.5 p-1 bg-gray-50/50 dark:bg-gray-900/50 rounded-none border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-1.5 p-1 bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
                             {/* Mobile Filter Button */}
                             <button
                                 onClick={() => setIsMobileSheetOpen(true)}
-                                className="lg:hidden p-2.5 rounded-none hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-accent-green transition-all"
+                                className="lg:hidden p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-800 text-gray-500 hover:text-accent-green transition-all"
                                 title={lang === 'es' ? "Abrir filtros" : "Open filters"}
                             >
                                 <Filter className="w-5 h-5" />
@@ -442,7 +442,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                             {isSidebarCollapsed && (
                                 <button
                                     onClick={() => setIsSidebarCollapsed(false)}
-                                    className="hidden lg:flex p-2.5 rounded-none bg-white dark:bg-gray-800 text-accent-green shadow-none hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                                    className="hidden lg:flex p-2.5 rounded-xl bg-white dark:bg-gray-800 text-accent-green shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                                     title={lang === 'es' ? "Mostrar panel de filtros" : "Show filters panel"}
                                 >
                                     <PanelLeftOpen className="w-5 h-5" />
@@ -468,7 +468,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
 
                         <button
                             onClick={() => fetchData(true)}
-                            className={`p-2.5 rounded-none border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all ${(isFetching || isLoading) ? 'animate-spin text-accent-green' : 'text-gray-500'}`}
+                            className={`p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all ${(isFetching || isLoading) ? 'animate-spin text-accent-green' : 'text-gray-500'}`}
                             disabled={isLoading || isFetching}
                         >
                             <RefreshCw className="w-5 h-5" />
@@ -476,16 +476,16 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     </div>
 
                     <div className="flex items-center gap-4 w-full md:w-auto border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-800 pt-4 md:pt-0 md:pl-4">
-                        <div className="flex items-center gap-1.5 p-1 bg-gray-50 dark:bg-gray-900 rounded-none border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-1.5 p-1 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className={`p-2 rounded-none transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`p-2 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 <LayoutGrid className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`p-2 rounded-none transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
+                                className={`p-2 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 text-accent-green' : 'text-gray-400 hover:text-gray-600'}`}
                             >
                                 <List className="w-4 h-4" />
                             </button>
@@ -500,7 +500,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                 {isLoading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} className="bg-white dark:bg-[#121b28] rounded-none h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
+                            <div key={i} className="bg-white dark:bg-[#121b28] rounded-3xl h-[350px] animate-pulse border border-gray-100 dark:border-gray-800" />
                         ))}
                     </div>
                 ) : (
@@ -519,8 +519,8 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.3 }}
                                 className={viewMode === 'grid'
-                                    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4`
-                                    : "w-full overflow-hidden"
+                                    ? `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isSidebarCollapsed ? 'xl:grid-cols-6' : 'xl:grid-cols-5'} gap-4 container mx-auto pb-4`
+                                    : "w-full overflow-hidden container mx-auto pb-4"
                                 }
                             >
                                 {species.length > 0 ? (
@@ -535,30 +535,30 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                                         <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Familia</th>
                                                         <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Localidad</th>
                                                         <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
-                                                     </tr>
-                                                 </thead>
-                                                 <tbody>
-                                                     {species.map(s => (
-                                                         <SpeciesTableRow
-                                                             key={s.id}
-                                                             species={s}
-                                                             lang={lang}
-                                                         />
-                                                     ))}
-                                                 </tbody>
-                                             </table>
-                                         </div>
-                                     ) : (
-                                         species.map(s => (
-                                             <SpeciesCard
-                                                 key={s.id}
-                                                 species={s}
-                                                 viewMode={viewMode}
-                                                 lang={lang}
-                                             />
-                                         ))
-                                     )
-                                 ) : (
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {species.map(s => (
+                                                        <SpeciesTableRow
+                                                            key={s.id}
+                                                            species={s}
+                                                            lang={lang}
+                                                        />
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        species.map(s => (
+                                            <SpeciesCard
+                                                key={s.id}
+                                                species={s}
+                                                viewMode={viewMode}
+                                                lang={lang}
+                                            />
+                                        ))
+                                    )
+                                ) : (
                                     <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
                                         <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-3xl flex items-center justify-center">
                                             <Search className="w-8 h-8 text-gray-300" />
@@ -577,34 +577,35 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
 
                         {/* Pagination */}
                         {totalPages > 1 && (
-                            <div className="mt-12 flex justify-center items-center gap-2">
-                                <button
-                                    disabled={page === 1}
-                                    onClick={() => setPage(page - 1)}
-                                    className="p-2 rounded-none bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 disabled:opacity-30 disabled:hover:bg-white transition-all hover:bg-gray-50"
-                                >
-                                    <ChevronLeft className="w-5 h-5" />
-                                </button>
-
-                                <div className="flex gap-1.5 px-4">
-                                    {Array.from({ length: totalPages }).map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setPage(i + 1)}
-                                            className={`w-9 h-9 rounded-none font-bold text-xs transition-all ${page === i + 1 ? 'bg-accent-green text-white scale-110' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:bg-gray-50'}`}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
+                            <div className="mt-8 flex flex-wrap justify-end items-center gap-4 text-sm text-gray-700 dark:text-gray-300 pb-8 container mx-auto">
+                                <div>
+                                    {lang === 'es' ? 'Mostrando' : 'Showing'} {(page - 1) * ITEMS_PER_PAGE + 1} - {Math.min(page * ITEMS_PER_PAGE, totalCount)} {lang === 'es' ? 'de' : 'of'} {totalCount} {lang === 'es' ? 'resultados' : 'results'} ({lang === 'es' ? 'Página' : 'Page'} {page} {lang === 'es' ? 'de' : 'of'} {totalPages})
                                 </div>
-
-                                <button
-                                    disabled={page === totalPages}
-                                    onClick={() => setPage(page + 1)}
-                                    className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 disabled:opacity-30 disabled:hover:bg-white transition-all hover:bg-gray-50"
-                                >
-                                    <ChevronRight className="w-5 h-5" />
-                                </button>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span>{lang === 'es' ? 'Filas por página' : 'Rows per page'}</span>
+                                        <select className="border border-gray-200 dark:border-gray-700 rounded-md bg-transparent px-2 py-1 outline-none text-gray-700 dark:text-gray-300">
+                                            <option value="20">20</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            disabled={page === 1}
+                                            onClick={() => setPage(page - 1)}
+                                            className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </button>
+                                        <span className="font-medium px-2">{page} / {totalPages}</span>
+                                        <button
+                                            disabled={page === totalPages}
+                                            onClick={() => setPage(page + 1)}
+                                            className="p-1.5 rounded-md bg-[#fbfbf9] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-50 transition-all hover:bg-gray-100"
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
