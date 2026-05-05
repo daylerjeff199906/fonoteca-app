@@ -40,10 +40,13 @@ const FilterCombobox: React.FC<{
     onChange: (val: string) => void;
     lang: string;
     disabled?: boolean;
-}> = ({ title, items, value, onChange, lang, disabled }) => {
+    allLabel?: string;
+}> = ({ title, items, value, onChange, lang, disabled, allLabel }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const defaultAll = allLabel || (lang === 'es' ? 'Todos' : 'All');
 
     const filteredItems = useMemo(() =>
         items.filter(item =>
@@ -62,7 +65,7 @@ const FilterCombobox: React.FC<{
 
     return (
         <div className="flex flex-col gap-1.5 mb-4 relative" ref={containerRef}>
-            <label className="text-[11px] font-bold text-[#0c141d] dark:text-gray-300 px-0.5">
+            <label className="text-[11px] font-medium text-[#0c141d] dark:text-gray-300 px-0.5">
                 {title}
             </label>
 
@@ -78,7 +81,7 @@ const FilterCombobox: React.FC<{
                     isOpen ? "border-accent-green ring-1 ring-accent-green/20" : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
                 )}>
                     <span className={cn("truncate", value === 'All' ? "text-gray-400" : "text-[#0c141d] dark:text-gray-100 font-medium")}>
-                        {value === 'All' ? (lang === 'es' ? 'Todos' : 'All') : value}
+                        {value === 'All' ? defaultAll : value}
                     </span>
                     <Search className="w-3.5 h-3.5 text-gray-400" />
                 </div>
@@ -90,18 +93,21 @@ const FilterCombobox: React.FC<{
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 4 }}
-                        className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+                        className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800 rounded-md overflow-hidden flex flex-col"
                     >
-                        <div className="p-2 border-b border-gray-50 dark:border-gray-800/50 flex items-center gap-2 bg-gray-50/30 dark:bg-gray-900/30">
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder={lang === 'es' ? 'Buscar...' : 'Search...'}
-                                className="flex-1 bg-transparent border-none outline-none text-[11px] py-1 text-gray-700 dark:text-gray-300"
-                                autoFocus
-                                onClick={(e) => e.stopPropagation()}
-                            />
+                        <div className="p-2 border-b border-gray-50 dark:border-gray-800/50 flex flex-col gap-2 bg-gray-50/30 dark:bg-gray-900/30">
+                            <div className="relative">
+                                <Search className="w-3.5 h-3.5 absolute right-3 top-2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder={lang === 'es' ? 'Buscar...' : 'Search...'}
+                                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg pl-3 pr-9 py-1.5 text-[11px] outline-none focus:border-accent-green transition-colors text-gray-700 dark:text-gray-300"
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
                         </div>
                         <div className="max-h-60 overflow-y-auto p-1.5 custom-scrollbar">
                             {filteredItems.length > 0 ? (
@@ -121,7 +127,7 @@ const FilterCombobox: React.FC<{
                                                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                                         )}
                                     >
-                                        {item === 'All' ? (lang === 'es' ? 'Todos' : 'All') : item}
+                                        {item === 'All' ? defaultAll : item}
                                     </button>
                                 ))
                             ) : (
@@ -139,7 +145,7 @@ const FilterCombobox: React.FC<{
 
 const SidebarSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-1">
+        <h3 className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-1">
             {title}
         </h3>
         <div className="space-y-4">
@@ -177,7 +183,8 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
     const [filterMeta, setFilterMeta] = useState<{
-        classes: string[], orders: string[], families: string[], genera: string[], localities: string[]
+        classes: string[], orders: string[], families: string[], genera: string[], localities: string[],
+        taxonomyPaths?: Array<{ class: string | null, order: string | null, family: string | null, genus: string | null }>
     } | null>(null);
 
     // 1. URL Synchronization on mount
@@ -279,11 +286,36 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
     ]);
 
     // Dynamic Lists for filters (from metadata)
+    const taxonomyPaths = filterMeta?.taxonomyPaths || [];
     const locations = useMemo(() => ['All', ...(filterMeta?.localities || [])], [filterMeta]);
-    const classes = useMemo(() => ['All', ...(filterMeta?.classes || [])], [filterMeta]);
-    const orders = useMemo(() => ['All', ...(filterMeta?.orders || [])], [filterMeta]);
-    const families = useMemo(() => ['All', ...(filterMeta?.families || [])], [filterMeta]);
-    const genera = useMemo(() => ['All', ...(filterMeta?.genera || [])], [filterMeta]);
+    const availableClasses = useMemo(() => ['All', ...(filterMeta?.classes || [])], [filterMeta]);
+
+    const availableOrders = useMemo(() => {
+        if (!filterMeta) return ['All'];
+        if (selectedClass === 'All') return ['All', ...filterMeta.orders];
+        const validOrders = taxonomyPaths.filter(p => p.class === selectedClass).map(p => p.order).filter(Boolean) as string[];
+        return ['All', ...Array.from(new Set(validOrders)).sort()];
+    }, [filterMeta, selectedClass, taxonomyPaths]);
+
+    const availableFamilies = useMemo(() => {
+        if (!filterMeta) return ['All'];
+        if (selectedOrder === 'All') return ['All', ...filterMeta.families];
+        const validFamilies = taxonomyPaths.filter(p =>
+            p.order === selectedOrder && (selectedClass === 'All' || p.class === selectedClass)
+        ).map(p => p.family).filter(Boolean) as string[];
+        return ['All', ...Array.from(new Set(validFamilies)).sort()];
+    }, [filterMeta, selectedOrder, selectedClass, taxonomyPaths]);
+
+    const availableGenera = useMemo(() => {
+        if (!filterMeta) return ['All'];
+        if (selectedFamily === 'All') return ['All', ...filterMeta.genera];
+        const validGenera = taxonomyPaths.filter(p =>
+            p.family === selectedFamily &&
+            (selectedOrder === 'All' || p.order === selectedOrder) &&
+            (selectedClass === 'All' || p.class === selectedClass)
+        ).map(p => p.genus).filter(Boolean) as string[];
+        return ['All', ...Array.from(new Set(validGenera)).sort()];
+    }, [filterMeta, selectedFamily, selectedOrder, selectedClass, taxonomyPaths]);
 
     const playAudio = (species: Species) => {
         // Handled directly inside SpeciesCard via custom events to trigger PersistentPlayer
@@ -397,15 +429,53 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                 <div className="space-y-8 pb-10 lg:pb-0">
                     <SidebarSection title={lang === 'es' ? 'Taxonomía' : 'Taxonomy'}>
                         <div className="space-y-1">
-                            <FilterCombobox title="Clase" items={classes} value={selectedClass} onChange={setSelectedClass} lang={lang} />
-                            <FilterCombobox title="Orden" items={orders} value={selectedOrder} onChange={setSelectedOrder} lang={lang} disabled={selectedClass === 'All'} />
-                            <FilterCombobox title="Familia" items={families} value={selectedFamily} onChange={setSelectedFamily} lang={lang} disabled={selectedOrder === 'All' || selectedClass === 'All'} />
-                            <FilterCombobox title="Género" items={genera} value={selectedGenus} onChange={setSelectedGenus} lang={lang} disabled={selectedFamily === 'All' || selectedOrder === 'All' || selectedClass === 'All'} />
+                            <FilterCombobox
+                                title="Clase"
+                                items={availableClasses}
+                                value={selectedClass}
+                                onChange={(val) => { setSelectedClass(val); setSelectedOrder('All'); setSelectedFamily('All'); setSelectedGenus('All'); }}
+                                lang={lang}
+                                allLabel={lang === 'es' ? 'Todas las clases' : 'All classes'}
+                            />
+                            <FilterCombobox
+                                title="Orden"
+                                items={availableOrders}
+                                value={selectedOrder}
+                                onChange={(val) => { setSelectedOrder(val); setSelectedFamily('All'); setSelectedGenus('All'); }}
+                                lang={lang}
+                                disabled={selectedClass === 'All'}
+                                allLabel={lang === 'es' ? 'Todas las órdenes' : 'All orders'}
+                            />
+                            <FilterCombobox
+                                title="Familia"
+                                items={availableFamilies}
+                                value={selectedFamily}
+                                onChange={(val) => { setSelectedFamily(val); setSelectedGenus('All'); }}
+                                lang={lang}
+                                disabled={selectedOrder === 'All' || selectedClass === 'All'}
+                                allLabel={lang === 'es' ? 'Todas las familias' : 'All families'}
+                            />
+                            <FilterCombobox
+                                title="Género"
+                                items={availableGenera}
+                                value={selectedGenus}
+                                onChange={setSelectedGenus}
+                                lang={lang}
+                                disabled={selectedFamily === 'All' || selectedOrder === 'All' || selectedClass === 'All'}
+                                allLabel={lang === 'es' ? 'Todos los géneros' : 'All genera'}
+                            />
                         </div>
                     </SidebarSection>
 
                     <SidebarSection title={lang === 'es' ? 'Localidad' : 'Location'}>
-                        <FilterCombobox title="Localidad" items={locations} value={selectedLocation} onChange={setSelectedLocation} lang={lang} />
+                        <FilterCombobox
+                            title="Localidad"
+                            items={locations}
+                            value={selectedLocation}
+                            onChange={setSelectedLocation}
+                            lang={lang}
+                            allLabel={lang === 'es' ? 'Todas las localidades' : 'All locations'}
+                        />
                     </SidebarSection>
 
                     <SidebarSection title={lang === 'es' ? 'Recursos' : 'Resources'}>

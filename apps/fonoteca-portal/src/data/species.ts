@@ -731,11 +731,22 @@ export async function getFilterMetaData() {
     const taxa = occurrences?.map(o => o.taxa).filter(Boolean) || [];
     const locs = occurrences?.map(o => o.locations).filter(Boolean) || [];
 
-    const classes = Array.from(new Set(taxa?.map((t: any) => t.genus?.family?.orders?.classes?.name).filter(Boolean) as string[])).sort();
-    const orders = Array.from(new Set(taxa?.map((t: any) => t.genus?.family?.orders?.name).filter(Boolean) as string[])).sort();
-    const families = Array.from(new Set(taxa?.map((t: any) => t.genus?.family?.name).filter(Boolean) as string[])).sort();
-    const genera = Array.from(new Set(taxa?.map((t: any) => t.genus?.name).filter(Boolean) as string[])).sort();
+    const taxonomyPaths = Array.from(new Set(taxa.map((t: any) => {
+        const className = t.genus?.family?.orders?.classes?.name;
+        const orderName = t.genus?.family?.orders?.name;
+        const familyName = t.genus?.family?.name;
+        const genusName = t.genus?.name;
+        if (className || orderName || familyName || genusName) {
+            return JSON.stringify({ class: className || null, order: orderName || null, family: familyName || null, genus: genusName || null });
+        }
+        return null;
+    }).filter(Boolean))).map((str: string) => JSON.parse(str));
+
+    const classes = Array.from(new Set(taxonomyPaths.map((p: any) => p.class).filter(Boolean))).sort() as string[];
+    const orders = Array.from(new Set(taxonomyPaths.map((p: any) => p.order).filter(Boolean))).sort() as string[];
+    const families = Array.from(new Set(taxonomyPaths.map((p: any) => p.family).filter(Boolean))).sort() as string[];
+    const genera = Array.from(new Set(taxonomyPaths.map((p: any) => p.genus).filter(Boolean))).sort() as string[];
     const localities = Array.from(new Set(locs?.map((l: any) => l.locality).filter(Boolean) as string[])).sort();
 
-    return { classes, orders, families, genera, localities };
+    return { classes, orders, families, genera, localities, taxonomyPaths };
 }
