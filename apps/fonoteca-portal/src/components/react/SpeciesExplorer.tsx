@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../../lib/utils';
 import {
     Search,
     Filter,
@@ -32,67 +33,102 @@ interface FilterListBoxProps {
     lang: string;
 }
 
-const FilterListBox: React.FC<FilterListBoxProps> = ({ title, items, value, onChange, lang }) => {
+const FilterCombobox: React.FC<{
+    title: string;
+    items: string[];
+    value: string;
+    onChange: (val: string) => void;
+    lang: string;
+    disabled?: boolean;
+}> = ({ title, items, value, onChange, lang, disabled }) => {
+    const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
-    const filteredItems = items.filter(i =>
-        i.toLowerCase().includes(search.toLowerCase()) || i === 'All'
-    );
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const filteredItems = useMemo(() =>
+        items.filter(item =>
+            item.toLowerCase().includes(search.toLowerCase()) || item === 'All'
+        ), [items, search]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     return (
-        <div className="space-y-2">
-            <h3 className="font-semibold text-gray-400 dark:text-gray-500 text-[10px] uppercase tracking-wider px-1">{title}</h3>
-            <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-1 bg-white dark:bg-[#0c141d]">
-                <div className="relative">
-                    <Search className="w-3 h-3 absolute left-2 top-1.5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder={lang === 'es' ? 'Filtrar...' : 'Search...'}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-7 pr-2 py-1 text-xs bg-transparent outline-none border-b border-gray-50 dark:border-gray-800 text-gray-800 dark:text-gray-200"
-                    />
-                </div>
-                <ul className="max-h-32 min-h-[40px] overflow-y-auto mt-1 space-y-0.5 custom-scrollbar">
-                    {filteredItems.map(item => (
-                        <li key={item}>
-                            <button
-                                onClick={() => onChange(item)}
-                                className={`w-full text-left px-2 py-1 rounded-lg text-[11px] cursor-pointer transition-all ${value === item
-                                    ? 'bg-accent-green text-white font-medium'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                    }`}
-                            >
-                                {item === 'All' ? (lang === 'es' ? 'Todas' : 'All') : item}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </div>
-    );
-};
+        <div className="flex flex-col gap-1.5 mb-4 relative" ref={containerRef}>
+            <label className="text-[11px] font-bold text-[#0c141d] dark:text-gray-300 px-0.5">
+                {title}
+            </label>
 
-const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
-    const [isOpen, setIsOpen] = useState(true);
-    return (
-        <div className="border border-gray-100 dark:border-gray-800 rounded-none bg-white dark:bg-[#121b28] overflow-hidden">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-4 py-3 flex items-center justify-between text-left text-[11px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-800/10 hover:bg-gray-100/50 dark:hover:bg-gray-800/20 transition-colors"
+            <div
+                className={cn(
+                    "relative group transition-all",
+                    disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+                )}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
             >
-                <span>{title}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
+                <div className={cn(
+                    "w-full flex items-center justify-between bg-white dark:bg-[#0c141d] border rounded-lg py-2 px-3 text-xs transition-all",
+                    isOpen ? "border-accent-green ring-1 ring-accent-green/20" : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                )}>
+                    <span className={cn("truncate", value === 'All' ? "text-gray-400" : "text-[#0c141d] dark:text-gray-100 font-medium")}>
+                        {value === 'All' ? (lang === 'es' ? 'Todos' : 'All') : value}
+                    </span>
+                    <Search className="w-3.5 h-3.5 text-gray-400" />
+                </div>
+            </div>
+
+            <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-[#121b28] border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col"
                     >
-                        <div className="p-4 space-y-5">
-                            {children}
+                        <div className="p-2 border-b border-gray-50 dark:border-gray-800/50 flex items-center gap-2 bg-gray-50/30 dark:bg-gray-900/30">
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder={lang === 'es' ? 'Buscar...' : 'Search...'}
+                                className="flex-1 bg-transparent border-none outline-none text-[11px] py-1 text-gray-700 dark:text-gray-300"
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </div>
+                        <div className="max-h-60 overflow-y-auto p-1.5 custom-scrollbar">
+                            {filteredItems.length > 0 ? (
+                                filteredItems.map(item => (
+                                    <button
+                                        key={item}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onChange(item);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={cn(
+                                            "w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all",
+                                            value === item
+                                                ? "bg-accent-green/10 text-accent-green font-bold"
+                                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        )}
+                                    >
+                                        {item === 'All' ? (lang === 'es' ? 'Todos' : 'All') : item}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="px-3 py-6 text-[11px] text-gray-400 text-center">
+                                    {lang === 'es' ? 'No hay resultados' : 'No results found'}
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}
@@ -100,6 +136,17 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode }>
         </div>
     );
 };
+
+const SidebarSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div className="space-y-3">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 px-1">
+            {title}
+        </h3>
+        <div className="space-y-4">
+            {children}
+        </div>
+    </div>
+);
 
 // Removed QueryProvider - using direct state management with Supabase
 
@@ -269,8 +316,8 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
             {/* Header for Mobile Sheet & Desktop */}
             <div className="flex items-center justify-between p-4 lg:p-5 border-b border-gray-100 dark:border-gray-800 shrink-0">
                 <div className="flex items-center gap-2">
-                    <Filter className="w-5 h-5 text-accent-green" />
-                    <h2 className="font-bold text-sm uppercase tracking-wider">{lang === 'es' ? 'Filtros' : 'Filters'}</h2>
+                    <Filter className="w-4 h-4 text-accent-green" />
+                    <h2 className="font-bold text-xs uppercase tracking-wider">{lang === 'es' ? 'Filtros' : 'Filters'}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {/* Desktop Close Button */}
@@ -347,34 +394,24 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     </div>
                 )}
 
-                <div className="space-y-4 pb-10 lg:pb-0">
-                    <CollapsibleSection title={lang === 'es' ? 'Taxonomía' : 'Taxonomy'}>
-                        <FilterListBox title="Clase" items={classes} value={selectedClass} onChange={setSelectedClass} lang={lang} />
-                        <FilterListBox title="Orden" items={orders} value={selectedOrder} onChange={setSelectedOrder} lang={lang} />
-                        <FilterListBox title="Familia" items={families} value={selectedFamily} onChange={setSelectedFamily} lang={lang} />
-                        <FilterListBox title="Género" items={genera} value={selectedGenus} onChange={setSelectedGenus} lang={lang} />
-                    </CollapsibleSection>
-
-                    <CollapsibleSection title={lang === 'es' ? 'Localidad' : 'Location'}>
-                        <div className="grid grid-cols-1 gap-1">
-                            {locations.map(loc => (
-                                <button
-                                    key={loc}
-                                    onClick={() => setSelectedLocation(loc)}
-                                    className={`px-3 py-2 rounded-xl text-[11px] text-left transition-all ${selectedLocation === loc
-                                        ? 'bg-accent-green text-white shadow-accent-green/20'
-                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
-                                >
-                                    {loc === 'All' ? (lang === 'es' ? 'Todas' : 'All') : loc}
-                                </button>
-                            ))}
+                <div className="space-y-8 pb-10 lg:pb-0">
+                    <SidebarSection title={lang === 'es' ? 'Taxonomía' : 'Taxonomy'}>
+                        <div className="space-y-1">
+                            <FilterCombobox title="Clase" items={classes} value={selectedClass} onChange={setSelectedClass} lang={lang} />
+                            <FilterCombobox title="Orden" items={orders} value={selectedOrder} onChange={setSelectedOrder} lang={lang} disabled={selectedClass === 'All'} />
+                            <FilterCombobox title="Familia" items={families} value={selectedFamily} onChange={setSelectedFamily} lang={lang} disabled={selectedOrder === 'All' || selectedClass === 'All'} />
+                            <FilterCombobox title="Género" items={genera} value={selectedGenus} onChange={setSelectedGenus} lang={lang} disabled={selectedFamily === 'All' || selectedOrder === 'All' || selectedClass === 'All'} />
                         </div>
-                    </CollapsibleSection>
+                    </SidebarSection>
 
-                    <CollapsibleSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
+                    <SidebarSection title={lang === 'es' ? 'Localidad' : 'Location'}>
+                        <FilterCombobox title="Localidad" items={locations} value={selectedLocation} onChange={setSelectedLocation} lang={lang} />
+                    </SidebarSection>
+
+                    <SidebarSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
                         <button
                             onClick={() => setOnlyWithAudio(!onlyWithAudio)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
                         >
                             <div className="flex items-center gap-2">
                                 <Music className="w-3.5 h-3.5" />
@@ -384,7 +421,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 {onlyWithAudio && <X className="w-3 h-3 text-white" />}
                             </div>
                         </button>
-                    </CollapsibleSection>
+                    </SidebarSection>
                 </div>
             </div>
         </div>
@@ -457,7 +494,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 placeholder={lang === 'es' ? 'Buscar especies...' : 'Search species...'}
-                                className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 rounded-none border border-gray-100 dark:border-gray-800 focus:ring-2 focus:ring-accent-green outline-none text-sm transition-shadow"
+                                className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 focus:ring-2 focus:ring-accent-green outline-none text-sm transition-shadow"
                             />
                             {searchInput && (
                                 <button onClick={() => { setSearchInput(''); setSearchTerm(''); }} className="absolute right-3 top-2.5 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">

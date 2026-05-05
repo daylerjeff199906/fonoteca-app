@@ -192,7 +192,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
         return (
             <motion.div
                 layout
-                className="bg-white dark:bg-[#121b28] p-3 rounded-none border border-gray-100 dark:border-gray-800 flex items-center gap-4 hover:border-accent-green/30 hover:shadow-none transition-all group flex-wrap md:flex-nowrap"
+                className="p-3 rounded-none border border-gray-100 dark:border-gray-800 flex items-center gap-4 hover:border-accent-green/30 hover:shadow-none transition-all group flex-wrap md:flex-nowrap"
             >
                 <div className="w-12 h-12 rounded-none overflow-hidden flex-shrink-0 bg-gray-50 dark:bg-gray-900 border border-gray-50 dark:border-gray-800 relative">
                     <MediaViewer
@@ -224,9 +224,9 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
     return (
         <a
             href={detailLink}
-            className="group block bg-[#fbfbf9] dark:bg-[#121b28] rounded-2xl transition-all duration-300 relative flex flex-col overflow-hidden shadow-none border-none"
+            className="group block rounded-2xl transition-all duration-300 relative flex flex-col overflow-hidden shadow-none border-none"
         >
-            <div className="aspect-[6/5] relative bg-gray-50 dark:bg-gray-900 overflow-hidden">
+            <div className="aspect-[6/5] relative overflow-hidden">
                 <MediaViewer
                     src={coverImage}
                     alt={species.scientificName}
@@ -247,9 +247,9 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                 </div>
             </div>
 
-            <div className="py-5 flex-1 flex flex-col relative bg-[#fbfbf9] dark:bg-[#121b28]">
+            <div className="py-5 flex-1 flex flex-col relative ">
                 <div className="mb-4">
-                    <h4 className="text-[#0c141d] italic font-serif dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-2 text-xl">
+                    <h4 className="text-[#0c141d] italic font-serif dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-2 text-sm">
                         {species.scientificName}
                     </h4>
                     {species.location && species.location !== 'All' && (
