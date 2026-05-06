@@ -217,27 +217,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
                 {/* Viewport Area */}
                 <div className="relative w-full bg-black group p-4 flex flex-col flex-1 overflow-hidden">
-                    {/* Spectrogram Navigation */}
-                    <div className="w-full h-48 md:h-64 bg-black/40 rounded-2xl overflow-hidden mb-6 relative group/img">
-                        {allImages.length > 0 ? (
-                            <>
-                                <img src={allImages[currentImageIndex]} alt="Spectrogram" className="w-full h-full object-contain" />
-                                {allImages.length > 1 && (
-                                    <>
-                                        <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity"><ChevronLeft className="w-6 h-6" /></button>
-                                        <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity"><ChevronRight className="w-6 h-6" /></button>
-                                        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md text-[10px] text-white font-bold tracking-widest uppercase">{currentImageIndex + 1} / {allImages.length}</div>
-                                    </>
-                                )}
-                            </>
-                        ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
-                                <Music className="w-12 h-12 mb-2" />
-                                <span className="text-xs font-medium uppercase tracking-widest">No Spectrogram</span>
-                            </div>
-                        )}
-                    </div>
-
                     <div ref={timelineRef} className="w-full bg-[#181818] flex-shrink-0" />
                     <div ref={spectrogramRef} className="w-full relative overflow-hidden flex-1" style={{ minHeight: '150px' }} />
                     <div ref={waveformRef} className="w-full relative bg-[#111111] overflow-hidden border-t border-gray-900 flex-shrink-0" />
@@ -315,7 +294,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
                 {/* SIDE PANEL */}
                 {isFullScreen && species && (
-                    <div className="w-full md:w-80 lg:w-96 flex-shrink-0 bg-[#0a0a0a] border-t md:border-t-0 md:border-l border-gray-800 flex flex-col overflow-y-auto max-h-[40vh] md:max-h-none">
+                    <div className="w-full md:w-1/2 flex-shrink-0 bg-[#0a0a0a] border-t md:border-t-0 md:border-l border-gray-800 flex flex-col overflow-y-auto max-h-[50vh] md:max-h-none">
                         <div className="p-4 border-b border-gray-800 sticky top-0 bg-[#0a0a0a] z-10 flex justify-between items-center">
                             <h3 className="text-white font-bold tracking-wide text-sm">{lang === 'es' ? 'Ficha de Audio' : 'Audio Profile'}</h3>
                             <button disabled className="text-[9px] px-2 py-1.5 bg-accent-green/20 text-accent-green/50 rounded uppercase font-bold tracking-wider cursor-not-allowed border border-accent-green/20">

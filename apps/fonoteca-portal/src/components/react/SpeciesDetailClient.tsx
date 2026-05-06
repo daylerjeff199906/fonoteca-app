@@ -252,7 +252,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 />
                             </div>
                         ) : (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden border border-gray-100 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 flex flex-col items-center justify-center p-4">
+                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden border border-gray-100 dark:border-gray-800 rounded-none bg-gray-50/50 dark:bg-gray-800/50 flex flex-col items-center justify-center p-4">
                                 <span className="text-gray-400 dark:text-gray-500 text-sm font-medium text-center uppercase tracking-widest">{lang === 'es' ? 'Sin imagen profesional disponible' : 'No professional image available'}</span>
                             </div>
                         )}
@@ -401,11 +401,10 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                 {[
                                                     { label: lang === 'es' ? 'ID de Ocurrencia' : 'Occurrence ID', value: species.databaseDetails.occurrenceID },
                                                     { label: lang === 'es' ? 'Fecha de Ocurrencia' : 'Occurrence Date', value: species.databaseDetails.occurrence_date },
-                                                    { label: lang === 'es' ? 'Identificado Por' : 'Identified By', value: species.databaseDetails.identifiedBy },
                                                     { label: lang === 'es' ? 'Método de Identificación' : 'Identification Method', value: species.databaseDetails.identificationMethod },
                                                     { label: lang === 'es' ? 'Etapa de Vida' : 'Life Stage', value: species.databaseDetails.lifeStage },
                                                     { label: lang === 'es' ? 'Sexo' : 'Sex', value: species.databaseDetails.sex },
-                                                ].map((item, idx) => (
+                                                ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`id-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
                                                         <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
@@ -414,16 +413,13 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                                                 {/* Specimen Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen y Colección' : 'Specimen and Collection'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen' : 'Specimen and Collection'}</td>
                                                 </tr>
                                                 {[
-                                                    { label: lang === 'es' ? 'Número de Catálogo' : 'Catalog Number', value: species.databaseDetails.catalogNumber },
                                                     { label: lang === 'es' ? 'Institución' : 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
                                                     { label: lang === 'es' ? 'Colección' : 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
                                                     { label: lang === 'es' ? 'Base del Registro' : 'Basis of Record', value: species.databaseDetails.basisOfRecord },
-                                                    { label: lang === 'es' ? 'Protocolo de Muestreo' : 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
-                                                    { label: lang === 'es' ? 'Fecha del Evento' : 'Event Date', value: species.databaseDetails.eventDate },
-                                                ].map((item, idx) => (
+                                                ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`spec-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
                                                         <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
@@ -439,7 +435,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         {/* Section: Distribution */}
                         <section id="distribution" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
                             <SectionHeader
-                                title={lang === 'es' ? 'Distribución' : 'Distribution'}
+                                title={lang === 'es' ? 'Distribución y Lugar' : 'Distribution & Location'}
                                 description={lang === 'es' ? 'Áreas geográficas y contexto de observación.' : 'Geographic ranges and observation context.'}
                             />
                             <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
@@ -499,11 +495,11 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 description={lang === 'es' ? 'Grabaciones de la especie y su análisis visual.' : 'Recordings of the species and their visual analysis.'}
                             />
 
-                            <AudioListTable 
-                                audios={species.audios} 
-                                species={species} 
-                                lang={lang} 
-                                onSelect={(idx) => setSelectedAudioIndex(idx)} 
+                            <AudioListTable
+                                audios={species.audios}
+                                species={species}
+                                lang={lang}
+                                onSelect={(idx) => setSelectedAudioIndex(idx)}
                             />
 
                             {/* Full Analysis Player Modal */}
