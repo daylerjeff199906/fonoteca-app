@@ -54,35 +54,33 @@ const AudioListTable: React.FC<{
     onSelect: (idx: number) => void;
 }> = ({ audios, species, lang, onSelect }) => {
     return (
-        <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+        <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl">
             <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                     <tr>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Nombre Científico</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Autor</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Fecha</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Duración</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Formato</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Tipo de Canto</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Localidad</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px] text-center">Acciones</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Autor' : 'Author'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fecha' : 'Date'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Duración' : 'Duration'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Formato' : 'Format'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Tipo de Canto' : 'Call Type'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Localidad' : 'Locality'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px] text-center">{lang === 'es' ? 'Acciones' : 'Actions'}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {audios.map((audio, idx) => (
-                        <tr key={audio.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white italic">{species.scientificName || '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.identifiedBy || 'Desconocido'}</td>
+                        <tr key={audio.id || idx} onClick={() => onSelect(idx)} className="hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors group cursor-pointer">
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.occurrence_date || '-'}</td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{'-'}</td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{audio.format || '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{audio.title || audio.tag || 'Canto'}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{audio.title || audio.tag || (lang === 'es' ? 'Canto' : 'Call')}</td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={species.location}>{species.location || '-'}</td>
                             <td className="px-4 py-3 text-center">
                                 <button
-                                    onClick={() => onSelect(idx)}
-                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-colors"
-                                    title="Reproducir audio"
+                                    onClick={(e) => { e.stopPropagation(); onSelect(idx); }}
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10 text-accent-green group-hover:bg-accent-green group-hover:text-white transition-colors"
+                                    title={lang === 'es' ? 'Reproducir audio' : 'Play audio'}
                                 >
                                     <Music size={14} />
                                 </button>
@@ -246,7 +244,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                     <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
                         {/* Species Circle Image */}
                         {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 shadow-xl overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in bg-gray-50 dark:bg-gray-800 flex items-center justify-center p-2">
+                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in bg-gray-50 dark:bg-gray-800 flex items-center justify-center p-2">
                                 <img
                                     src={species.mainImage}
                                     alt={commonName}
@@ -366,7 +364,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             {/* Detalle de la especie */}
                             {species.databaseDetails && (
                                 <div className="space-y-8 mt-8">
-                                    <div className="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm shadow-sm bg-white dark:bg-gray-900">
+                                    <div className="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm bg-white dark:bg-gray-900">
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-gray-100 dark:bg-gray-800">
@@ -376,37 +374,39 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                             </thead>
                                             <tbody className="text-sm">
                                                 {/* Taxonomía */}
-                                                <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">1. {lang === 'es' ? 'Taxonomía Científica' : 'Scientific Taxonomy'}</td>
+                                                <tr className="bg-white dark:bg-gray-900 hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors">
+                                                    <td className="px-6 py-4 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">
+                                                        {lang === 'es' ? 'Taxonomía Científica' : 'Scientific Taxonomy'}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
+                                                        <div className="flex flex-wrap items-center gap-y-1 gap-x-1.5 text-[11px] md:text-xs">
+                                                            {taxonomyParts.map((part, idx) => (
+                                                                <React.Fragment key={idx}>
+                                                                    <span className={`${idx === taxonomyParts.length - 1 ? 'text-accent-green font-bold italic' : 'text-gray-500'}`}>
+                                                                        {part}
+                                                                    </span>
+                                                                    {idx < taxonomyParts.length - 1 && (
+                                                                        <span className="text-gray-300 dark:text-gray-600">/</span>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            ))}
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                                {[
-                                                    { label: lang === 'es' ? 'Reino' : 'Kingdom', value: species.kingdom },
-                                                    { label: lang === 'es' ? 'Filo' : 'Phylum', value: species.phylum },
-                                                    { label: lang === 'es' ? 'Clase' : 'Class', value: species.class_name },
-                                                    { label: lang === 'es' ? 'Orden' : 'Order', value: species.order },
-                                                    { label: lang === 'es' ? 'Familia' : 'Family', value: species.family },
-                                                    { label: lang === 'es' ? 'Género' : 'Genus', value: species.genus },
-                                                    { label: lang === 'es' ? 'Nombre Científico' : 'Scientific Name', value: species.scientificName },
-                                                ].filter(item => item.value).map((item, idx) => (
-                                                    <tr key={`tax-${idx}`} className={`${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
-                                                        <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
-                                                    </tr>
-                                                ))}
 
                                                 {/* Identification Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Identificación y Registro' : 'Identification and Record'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">1. {lang === 'es' ? 'Identificación y Registro' : 'Identification and Record'}</td>
                                                 </tr>
                                                 {[
-                                                    { label: 'Occurrence ID', value: species.databaseDetails.occurrenceID },
-                                                    { label: 'Occurrence Date', value: species.databaseDetails.occurrence_date },
-                                                    { label: 'Identified By', value: species.databaseDetails.identifiedBy },
-                                                    { label: 'Method', value: species.databaseDetails.identificationMethod },
-                                                    { label: 'Life Stage', value: species.databaseDetails.lifeStage },
-                                                    { label: 'Sex', value: species.databaseDetails.sex },
+                                                    { label: lang === 'es' ? 'ID de Ocurrencia' : 'Occurrence ID', value: species.databaseDetails.occurrenceID },
+                                                    { label: lang === 'es' ? 'Fecha de Ocurrencia' : 'Occurrence Date', value: species.databaseDetails.occurrence_date },
+                                                    { label: lang === 'es' ? 'Identificado Por' : 'Identified By', value: species.databaseDetails.identifiedBy },
+                                                    { label: lang === 'es' ? 'Método de Identificación' : 'Identification Method', value: species.databaseDetails.identificationMethod },
+                                                    { label: lang === 'es' ? 'Etapa de Vida' : 'Life Stage', value: species.databaseDetails.lifeStage },
+                                                    { label: lang === 'es' ? 'Sexo' : 'Sex', value: species.databaseDetails.sex },
                                                 ].map((item, idx) => (
-                                                    <tr key={`id-${idx}`} className={`${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                    <tr key={`id-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
                                                         <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
                                                     </tr>
@@ -414,17 +414,17 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                                                 {/* Specimen Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">3. {lang === 'es' ? 'Especimen y Colección' : 'Specimen and Collection'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen y Colección' : 'Specimen and Collection'}</td>
                                                 </tr>
                                                 {[
-                                                    { label: 'Catalog Number', value: species.databaseDetails.catalogNumber },
-                                                    { label: 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
-                                                    { label: 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
-                                                    { label: 'Basis of Record', value: species.databaseDetails.basisOfRecord },
-                                                    { label: 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
-                                                    { label: 'Event Date', value: species.databaseDetails.eventDate },
+                                                    { label: lang === 'es' ? 'Número de Catálogo' : 'Catalog Number', value: species.databaseDetails.catalogNumber },
+                                                    { label: lang === 'es' ? 'Institución' : 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
+                                                    { label: lang === 'es' ? 'Colección' : 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
+                                                    { label: lang === 'es' ? 'Base del Registro' : 'Basis of Record', value: species.databaseDetails.basisOfRecord },
+                                                    { label: lang === 'es' ? 'Protocolo de Muestreo' : 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
+                                                    { label: lang === 'es' ? 'Fecha del Evento' : 'Event Date', value: species.databaseDetails.eventDate },
                                                 ].map((item, idx) => (
-                                                    <tr key={`spec-${idx}`} className={`${idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                    <tr key={`spec-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
                                                         <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
                                                     </tr>
@@ -549,7 +549,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     {description}
                                 </p>
                                 {species.databaseDetails?.occurrenceRemarks && (
-                                    <div className="mb-4 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm">
+                                    <div className="mb-4 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl">
                                         <h5 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Observaciones de campo</h5>
                                         <p className="text-gray-600 dark:text-gray-400 text-sm italic">
                                             "{species.databaseDetails.occurrenceRemarks}"
@@ -557,7 +557,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     </div>
                                 )}
                                 {species.databaseDetails?.microhabitat_remarks && (
-                                    <div className="mb-8 p-6 bg-accent-green/5 border border-accent-green/10 rounded-xl shadow-sm">
+                                    <div className="mb-8 p-6 bg-accent-green/5 border border-accent-green/10 rounded-xl">
                                         <h5 className="text-[10px] font-black text-accent-green uppercase tracking-widest mb-2">Microhábitat</h5>
                                         <p className="text-gray-700 dark:text-gray-300 text-sm">
                                             {species.databaseDetails.microhabitat_remarks}
@@ -569,7 +569,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             {characteristics && characteristics.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {characteristics.map((char, idx) => (
-                                        <div key={idx} className="flex gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm items-start group hover:border-accent-green/20 transition-colors">
+                                        <div key={idx} className="flex gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 items-start group hover:border-accent-green/20 transition-colors">
                                             <div className="w-1.5 h-1.5 rounded-full bg-accent-green mt-2 group-hover:scale-150 transition-transform" />
                                             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed">{char}</p>
                                         </div>
