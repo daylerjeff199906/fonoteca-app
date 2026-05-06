@@ -109,7 +109,6 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     defaultValues: {
       basisOfRecord: "MachineObservation",
       identificationMethod: "Manual",
-
       verification_status: "pending",
       record_status: "draft",
       event_id: defaultEventId || undefined,
@@ -231,7 +230,6 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
     }
   };
 
-  const selectedCollectionId = watch("collection_id");
   const filteredCollections = selectedInstitutionId
     ? collections.filter(c => c.institution_id === selectedInstitutionId)
     : [];

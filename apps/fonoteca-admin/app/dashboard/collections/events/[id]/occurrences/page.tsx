@@ -99,7 +99,7 @@ export default async function EventOccurrencesPage({
                       </div>
 
                       <Button asChild size="sm" variant="secondary" className="w-full h-8 text-xs gap-1.5 mt-2 bg-primary/10 hover:bg-primary/20 text-primary">
-                        <Link href={`/dashboard/collections/occurrences/${occ.id}/multimedia`}>
+                        <Link href={`/dashboard/occurrences/${occ.id}/multimedia`}>
                           <FileAudio className="h-3 w-3" />
                           <span>Paso 3: Añadir Multimedia</span>
                           <ArrowRight className="h-3 w-3 ml-auto" />

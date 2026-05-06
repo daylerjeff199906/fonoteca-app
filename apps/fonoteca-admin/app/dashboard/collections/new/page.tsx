@@ -8,13 +8,6 @@ export default function NewCollectionPage() {
   return (
     <LayoutWrapper sectionTitle="Registrar Colección">
       <div className="space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: "Monitoreo", href: "/dashboard/occurrences" },
-            { label: "Registrar Colección", href: "/dashboard/collections/new", active: true },
-          ]}
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           {/* Opción 1: A través de Eventos */}
           <Link href="/dashboard/collections/events/new" className="group">
