@@ -1195,10 +1195,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Título *</label>
                 <Input placeholder="p. ej. Canto de ave" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Etiqueta</label>
-                <Input placeholder="main_audio, gallery..." value={editTag} onChange={(e) => setEditTag(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
-              </div>
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Descripción</label>
                 <textarea
@@ -1246,18 +1242,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                         <option value="draft">Borrador</option>
                         <option value="published">Publicado</option>
                         <option value="deleted">Eliminado (Lógico)</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Multimedia</label>
-                      <select
-                        value={editType}
-                        onChange={(e) => setEditType(e.target.value as any)}
-                        className="w-full h-8 px-2 text-xs rounded-md border bg-background"
-                      >
-                        {Object.entries(MEDIA_TYPE).map(([key, val]) => (
-                          <option key={key} value={val}>{key}</option>
-                        ))}
                       </select>
                     </div>
                     <div className="space-y-1.5">

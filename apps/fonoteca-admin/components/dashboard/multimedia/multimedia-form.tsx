@@ -13,8 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Occurrence, MEDIA_TYPE } from "@/types/fonoteca";
-import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2 } from "lucide-react";
+import { Occurrence, MEDIA_TYPE, MEDIA_TAG } from "@/types/fonoteca";
+import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: string, redirectUrl?: string, defaultOccurrenceId?: string }) {
@@ -39,6 +39,19 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
   });
 
   const mediaType = watch("type");
+
+  // Auto-set tag and format when type changes
+  useEffect(() => {
+    if (!id) { // Only for new records
+      if (mediaType === MEDIA_TYPE.SOUND) {
+        reset((prev) => ({ ...prev, tag: MEDIA_TAG.MAIN_AUDIO, format: "audio/wav" }));
+      } else if (mediaType === MEDIA_TYPE.STILL) {
+        reset((prev) => ({ ...prev, tag: MEDIA_TAG.GALLERY, format: "image/jpeg" }));
+      } else if (mediaType === MEDIA_TYPE.VIDEO) {
+        reset((prev) => ({ ...prev, tag: MEDIA_TAG.GALLERY, format: "video/mp4" }));
+      }
+    }
+  }, [mediaType, id, reset]);
 
   useEffect(() => {
     getOccurrences({ limit: 100 }).then(resp => setOccurrences(resp.data));
@@ -123,10 +136,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             <Input {...register("originalFilename")} placeholder="recording_001.wav" className="h-9" />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Etiqueta (Tag)</label>
-            <Input {...register("tag")} placeholder="Ex: spectrogram, primary, habitat" className="h-9" />
-          </div>
+          <input type="hidden" {...register("tag")} />
         </div>
       </div>
 
@@ -149,17 +159,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             {errors.creator && <p className="text-[10px] text-red-500 mt-1">{errors.creator.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Tipo de Multimedia *</label>
-            <select
-              {...register("type")}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-            >
-              <option value="Sound">Sonido (Audio)</option>
-              <option value="Still">Imagen Estática</option>
-              <option value="MovingImage">Video / Imagen en Movimiento</option>
-            </select>
-          </div>
+          <input type="hidden" {...register("type")} />
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Formato (MIME Type) *</label>

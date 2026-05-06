@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MEDIA_TYPE, MEDIA_TAG } from "@/types/fonoteca";
 
 // Helper tool to handle numeric fields from HTML inputs that send empty strings.
 const numberOrNull = z.preprocess(
@@ -137,7 +138,7 @@ export const multimediaSchema = z.object({
   occurrence_id: z.string().uuid().optional().nullable(),
   identifier: z.string().min(1, "Identifier is required"),
   originalFilename: z.string().optional().nullable(),
-  type: z.string().default("Sound"),
+  type: z.enum([MEDIA_TYPE.SOUND, MEDIA_TYPE.STILL, MEDIA_TYPE.VIDEO, MEDIA_TYPE.TEXT]).default(MEDIA_TYPE.SOUND),
   format: z.string().default("audio/wav"),
   title: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -146,7 +147,15 @@ export const multimediaSchema = z.object({
   license: z.string().default("http://creativecommons.org/licenses/by-nc/4.0/"),
   guano_metadata: z.record(z.any()).optional().default({}),
   order_index: z.coerce.number().optional().default(0),
-  tag: z.string().optional().nullable(),
+  tag: z.enum([
+    MEDIA_TAG.MAIN_AUDIO,
+    MEDIA_TAG.SUPPORTING_AUDIO,
+    MEDIA_TAG.SPECTROGRAM,
+    MEDIA_TAG.VOUCHER_PHOTO,
+    MEDIA_TAG.FIELD_PHOTO,
+    MEDIA_TAG.GALLERY,
+    MEDIA_TAG.DOCUMENT
+  ]).optional().nullable(),
   parent_multimedia_id: z.string().uuid().optional().nullable(),
   record_status: z.enum(["draft", "published", "deleted"]).optional().default("draft"),
   is_public: z.boolean().optional().default(true),
