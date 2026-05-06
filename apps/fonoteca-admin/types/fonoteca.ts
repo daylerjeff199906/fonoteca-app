@@ -246,7 +246,11 @@ export interface Multimedia {
   license: string;
   guano_metadata: Record<string, any>;
   order_index: number;
-  tag: string | null;
+  tag: MediaTag | null;
+  vocalization_type: string | null;
+  background_species: string | null;
+  duration_seconds: number | null;
+  file_size_bytes: number | null;
   parent_multimedia_id: string | null;
   record_status: "draft" | "published" | "deleted";
   is_public: boolean;

@@ -145,6 +145,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [editRecordStatus, setEditRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
   const [editType, setEditType] = useState<MediaType>(MEDIA_TYPE.SOUND);
   const [editFormat, setEditFormat] = useState("");
+  const [editVocalizationType, setEditVocalizationType] = useState("");
+  const [editBackgroundSpecies, setEditBackgroundSpecies] = useState("");
+  const [editDurationSeconds, setEditDurationSeconds] = useState<string | number>("");
+  const [editFileSize, setEditFileSize] = useState<string | number>("");
   const [editGuanoMetadata, setEditGuanoMetadata] = useState<Record<string, any>>({});
   const [showMetadataConfig, setShowMetadataConfig] = useState(false);
 
@@ -397,6 +401,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
     setEditRecordStatus(item.record_status || "draft");
     setEditType(item.type);
     setEditFormat(item.format);
+    setEditVocalizationType(item.vocalization_type || "");
+    setEditBackgroundSpecies(item.background_species || "");
+    setEditDurationSeconds(item.duration_seconds || "");
+    setEditFileSize(item.file_size_bytes || "");
     setEditGuanoMetadata(item.guano_metadata || {});
     setShowMetadataConfig(false);
     setEditSheetOpen(true);
@@ -420,6 +428,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         record_status: editRecordStatus,
         type: editType as any,
         format: editFormat,
+        vocalization_type: editVocalizationType,
+        background_species: editBackgroundSpecies,
+        duration_seconds: editDurationSeconds ? Number(editDurationSeconds) : null,
+        file_size_bytes: editFileSize ? Number(editFileSize) : null,
         guano_metadata: editGuanoMetadata,
       };
 
@@ -665,12 +677,20 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       </div>
 
       {list.length === 0 ? (
-        <div className="border border-dashed rounded-xl py-12 flex flex-col items-center justify-center bg-muted/5">
-          <div className="bg-muted/30 p-4 rounded-full mb-2">
-            <Music className="h-6 w-6 text-muted-foreground/50" />
+        <button 
+          onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setSelectedFiles([]); setUploadSheetOpen(true); }}
+          className="w-full border-2 border-dashed border-muted-foreground/20 rounded-2xl py-12 flex flex-col items-center justify-center bg-muted/5 hover:bg-primary/5 hover:border-primary/40 transition-all group"
+        >
+          <div className="bg-primary/10 p-5 rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <Music className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-xs font-medium text-muted-foreground">No hay audios registrados</p>
-        </div>
+          <h4 className="text-sm font-bold text-foreground">No hay audios registrados</h4>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">Aún no has subido grabaciones para esta ocurrencia</p>
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
+            <Upload className="h-3.5 w-3.5" />
+            Comenzar a subir
+          </div>
+        </button>
       ) : (
         <div className="space-y-3">
           {/* Add New Audio Card */}
@@ -839,12 +859,20 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       </div>
 
       {list.length === 0 ? (
-        <div className="border border-dashed rounded-xl py-12 flex flex-col items-center justify-center bg-muted/5">
-          <div className="bg-muted/30 p-4 rounded-full mb-2">
-            <FileImage className="h-6 w-6 text-muted-foreground/50" />
+        <button 
+          onClick={() => { setActiveUploadType(uploadType); setSelectedFiles([]); setUploadSheetOpen(true); }}
+          className="w-full border-2 border-dashed border-muted-foreground/20 rounded-2xl py-16 flex flex-col items-center justify-center bg-muted/5 hover:bg-primary/5 hover:border-primary/40 transition-all group"
+        >
+          <div className="bg-primary/10 p-5 rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <FileImage className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-xs font-medium text-muted-foreground">No hay imágenes registradas</p>
-        </div>
+          <h4 className="text-sm font-bold text-foreground">Galería vacía</h4>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">No hay fotografías o videos asociados</p>
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            Añadir multimedia
+          </div>
+        </button>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {/* Add New Image Card */}
@@ -1179,10 +1207,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Título *</label>
                 <Input placeholder="p. ej. Canto de ave" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Etiqueta</label>
-                <Input placeholder="main_audio, gallery..." value={editTag} onChange={(e) => setEditTag(e.target.value)} className="text-sm h-9 bg-background focus-visible:ring-primary/20" />
-              </div>
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Descripción</label>
                 <textarea
@@ -1233,18 +1257,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Multimedia</label>
-                      <select
-                        value={editType}
-                        onChange={(e) => setEditType(e.target.value as any)}
-                        className="w-full h-8 px-2 text-xs rounded-md border bg-background"
-                      >
-                        {Object.entries(MEDIA_TYPE).map(([key, val]) => (
-                          <option key={key} value={val}>{key}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Formato (MIME)</label>
                       <Input value={editFormat} onChange={(e) => setEditFormat(e.target.value)} className="text-xs h-8 bg-background" />
                     </div>
@@ -1257,39 +1269,91 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                     </div>
                   </div>
 
+                  {/* Bioacústica Section - Only for Sound */}
+                  {editingItem?.type === MEDIA_TYPE.SOUND && (
+                    <div className="pt-6 border-t mt-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-1 w-1 rounded-full bg-primary" />
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Detalles de Bioacústica</h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Vocalización</label>
+                          <Input
+                            placeholder="Ej: Canto de anuncio, Alarma"
+                            value={editVocalizationType}
+                            onChange={(e) => setEditVocalizationType(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Especies de Fondo</label>
+                          <Input
+                            placeholder="Especies que se escuchan..."
+                            value={editBackgroundSpecies}
+                            onChange={(e) => setEditBackgroundSpecies(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Duración (seg)</label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={editDurationSeconds}
+                            onChange={(e) => setEditDurationSeconds(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tamaño (bytes)</label>
+                          <Input
+                            type="number"
+                            placeholder="Peso en bytes"
+                            value={editFileSize}
+                            onChange={(e) => setEditFileSize(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* GUANO Section - Only for Sound */}
                   {editType === MEDIA_TYPE.SOUND && (
                     <div className="pt-6 border-t mt-4">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="h-1 w-1 rounded-full bg-primary" />
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO</h4>
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO (Parámetros técnicos del grabador)</h4>
                       </div>
                       <div className="grid grid-cols-1 gap-4">
                         {[
-                          "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
-                          "Timestamp", "Loc Position", "Loc Elevation", "Length",
-                          "Samplerate", "TE", "Filter HP", "Species Manual ID",
-                          "Species Auto ID", "Note"
-                        ].map((key) => (
-                          <div key={key} className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
-                            {key === "Note" ? (
+                          { label: "Marca (Make - Fabricante)", key: "Make" },
+                          { label: "Modelo (Model - Equipo)", key: "Model" },
+                          { label: "Serie (Serial - Nro. Único)", key: "Serial" },
+                          { label: "Filtro HP (Filter HP - Paso Alto)", key: "Filter HP" },
+                          { label: "Notas (Note - Obs. Técnicas)", key: "Note" }
+                        ].map((field) => (
+                          <div key={field.key} className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{field.label}</label>
+                            {field.key === "Note" ? (
                               <Textarea
-                                value={editGuanoMetadata[key] || ""}
-                                placeholder={`Valor de ${key}...`}
+                                value={editGuanoMetadata[field.key] || ""}
+                                placeholder={`Valor de ${field.key}...`}
                                 onChange={(e) => {
                                   const val = e.target.value;
-                                  setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                                  setEditGuanoMetadata(prev => ({ ...prev, [field.key]: val }));
                                 }}
                                 className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
                               />
                             ) : (
                               <Input
-                                value={editGuanoMetadata[key] || ""}
-                                placeholder={`Valor de ${key}...`}
+                                value={editGuanoMetadata[field.key] || ""}
+                                placeholder={`Valor de ${field.key}...`}
                                 onChange={(e) => {
                                   const val = e.target.value;
-                                  setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                                  setEditGuanoMetadata(prev => ({ ...prev, [field.key]: val }));
                                 }}
                                 className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
                               />

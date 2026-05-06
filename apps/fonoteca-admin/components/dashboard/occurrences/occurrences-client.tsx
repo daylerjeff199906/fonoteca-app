@@ -439,22 +439,27 @@ export function OccurrencesClient({
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 min-w-[60px]">
+                      <Link
+                        href={`/dashboard/occurrences/${oc.id}/multimedia`}
+                        className="flex items-center gap-1.5 min-w-[60px] group hover:bg-primary/5 p-1 rounded-lg transition-all border border-transparent hover:border-primary/20"
+                        title="Gestionar Multimedia"
+                      >
                         {thumbUrl ? (
-                          <div className="h-8 w-8 rounded overflow-hidden border bg-muted">
+                          <div className="h-8 w-8 rounded-md overflow-hidden border bg-muted shrink-0 shadow-sm">
                             <img src={thumbUrl} className="h-full w-full object-cover" alt="Thumb" />
                           </div>
                         ) : (
-                          <div className="h-8 w-8 rounded border bg-muted/30 flex items-center justify-center">
-                            <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/50" />
+                          <div className="h-8 w-8 rounded-md border bg-muted/30 flex items-center justify-center shrink-0">
+                            <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                           </div>
                         )}
                         {hasSound && (
-                          <div title="Tiene Audio" className="p-1 rounded-full bg-blue-50 text-blue-600">
+                          <div className="p-1.5 rounded-full bg-blue-50 text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors shadow-sm">
                             <Music className="h-3 w-3" />
                           </div>
                         )}
-                      </div>
+                        <Plus className="h-3 w-3 text-primary opacity-0 group-hover:opacity-100 transition-all -ml-1" />
+                      </Link>
                     </TableCell>
                     <TableCell className="font-medium">{oc.occurrenceID}</TableCell>
                     <TableCell>

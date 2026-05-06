@@ -13,8 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Occurrence, MEDIA_TYPE } from "@/types/fonoteca";
-import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2 } from "lucide-react";
+import { Occurrence, MEDIA_TYPE, MEDIA_TAG } from "@/types/fonoteca";
+import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: string, redirectUrl?: string, defaultOccurrenceId?: string }) {
@@ -39,6 +39,19 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
   });
 
   const mediaType = watch("type");
+
+  // Auto-set tag and format when type changes
+  useEffect(() => {
+    if (!id) { // Only for new records
+      if (mediaType === MEDIA_TYPE.SOUND) {
+        reset((prev) => ({ ...prev, tag: MEDIA_TAG.MAIN_AUDIO, format: "audio/wav" }));
+      } else if (mediaType === MEDIA_TYPE.STILL) {
+        reset((prev) => ({ ...prev, tag: MEDIA_TAG.GALLERY, format: "image/jpeg" }));
+      } else if (mediaType === MEDIA_TYPE.VIDEO) {
+        reset((prev) => ({ ...prev, tag: MEDIA_TAG.GALLERY, format: "video/mp4" }));
+      }
+    }
+  }, [mediaType, id, reset]);
 
   useEffect(() => {
     getOccurrences({ limit: 100 }).then(resp => setOccurrences(resp.data));
@@ -123,10 +136,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             <Input {...register("originalFilename")} placeholder="recording_001.wav" className="h-9" />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Etiqueta (Tag)</label>
-            <Input {...register("tag")} placeholder="Ex: spectrogram, primary, habitat" className="h-9" />
-          </div>
+          <input type="hidden" {...register("tag")} />
         </div>
       </div>
 
@@ -149,17 +159,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             {errors.creator && <p className="text-[10px] text-red-500 mt-1">{errors.creator.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Tipo de Multimedia *</label>
-            <select
-              {...register("type")}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-            >
-              <option value="Sound">Sonido (Audio)</option>
-              <option value="Still">Imagen Estática</option>
-              <option value="MovingImage">Video / Imagen en Movimiento</option>
-            </select>
-          </div>
+          <input type="hidden" {...register("type")} />
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Formato (MIME Type) *</label>
@@ -177,28 +177,48 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
           </div>
         </div>
       </div>
+      {/* 2.5 Bioacústica Avanzada (Solo para Audio) */}
+      {mediaType === MEDIA_TYPE.SOUND && (
+        <div className="space-y-4 bg-card border rounded-lg p-5">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+            <Music className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Detalles de Bioacústica</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Tipo de Vocalización</label>
+              <Input {...register("vocalization_type")} placeholder="Ej: Canto de anuncio, Alarma, Contacto" className="h-9" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Especies de Fondo</label>
+              <Input {...register("background_species")} placeholder="Especies que se escuchan al fondo..." className="h-9" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Duración (Segundos)</label>
+              <Input type="number" step="0.01" {...register("duration_seconds")} placeholder="0.00" className="h-9" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Tamaño del Archivo (Bytes)</label>
+              <Input type="number" {...register("file_size_bytes")} placeholder="Peso en bytes..." className="h-9" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Metadatos GUANO (Solo para Audio) */}
       {mediaType === "Sound" && (
         <div className="space-y-4 bg-card border rounded-lg p-5 border-primary/20 bg-primary/5">
           <div className="flex items-center gap-2 pb-2 border-b border-primary/10">
             <Settings2 className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Metadatos GUANO (Grabación)</h3>
+            <h3 className="text-sm font-semibold text-foreground">Metadatos GUANO (Parámetros técnicos del grabador)</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
             {[
-              { label: "Make", key: "Make" },
-              { label: "Model", key: "Model" },
-              { label: "Serial", key: "Serial" },
-              { label: "Firmware", key: "Firmware Version" },
-              { label: "Timestamp", key: "Timestamp" },
-              { label: "Loc Position", key: "Loc Position" },
-              { label: "Loc Elevation", key: "Loc Elevation" },
-              { label: "Samplerate", key: "Samplerate" },
-              { label: "Filter HP", key: "Filter HP" },
-              { label: "Species Auto ID", key: "Species Auto ID" },
-              { label: "Species Manual ID", key: "Species Manual ID" },
+              { label: "Marca (Make - Fabricante del grabador)", key: "Make" },
+              { label: "Modelo (Model - Nombre del equipo)", key: "Model" },
+              { label: "Serie (Serial - Número único del dispositivo)", key: "Serial" },
+              { label: "Filtro HP (Filter HP - Paso alto en Hz)", key: "Filter HP" },
             ].map((field) => (
               <div key={field.key} className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">{field.label}</label>

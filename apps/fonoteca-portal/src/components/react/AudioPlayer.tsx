@@ -157,7 +157,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     
     const containerClasses = `bg-[#121212] flex rounded-xl overflow-hidden border border-gray-800 shadow-2xl font-sans transition-all duration-300 ${
         isFullScreen 
-        ? 'fixed inset-0 z-[250] w-[95vw] h-[95vh] m-auto md:w-[98vw] md:h-[98vh] flex-col md:flex-row' 
+        ? 'fixed inset-0 z-[250] w-[95vw] h-[95vh] m-auto md:w-[98vw] md:h-[98vh] flex-col md:flex-row-reverse' 
         : 'w-full relative min-h-[500px] flex-col'
     }`;
 
@@ -168,7 +168,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             <div className={containerClasses}>
                 {/* ASIDE - Images Carousel */}
                 {isFullScreen && species && (
-                    <aside className="w-full h-48 md:h-auto md:w-80 lg:w-96 flex-shrink-0 bg-[#0a0a0a] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col relative group/img">
+                    <aside className="w-full h-48 md:h-auto md:w-80 lg:w-96 flex-shrink-0 bg-[#0a0a0a] border-b md:border-b-0 md:border-l border-gray-800 flex flex-col relative group/img">
                         <div className="w-full h-full bg-black/40 relative">
                             {allImages.length > 0 ? (
                                 <>
@@ -241,8 +241,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     </div>
                 </div>
 
-                {/* Viewport Area */}
-                <div className="relative w-full bg-black group p-4 flex flex-col flex-1 overflow-hidden">
+                {/* Viewport Area (Audio 30%) */}
+                <div className="relative w-full bg-black group p-4 flex flex-col flex-[0.3] overflow-hidden">
                     <div ref={timelineRef} className="w-full bg-[#181818] flex-shrink-0" />
                     <div ref={spectrogramRef} className="w-full relative overflow-hidden flex-1" style={{ minHeight: '150px' }} />
                     <div ref={waveformRef} className="w-full relative bg-[#111111] overflow-hidden border-t border-gray-900 flex-shrink-0" />
@@ -317,9 +317,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     </div>
                 )}
 
-                {/* Ficha Area (only in full screen) */}
+                {/* Ficha Area (Info 70%) */}
                 {isFullScreen && species && (
-                    <div className="flex-1 bg-[#0a0a0a] border-t border-gray-800 flex flex-col min-h-[200px] overflow-y-auto">
+                    <div className="flex-[0.7] bg-[#0a0a0a] border-t border-gray-800 flex flex-col min-h-[200px] overflow-y-auto">
                         <div className="p-4 border-b border-gray-800 sticky top-0 bg-[#0a0a0a] z-10 flex justify-between items-center">
                             <h3 className="text-white font-bold tracking-wide text-sm">{lang === 'es' ? 'Ficha de Audio' : 'Audio Profile'}</h3>
                             <button disabled className="text-[9px] px-2 py-1.5 bg-accent-green/20 text-accent-green/50 rounded uppercase font-bold tracking-wider cursor-not-allowed border border-accent-green/20">

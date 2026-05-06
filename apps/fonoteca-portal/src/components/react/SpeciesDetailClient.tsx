@@ -62,8 +62,8 @@ const AudioListTable: React.FC<{
                         <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Autor' : 'Author'}</th>
                         <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fecha' : 'Date'}</th>
                         <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Duración' : 'Duration'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Formato' : 'Format'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Tipo de Canto' : 'Call Type'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fondo' : 'Background'}</th>
+                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Vocalización' : 'Vocalization'}</th>
                         <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Localidad' : 'Locality'}</th>
                         <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px] text-center">{lang === 'es' ? 'Acciones' : 'Actions'}</th>
                     </tr>
@@ -71,11 +71,15 @@ const AudioListTable: React.FC<{
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {audios.map((audio, idx) => (
                         <tr key={audio.id || idx} onClick={() => onSelect(idx)} className="hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors group cursor-pointer">
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-medium">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.occurrence_date || '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{'-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{audio.format || '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{audio.title || audio.tag || (lang === 'es' ? 'Canto' : 'Call')}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{audio.duration_seconds ? `${Number(audio.duration_seconds).toFixed(2)}s` : '-'}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[120px] truncate text-xs" title={audio.background_species}>{audio.background_species || '-'}</td>
+                            <td className="px-4 py-3">
+                                <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                    {audio.vocalization_type || audio.title || (lang === 'es' ? 'Canto' : 'Call')}
+                                </span>
+                            </td>
                             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={species.location}>{species.location || '-'}</td>
                             <td className="px-4 py-3 text-center">
                                 <button
@@ -245,7 +249,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                     <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
                         {/* Species Circle Image */}
                         {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in bg-gray-50 dark:bg-gray-800 flex items-center justify-center p-2">
+                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in flex items-center justify-center">
                                 <img
                                     src={species.mainImage}
                                     alt={commonName}
