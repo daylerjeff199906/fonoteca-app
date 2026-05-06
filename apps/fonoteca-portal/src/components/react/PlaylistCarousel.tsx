@@ -28,7 +28,7 @@ export const PlaylistCarousel: React.FC<PlaylistCarouselProps> = ({ allSpecies, 
         if (!Array.isArray(allSpecies) || allSpecies.length === 0) return []
         // Only take the first 10 items as requested
         const top10 = allSpecies.slice(0, 10);
-        
+
         let items = [...top10]
         // Repeat items to fill up the carousel nicely if needed
         while (items.length < 10) {
@@ -94,9 +94,9 @@ export const PlaylistCarousel: React.FC<PlaylistCarouselProps> = ({ allSpecies, 
                         {carouselItems.map((species, idx) => (
                             <CarouselItem
                                 key={`${species.id}-${idx}`}
-                                className="pl-6 md:basis-1/2 lg:basis-1/4"
+                                className="pl-6 md:basis-1/3 lg:basis-1/5"
                             >
-                                <SpeciesCard 
+                                <SpeciesCard
                                     species={species}
                                     lang={lang}
                                     viewMode="grid"

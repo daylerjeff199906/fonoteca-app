@@ -4,24 +4,13 @@ import { Header } from "../../../components/react/Header";
 import { Footer } from "../../../components/react/Footer";
 import { SpeciesDetailClient } from "../../../components/react/SpeciesDetailClient";
 import { translations, LANGUAGES } from "../../../i18n/data";
-import { getAllSpecies } from "../../../data/species";
 import logoIiap from "../../../assets/logo_iiap.png";
 
+export const prerender = false;
 
 
-export const prerender = true;
-
-export async function getStaticPaths() {
-    const { species } = await getAllSpecies();
-    
-    return LANGUAGES.flatMap((lang) => 
-        species.map((s) => ({
-            params: { lang, id: s.id },
-        }))
-    );
-}
-
-const { lang, id } = Astro.params;
+const lang = Astro.params.lang || 'es';
+const id = Astro.params.id;
 const content = translations[lang as keyof typeof translations];
 
 if (!content) {
