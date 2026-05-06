@@ -1,7 +1,6 @@
 import { getOccurrence } from "@/actions/occurrences";
 import { MultimediaSection } from "@/components/dashboard/occurrences/multimedia-section";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
-import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Check, ArrowLeft } from "lucide-react";
