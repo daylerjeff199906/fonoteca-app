@@ -145,6 +145,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [editRecordStatus, setEditRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
   const [editType, setEditType] = useState<MediaType>(MEDIA_TYPE.SOUND);
   const [editFormat, setEditFormat] = useState("");
+  const [editVocalizationType, setEditVocalizationType] = useState("");
+  const [editBackgroundSpecies, setEditBackgroundSpecies] = useState("");
+  const [editDurationSeconds, setEditDurationSeconds] = useState<string | number>("");
+  const [editFileSize, setEditFileSize] = useState<string | number>("");
   const [editGuanoMetadata, setEditGuanoMetadata] = useState<Record<string, any>>({});
   const [showMetadataConfig, setShowMetadataConfig] = useState(false);
 
@@ -397,6 +401,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
     setEditRecordStatus(item.record_status || "draft");
     setEditType(item.type);
     setEditFormat(item.format);
+    setEditVocalizationType(item.vocalization_type || "");
+    setEditBackgroundSpecies(item.background_species || "");
+    setEditDurationSeconds(item.duration_seconds || "");
+    setEditFileSize(item.file_size_bytes || "");
     setEditGuanoMetadata(item.guano_metadata || {});
     setShowMetadataConfig(false);
     setEditSheetOpen(true);
@@ -420,6 +428,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         record_status: editRecordStatus,
         type: editType as any,
         format: editFormat,
+        vocalization_type: editVocalizationType,
+        background_species: editBackgroundSpecies,
+        duration_seconds: editDurationSeconds ? Number(editDurationSeconds) : null,
+        file_size_bytes: editFileSize ? Number(editFileSize) : null,
         guano_metadata: editGuanoMetadata,
       };
 
@@ -1257,39 +1269,91 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                     </div>
                   </div>
 
+                  {/* Bioacústica Section - Only for Sound */}
+                  {editingItem?.type === MEDIA_TYPE.SOUND && (
+                    <div className="pt-6 border-t mt-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-1 w-1 rounded-full bg-primary" />
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Detalles de Bioacústica</h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Vocalización</label>
+                          <Input
+                            placeholder="Ej: Canto de anuncio, Alarma"
+                            value={editVocalizationType}
+                            onChange={(e) => setEditVocalizationType(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Especies de Fondo</label>
+                          <Input
+                            placeholder="Especies que se escuchan..."
+                            value={editBackgroundSpecies}
+                            onChange={(e) => setEditBackgroundSpecies(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Duración (seg)</label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={editDurationSeconds}
+                            onChange={(e) => setEditDurationSeconds(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tamaño (bytes)</label>
+                          <Input
+                            type="number"
+                            placeholder="Peso en bytes"
+                            value={editFileSize}
+                            onChange={(e) => setEditFileSize(e.target.value)}
+                            className="text-xs h-8 bg-background"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* GUANO Section - Only for Sound */}
                   {editType === MEDIA_TYPE.SOUND && (
                     <div className="pt-6 border-t mt-4">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="h-1 w-1 rounded-full bg-primary" />
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO</h4>
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Metadatos GUANO (Parámetros técnicos del grabador)</h4>
                       </div>
                       <div className="grid grid-cols-1 gap-4">
                         {[
-                          "GUANO|Version", "Make", "Model", "Serial", "Firmware Version",
-                          "Timestamp", "Loc Position", "Loc Elevation", "Length",
-                          "Samplerate", "TE", "Filter HP", "Species Manual ID",
-                          "Species Auto ID", "Note"
-                        ].map((key) => (
-                          <div key={key} className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key}</label>
-                            {key === "Note" ? (
+                          { label: "Marca (Make - Fabricante)", key: "Make" },
+                          { label: "Modelo (Model - Equipo)", key: "Model" },
+                          { label: "Serie (Serial - Nro. Único)", key: "Serial" },
+                          { label: "Filtro HP (Filter HP - Paso Alto)", key: "Filter HP" },
+                          { label: "Notas (Note - Obs. Técnicas)", key: "Note" }
+                        ].map((field) => (
+                          <div key={field.key} className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{field.label}</label>
+                            {field.key === "Note" ? (
                               <Textarea
-                                value={editGuanoMetadata[key] || ""}
-                                placeholder={`Valor de ${key}...`}
+                                value={editGuanoMetadata[field.key] || ""}
+                                placeholder={`Valor de ${field.key}...`}
                                 onChange={(e) => {
                                   const val = e.target.value;
-                                  setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                                  setEditGuanoMetadata(prev => ({ ...prev, [field.key]: val }));
                                 }}
                                 className="text-xs min-h-[80px] bg-background/50 focus:bg-background border-dashed"
                               />
                             ) : (
                               <Input
-                                value={editGuanoMetadata[key] || ""}
-                                placeholder={`Valor de ${key}...`}
+                                value={editGuanoMetadata[field.key] || ""}
+                                placeholder={`Valor de ${field.key}...`}
                                 onChange={(e) => {
                                   const val = e.target.value;
-                                  setEditGuanoMetadata(prev => ({ ...prev, [key]: val }));
+                                  setEditGuanoMetadata(prev => ({ ...prev, [field.key]: val }));
                                 }}
                                 className="text-xs h-8 bg-background/50 focus:bg-background border-dashed"
                               />

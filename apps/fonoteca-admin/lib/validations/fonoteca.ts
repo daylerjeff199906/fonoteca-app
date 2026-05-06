@@ -156,6 +156,10 @@ export const multimediaSchema = z.object({
     MEDIA_TAG.GALLERY,
     MEDIA_TAG.DOCUMENT
   ]).optional().nullable(),
+  vocalization_type: z.string().optional().nullable(),
+  background_species: z.string().optional().nullable(),
+  duration_seconds: numberOrNull,
+  file_size_bytes: numberOrNull,
   parent_multimedia_id: z.string().uuid().optional().nullable(),
   record_status: z.enum(["draft", "published", "deleted"]).optional().default("draft"),
   is_public: z.boolean().optional().default(true),

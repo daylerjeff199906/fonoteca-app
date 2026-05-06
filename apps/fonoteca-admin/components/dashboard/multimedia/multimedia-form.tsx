@@ -177,28 +177,48 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
           </div>
         </div>
       </div>
+      {/* 2.5 Bioacústica Avanzada (Solo para Audio) */}
+      {mediaType === MEDIA_TYPE.SOUND && (
+        <div className="space-y-4 bg-card border rounded-lg p-5">
+          <div className="flex items-center gap-2 pb-2 border-b border-muted/20">
+            <Music className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Detalles de Bioacústica</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Tipo de Vocalización</label>
+              <Input {...register("vocalization_type")} placeholder="Ej: Canto de anuncio, Alarma, Contacto" className="h-9" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Especies de Fondo</label>
+              <Input {...register("background_species")} placeholder="Especies que se escuchan al fondo..." className="h-9" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Duración (Segundos)</label>
+              <Input type="number" step="0.01" {...register("duration_seconds")} placeholder="0.00" className="h-9" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Tamaño del Archivo (Bytes)</label>
+              <Input type="number" {...register("file_size_bytes")} placeholder="Peso en bytes..." className="h-9" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Metadatos GUANO (Solo para Audio) */}
       {mediaType === "Sound" && (
         <div className="space-y-4 bg-card border rounded-lg p-5 border-primary/20 bg-primary/5">
           <div className="flex items-center gap-2 pb-2 border-b border-primary/10">
             <Settings2 className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Metadatos GUANO (Grabación)</h3>
+            <h3 className="text-sm font-semibold text-foreground">Metadatos GUANO (Parámetros técnicos del grabador)</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
             {[
-              { label: "Make", key: "Make" },
-              { label: "Model", key: "Model" },
-              { label: "Serial", key: "Serial" },
-              { label: "Firmware", key: "Firmware Version" },
-              { label: "Timestamp", key: "Timestamp" },
-              { label: "Loc Position", key: "Loc Position" },
-              { label: "Loc Elevation", key: "Loc Elevation" },
-              { label: "Samplerate", key: "Samplerate" },
-              { label: "Filter HP", key: "Filter HP" },
-              { label: "Species Auto ID", key: "Species Auto ID" },
-              { label: "Species Manual ID", key: "Species Manual ID" },
+              { label: "Marca (Make - Fabricante del grabador)", key: "Make" },
+              { label: "Modelo (Model - Nombre del equipo)", key: "Model" },
+              { label: "Serie (Serial - Número único del dispositivo)", key: "Serial" },
+              { label: "Filtro HP (Filter HP - Paso alto en Hz)", key: "Filter HP" },
             ].map((field) => (
               <div key={field.key} className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase">{field.label}</label>

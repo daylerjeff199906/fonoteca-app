@@ -8,6 +8,10 @@ export interface DbMultimedia {
     title: string | null;
     description: string | null;
     tag: string | null;
+    vocalization_type: string | null;
+    background_species: string | null;
+    duration_seconds: number | null;
+    file_size_bytes: number | null;
     parent_multimedia_id: string | null;
 }
 
@@ -109,6 +113,10 @@ export interface Multimedia {
     title: string | null;
     description: string | null;
     tag: string | null;
+    vocalization_type: string | null;
+    background_species: string | null;
+    duration_seconds: number | null;
+    file_size_bytes: number | null;
     parent_multimedia_id: string | null;
 }
 
@@ -299,7 +307,20 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                     name
                 )
             ),
-            multimedia${multimediaJoin}(*)
+            multimedia${multimediaJoin}(
+                id,
+                identifier,
+                type,
+                format,
+                title,
+                description,
+                tag,
+                vocalization_type,
+                background_species,
+                duration_seconds,
+                file_size_bytes,
+                parent_multimedia_id
+            )
         `, { count: 'exact' })
         .eq('record_status', 'published');
 
@@ -364,6 +385,10 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                 title: m.title,
                 description: m.description,
                 tag: m.tag,
+                vocalization_type: m.vocalization_type,
+                background_species: m.background_species,
+                duration_seconds: m.duration_seconds,
+                file_size_bytes: m.file_size_bytes,
                 parent_multimedia_id: m.parent_multimedia_id
             };
         };
@@ -559,6 +584,10 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
                 title,
                 description,
                 tag,
+                vocalization_type,
+                background_species,
+                duration_seconds,
+                file_size_bytes,
                 parent_multimedia_id
             )
         `)
@@ -591,6 +620,10 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             title: m.title,
             description: m.description,
             tag: m.tag,
+            vocalization_type: m.vocalization_type,
+            background_species: m.background_species,
+            duration_seconds: m.duration_seconds,
+            file_size_bytes: m.file_size_bytes,
             parent_multimedia_id: m.parent_multimedia_id
         };
     };
