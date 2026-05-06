@@ -5,6 +5,7 @@ import { getSpeciesById, type Species } from '../../data/species';
 import { translations, type Language } from '../../i18n/data';
 import { SpeciesGallery } from './SpeciesGallery';
 import { AudioPlayer } from './AudioPlayer';
+import { SpeciesDistributionMap } from './SpeciesDistributionMap';
 import {
     Bird,
     TrendingDown,
@@ -240,7 +241,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
             {/* Header Section (Mockup Inspired) */}
             <header className="bg-[#f4f1ea] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                <div className="container mx-auto px-6 py-12 max-w-7xl">
+                <div className="container mx-auto px-6 py-12 max-w-8xl">
                     <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
                         {/* Species Circle Image */}
                         {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
@@ -292,7 +293,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
             </header>
 
             {/* Layout Body */}
-            <div className="container mx-auto px-6 py-12 max-w-7xl">
+            <div className="container mx-auto px-6 py-12 max-w-8xl">
                 <div className="flex flex-col lg:flex-row gap-12 lg:items-start">
                     {/* Sidebar Sticky Navigation */}
                     <aside className="lg:w-64 shrink-0 lg:sticky lg:top-24 mt-2">
@@ -346,7 +347,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                     </aside>
 
                     {/* Main Content Area */}
-                    <div className="flex-1 max-w-4xl flex flex-col gap-4">
+                    <div className="flex-1 w-full flex flex-col gap-4">
 
                         {/* Section: At a glance */}
                         <section id="at-a-glance" className="scroll-mt-24">
@@ -439,25 +440,13 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 description={lang === 'es' ? 'Áreas geográficas y contexto de observación.' : 'Geographic ranges and observation context.'}
                             />
                             <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
-                                {species.databaseDetails?.decimalLatitude && species.databaseDetails?.decimalLongitude ? (
-                                    <div className="w-full h-full min-h-[400px] rounded-md overflow-hidden relative">
-                                        <iframe
-                                            width="100%"
-                                            height="100%"
-                                            frameBorder="0"
-                                            style={{ border: 0, position: 'absolute', top: 0, left: 0 }}
-                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${species.databaseDetails.decimalLongitude - 0.05},${species.databaseDetails.decimalLatitude - 0.05},${species.databaseDetails.decimalLongitude + 0.05},${species.databaseDetails.decimalLatitude + 0.05}&layer=mapnik&marker=${species.databaseDetails.decimalLatitude},${species.databaseDetails.decimalLongitude}`}
-                                            allowFullScreen
-                                        ></iframe>
-                                    </div>
-                                ) : (
-                                    <div className="text-center space-y-4 relative z-10 max-w-md py-12">
-                                        <MapPin size={48} className="text-gray-300 dark:text-gray-700 mx-auto" />
-                                        <h4 className="text-xl font-bold text-gray-400 dark:text-gray-500 leading-tight">
-                                            {lang === 'es' ? 'Sin coordenadas geográficas' : 'No geographic coordinates'}
-                                        </h4>
-                                    </div>
-                                )}
+                                <div className="w-full relative z-10">
+                                    <SpeciesDistributionMap
+                                        scientificName={species.scientificName}
+                                        latitude={species.databaseDetails?.decimalLatitude ?? undefined}
+                                        longitude={species.databaseDetails?.decimalLongitude ?? undefined}
+                                    />
+                                </div>
                                 <div className="w-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 mt-2 rounded-xl flex flex-wrap justify-between items-center gap-4">
                                     <div className="flex-1 min-w-[200px]">
                                         <h4 className="text-sm font-black text-gray-900 dark:text-white">{species.location}</h4>
