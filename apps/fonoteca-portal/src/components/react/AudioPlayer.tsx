@@ -166,6 +166,32 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             {isFullScreen && <div className="fixed inset-0 z-[240] bg-black/95 backdrop-blur-md" onClick={() => layoutMode === 'expandable' ? setIsExpanded(false) : handleClose()}></div>}
             
             <div className={containerClasses}>
+                {/* ASIDE - Images Carousel */}
+                {isFullScreen && species && (
+                    <aside className="w-full h-48 md:h-auto md:w-80 lg:w-96 flex-shrink-0 bg-[#0a0a0a] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col relative group/img">
+                        <div className="w-full h-full bg-black/40 relative">
+                            {allImages.length > 0 ? (
+                                <>
+                                    <img src={allImages[currentImageIndex]} alt="Spectrogram" className="w-full h-full object-contain" />
+                                    {allImages.length > 1 && (
+                                        <>
+                                            <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity"><ChevronLeft className="w-6 h-6" /></button>
+                                            <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity"><ChevronRight className="w-6 h-6" /></button>
+                                            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md text-[10px] text-white font-bold tracking-widest uppercase">{currentImageIndex + 1} / {allImages.length}</div>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
+                                    <Music className="w-12 h-12 mb-2" />
+                                    <span className="text-xs font-medium uppercase tracking-widest">No Spectrogram</span>
+                                </div>
+                            )}
+                        </div>
+                    </aside>
+                )}
+
+                {/* MAIN - Audio Player & Ficha */}
                 <div className="flex-1 flex flex-col min-w-0 h-full">
                     {/* Technical Header */}
                     <div className="bg-[#1a1a1a] px-4 sm:px-6 py-3 border-b border-gray-800 flex justify-between items-center sm:min-h-[64px] flex-shrink-0">
@@ -290,58 +316,40 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                         <span className="truncate">{description}</span>
                     </div>
                 )}
-                </div>
 
-                {/* SIDE PANEL */}
+                {/* Ficha Area (only in full screen) */}
                 {isFullScreen && species && (
-                    <div className="w-full md:w-1/2 flex-shrink-0 bg-[#0a0a0a] border-t md:border-t-0 md:border-l border-gray-800 flex flex-col overflow-y-auto max-h-[50vh] md:max-h-none">
+                    <div className="flex-1 bg-[#0a0a0a] border-t border-gray-800 flex flex-col min-h-[200px] overflow-y-auto">
                         <div className="p-4 border-b border-gray-800 sticky top-0 bg-[#0a0a0a] z-10 flex justify-between items-center">
                             <h3 className="text-white font-bold tracking-wide text-sm">{lang === 'es' ? 'Ficha de Audio' : 'Audio Profile'}</h3>
                             <button disabled className="text-[9px] px-2 py-1.5 bg-accent-green/20 text-accent-green/50 rounded uppercase font-bold tracking-wider cursor-not-allowed border border-accent-green/20">
                                 {lang === 'es' ? 'Descargar Ficha' : 'Download'}
                             </button>
                         </div>
-                        <div className="p-4 space-y-6">
-                            {/* Images related */}
-                            {spectrogramImages && spectrogramImages.length > 0 && (
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{lang === 'es' ? 'Imágenes Relacionadas' : 'Related Media'}</h4>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {spectrogramImages.slice(0, 4).map((img, i) => (
-                                            <div key={i} className="aspect-square bg-gray-900 rounded-md overflow-hidden border border-gray-800">
-                                                <img src={img} alt="Related" className="w-full h-full object-cover" />
-                                            </div>
+                        <div className="p-4 md:p-6">
+                            <div className="border border-gray-800 rounded-lg overflow-hidden bg-[#111]">
+                                <table className="w-full text-left text-xs">
+                                    <tbody className="divide-y divide-gray-800/50">
+                                        {[
+                                            { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName },
+                                            { label: lang === 'es' ? 'Autor' : 'Author', value: species.databaseDetails?.identifiedBy || 'Desconocido' },
+                                            { label: lang === 'es' ? 'Fecha' : 'Date', value: species.databaseDetails?.occurrence_date },
+                                            { label: lang === 'es' ? 'Localidad' : 'Locality', value: species.location },
+                                            { label: lang === 'es' ? 'País' : 'Country', value: species.databaseDetails?.country || 'Perú' },
+                                            { label: 'ID Ocurrencia', value: species.databaseDetails?.occurrenceID },
+                                        ].filter(item => item.value).map((item, i) => (
+                                            <tr key={i} className="hover:bg-[#1a1a1a] transition-colors">
+                                                <td className="px-3 py-2.5 text-gray-500 font-medium w-1/3 border-r border-gray-800/50">{item.label}</td>
+                                                <td className="px-3 py-2.5 text-gray-300 font-medium break-all">{item.value}</td>
+                                            </tr>
                                         ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Ficha table */}
-                            <div className="space-y-3">
-                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{lang === 'es' ? 'Datos de Ocurrencia' : 'Occurrence Data'}</h4>
-                                <div className="border border-gray-800 rounded-lg overflow-hidden bg-[#111]">
-                                    <table className="w-full text-left text-xs">
-                                        <tbody className="divide-y divide-gray-800/50">
-                                            {[
-                                                { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName },
-                                                { label: lang === 'es' ? 'Autor' : 'Author', value: species.databaseDetails?.identifiedBy || 'Desconocido' },
-                                                { label: lang === 'es' ? 'Fecha' : 'Date', value: species.databaseDetails?.occurrence_date },
-                                                { label: lang === 'es' ? 'Localidad' : 'Locality', value: species.location },
-                                                { label: lang === 'es' ? 'País' : 'Country', value: species.databaseDetails?.country || 'Perú' },
-                                                { label: 'ID Ocurrencia', value: species.databaseDetails?.occurrenceID },
-                                            ].filter(item => item.value).map((item, i) => (
-                                                <tr key={i} className="hover:bg-[#1a1a1a] transition-colors">
-                                                    <td className="px-3 py-2.5 text-gray-500 font-medium w-1/3 border-r border-gray-800/50">{item.label}</td>
-                                                    <td className="px-3 py-2.5 text-gray-300 font-medium break-all">{item.value}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 )}
+                </div>
             </div>
         </>
     );
