@@ -92,11 +92,12 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
     );
   }
 
-  if (!usageKey) {
+  // Only show error if BOTH distribution data and occurrence coordinates are missing
+  if (!usageKey && (!latitude || !longitude)) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="w-full h-[500px] flex flex-col items-center justify-center bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-          <p className="text-gray-600 font-medium">No se encontró información de distribución para {scientificName}.</p>
+        <div className="w-full h-[500px] flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 text-center">
+          <p className="text-gray-600 dark:text-gray-400 font-medium">No se encontró información de distribución para {scientificName}.</p>
         </div>
       </div>
     );
@@ -122,11 +123,13 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
           
-          {/* GBIF Density TileLayer (Hexagons) */}
-          <TileLayer
-            attribution='&copy; <a href="https://www.gbif.org/">GBIF</a>'
-            url={`https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${usageKey}&bin=hex&hexPerTile=50&style=classic.poly&srs=EPSG:3857`}
-          />
+          {/* GBIF Density TileLayer (Hexagons) - Only if usageKey exists */}
+          {usageKey && (
+            <TileLayer
+              attribution='&copy; <a href="https://www.gbif.org/">GBIF</a>'
+              url={`https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${usageKey}&bin=hex&hexPerTile=50&style=classic.poly&srs=EPSG:3857`}
+            />
+          )}
 
           {/* Individual occurrence marker with pulsing effect and permanent label */}
           {latitude && longitude && (

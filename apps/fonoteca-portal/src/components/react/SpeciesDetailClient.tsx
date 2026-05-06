@@ -245,7 +245,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                     <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
                         {/* Species Circle Image */}
                         {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in bg-gray-50 dark:bg-gray-800 flex items-center justify-center p-2">
+                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in flex items-center justify-center">
                                 <img
                                     src={species.mainImage}
                                     alt={commonName}
