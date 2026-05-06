@@ -21,6 +21,8 @@ interface AudioPlayerProps {
     hasNext?: boolean;
     hasPrev?: boolean;
     layoutMode?: 'direct' | 'expandable';
+    species?: any;
+    lang?: string;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
@@ -38,7 +40,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     onPrev,
     hasNext,
     hasPrev,
-    layoutMode = 'direct'
+    layoutMode = 'direct',
+    species,
+    lang
 }) => {
     const [isExpanded, setIsExpanded] = useState(layoutMode === 'direct');
     
@@ -151,10 +155,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     // Style logic
     const isFullScreen = isExpanded || isModalContainer;
     
-    const containerClasses = `bg-[#121212] flex flex-col rounded-xl overflow-hidden border border-gray-800 shadow-2xl font-sans transition-all duration-300 ${
+    const containerClasses = `bg-[#121212] flex rounded-xl overflow-hidden border border-gray-800 shadow-2xl font-sans transition-all duration-300 ${
         isFullScreen 
-        ? 'fixed inset-0 z-[250] w-[95vw] h-[95vh] m-auto md:w-[90vw] md:h-[90vh]' 
-        : 'w-full relative min-h-[500px]'
+        ? 'fixed inset-0 z-[250] w-[95vw] h-[95vh] m-auto md:w-[98vw] md:h-[98vh] flex-col md:flex-row' 
+        : 'w-full relative min-h-[500px] flex-col'
     }`;
 
     return (
@@ -162,8 +166,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             {isFullScreen && <div className="fixed inset-0 z-[240] bg-black/95 backdrop-blur-md" onClick={() => layoutMode === 'expandable' ? setIsExpanded(false) : handleClose()}></div>}
             
             <div className={containerClasses}>
-                {/* Technical Header */}
-                <div className="bg-[#1a1a1a] px-4 sm:px-6 py-3 border-b border-gray-800 flex justify-between items-center sm:min-h-[64px] flex-shrink-0">
+                <div className="flex-1 flex flex-col min-w-0 h-full">
+                    {/* Technical Header */}
+                    <div className="bg-[#1a1a1a] px-4 sm:px-6 py-3 border-b border-gray-800 flex justify-between items-center sm:min-h-[64px] flex-shrink-0">
                     <div className="flex items-center gap-3 overflow-hidden">
                         {(onPrev || onNext) && (
                             <div className="flex items-center flex-shrink-0">
@@ -304,6 +309,58 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                     <div className="px-6 py-3 bg-[#111] border-t border-gray-900 text-[10px] text-gray-500 flex-shrink-0 flex items-center gap-2">
                         <span className="font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Nota:</span>
                         <span className="truncate">{description}</span>
+                    </div>
+                )}
+                </div>
+
+                {/* SIDE PANEL */}
+                {isFullScreen && species && (
+                    <div className="w-full md:w-80 lg:w-96 flex-shrink-0 bg-[#0a0a0a] border-t md:border-t-0 md:border-l border-gray-800 flex flex-col overflow-y-auto max-h-[40vh] md:max-h-none">
+                        <div className="p-4 border-b border-gray-800 sticky top-0 bg-[#0a0a0a] z-10 flex justify-between items-center">
+                            <h3 className="text-white font-bold tracking-wide text-sm">{lang === 'es' ? 'Ficha de Audio' : 'Audio Profile'}</h3>
+                            <button disabled className="text-[9px] px-2 py-1.5 bg-accent-green/20 text-accent-green/50 rounded uppercase font-bold tracking-wider cursor-not-allowed border border-accent-green/20">
+                                {lang === 'es' ? 'Descargar Ficha' : 'Download'}
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-6">
+                            {/* Images related */}
+                            {spectrogramImages && spectrogramImages.length > 0 && (
+                                <div className="space-y-3">
+                                    <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{lang === 'es' ? 'Imágenes Relacionadas' : 'Related Media'}</h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {spectrogramImages.slice(0, 4).map((img, i) => (
+                                            <div key={i} className="aspect-square bg-gray-900 rounded-md overflow-hidden border border-gray-800">
+                                                <img src={img} alt="Related" className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Ficha table */}
+                            <div className="space-y-3">
+                                <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{lang === 'es' ? 'Datos de Ocurrencia' : 'Occurrence Data'}</h4>
+                                <div className="border border-gray-800 rounded-lg overflow-hidden bg-[#111]">
+                                    <table className="w-full text-left text-xs">
+                                        <tbody className="divide-y divide-gray-800/50">
+                                            {[
+                                                { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName },
+                                                { label: lang === 'es' ? 'Autor' : 'Author', value: species.databaseDetails?.identifiedBy || 'Desconocido' },
+                                                { label: lang === 'es' ? 'Fecha' : 'Date', value: species.databaseDetails?.occurrence_date },
+                                                { label: lang === 'es' ? 'Localidad' : 'Locality', value: species.location },
+                                                { label: lang === 'es' ? 'País' : 'Country', value: species.databaseDetails?.country || 'Perú' },
+                                                { label: 'ID Ocurrencia', value: species.databaseDetails?.occurrenceID },
+                                            ].filter(item => item.value).map((item, i) => (
+                                                <tr key={i} className="hover:bg-[#1a1a1a] transition-colors">
+                                                    <td className="px-3 py-2.5 text-gray-500 font-medium w-1/3 border-r border-gray-800/50">{item.label}</td>
+                                                    <td className="px-3 py-2.5 text-gray-300 font-medium break-all">{item.value}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
