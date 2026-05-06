@@ -4,7 +4,8 @@ import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
+import { FormFooter } from "@/components/panel-admin/form-footer";
 
 export default async function OccurrenceMultimediaPage({
   params,
@@ -45,14 +46,19 @@ export default async function OccurrenceMultimediaPage({
             />
           </div>
 
-          <div className="flex justify-end pt-4">
+          <FormFooter>
+            <Button asChild variant="outline">
+              <Link href={isFromEvent ? `/dashboard/collections/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
+                Volver
+              </Link>
+            </Button>
             <Button asChild size="lg" className="gap-2 px-8">
               <Link href={isFromEvent ? `/dashboard/collections/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
                 <Check className="h-5 w-5" />
                 Terminar y Volver al Listado
               </Link>
             </Button>
-          </div>
+          </FormFooter>
         </div>
       </div>
     </LayoutWrapper>

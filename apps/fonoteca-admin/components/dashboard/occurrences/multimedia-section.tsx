@@ -665,12 +665,20 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       </div>
 
       {list.length === 0 ? (
-        <div className="border border-dashed rounded-xl py-12 flex flex-col items-center justify-center bg-muted/5">
-          <div className="bg-muted/30 p-4 rounded-full mb-2">
-            <Music className="h-6 w-6 text-muted-foreground/50" />
+        <button 
+          onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setSelectedFiles([]); setUploadSheetOpen(true); }}
+          className="w-full border-2 border-dashed border-muted-foreground/20 rounded-2xl py-12 flex flex-col items-center justify-center bg-muted/5 hover:bg-primary/5 hover:border-primary/40 transition-all group"
+        >
+          <div className="bg-primary/10 p-5 rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <Music className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-xs font-medium text-muted-foreground">No hay audios registrados</p>
-        </div>
+          <h4 className="text-sm font-bold text-foreground">No hay audios registrados</h4>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">Aún no has subido grabaciones para esta ocurrencia</p>
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
+            <Upload className="h-3.5 w-3.5" />
+            Comenzar a subir
+          </div>
+        </button>
       ) : (
         <div className="space-y-3">
           {/* Add New Audio Card */}
@@ -839,12 +847,20 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       </div>
 
       {list.length === 0 ? (
-        <div className="border border-dashed rounded-xl py-12 flex flex-col items-center justify-center bg-muted/5">
-          <div className="bg-muted/30 p-4 rounded-full mb-2">
-            <FileImage className="h-6 w-6 text-muted-foreground/50" />
+        <button 
+          onClick={() => { setActiveUploadType(uploadType); setSelectedFiles([]); setUploadSheetOpen(true); }}
+          className="w-full border-2 border-dashed border-muted-foreground/20 rounded-2xl py-16 flex flex-col items-center justify-center bg-muted/5 hover:bg-primary/5 hover:border-primary/40 transition-all group"
+        >
+          <div className="bg-primary/10 p-5 rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <FileImage className="h-8 w-8 text-primary" />
           </div>
-          <p className="text-xs font-medium text-muted-foreground">No hay imágenes registradas</p>
-        </div>
+          <h4 className="text-sm font-bold text-foreground">Galería vacía</h4>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">No hay fotografías o videos asociados</p>
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            Añadir multimedia
+          </div>
+        </button>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {/* Add New Image Card */}
