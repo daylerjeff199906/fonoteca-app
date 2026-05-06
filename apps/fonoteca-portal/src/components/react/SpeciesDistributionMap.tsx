@@ -78,16 +78,16 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
           zoom={latitude && longitude ? 8 : 5} 
           style={{ height: '100%', width: '100%' }}
         >
-          {/* Base TileLayer: CartoDB Positron */}
+          {/* Base TileLayer: CartoDB Dark Matter */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
           
-          {/* GBIF Density TileLayer */}
+          {/* GBIF Density TileLayer (Hexagons) */}
           <TileLayer
             attribution='&copy; <a href="https://www.gbif.org/">GBIF</a>'
-            url={`https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${usageKey}&style=green.poly&srs=EPSG:3857`}
+            url={`https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${usageKey}&bin=hex&hexPerTile=50&style=classic.poly&srs=EPSG:3857`}
           />
 
           {/* Individual occurrence marker */}

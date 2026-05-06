@@ -348,7 +348,6 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                     {/* Main Content Area */}
                     <div className="flex-1 w-full flex flex-col gap-4">
-
                         {/* Section: At a glance */}
                         <section id="at-a-glance" className="scroll-mt-24">
                             <SectionHeader
