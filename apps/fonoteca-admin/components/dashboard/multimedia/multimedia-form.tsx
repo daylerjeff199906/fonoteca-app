@@ -25,9 +25,7 @@ import {
 } from "@/components/ui/popover";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
@@ -43,7 +41,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
   const debouncedCreatorSearch = useDebounce(creatorSearch, 400);
   const [openCreator, setOpenCreator] = useState(false);
 
-  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<MultimediaInput>({
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<MultimediaInput>({
     resolver: zodResolver(multimediaSchema) as any,
     defaultValues: {
       type: "Sound",
@@ -195,8 +193,8 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
                 <Popover open={openCreator} onOpenChange={setOpenCreator}>
                   <PopoverTrigger asChild>
                     <div className="relative group">
-                      <Input 
-                        {...field} 
+                      <Input
+                        {...field}
                         placeholder="Nombre del autor..."
                         onChange={(e) => {
                           field.onChange(e.target.value);
@@ -204,10 +202,10 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
                           if (!e.target.value) setValue("creator_id", null);
                         }}
                         onFocus={() => setOpenCreator(true)}
-                        className="bg-background h-9 focus-visible:ring-primary/20 pr-8" 
+                        className="bg-background h-9 focus-visible:ring-primary/20 pr-8"
                       />
                       {field.value && (
-                        <button 
+                        <button
                           type="button"
                           onClick={() => {
                             field.onChange("");
@@ -254,8 +252,8 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             {errors.creator && <p className="text-[10px] text-red-500 mt-1">{errors.creator.message}</p>}
             {watch("creator_id") && (
               <div className="flex items-center gap-1.5 mt-1 px-1">
-                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                 <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-tighter">Vinculado a Intranet</span>
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-tighter">Vinculado a Intranet</span>
               </div>
             )}
           </div>
