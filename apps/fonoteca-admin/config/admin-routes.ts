@@ -106,6 +106,10 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
           title: "Operaciones Masivas",
           url: `/dashboard/bulk`,
         },
+        {
+          title: "Usuarios",
+          url: `/dashboard/users`,
+        },
       ],
     },
   ]
