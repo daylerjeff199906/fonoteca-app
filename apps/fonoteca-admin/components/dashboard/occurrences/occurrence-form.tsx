@@ -10,6 +10,7 @@ import { getLocations } from "@/actions/locations";
 import { getInstitutions } from "@/actions/institutions";
 import { getCollections } from "@/actions/collections";
 import { getEcosystems } from "@/actions/ecosystems";
+import { searchProfiles } from "@/actions/users";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -31,7 +32,8 @@ import {
   Thermometer,
   Droplets,
   ArrowUp,
-  Box
+  Box,
+  X
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -101,6 +103,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [openLocation, setOpenLocation] = useState(false);
   const debouncedLocationSearch = useDebounce(locationSearch, 400);
+
+  // User Search
+  const [recordedBySearch, setRecordedBySearch] = useState("");
+  const [identifiedBySearch, setIdentifiedBySearch] = useState("");
+  const [userResults, setUserResults] = useState<{ id: string, first_name: string, last_name: string, email: string }[]>([]);
+  const [isUserLoading, setIsUserLoading] = useState(false);
+  const debouncedRecordedBySearch = useDebounce(recordedBySearch, 400);
+  const debouncedIdentifiedBySearch = useDebounce(identifiedBySearch, 400);
+  const [openRecordedBy, setOpenRecordedBy] = useState(false);
+  const [openIdentifiedBy, setOpenIdentifiedBy] = useState(false);
 
 
 
@@ -206,6 +218,20 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       setIsTaxonLoading(false);
     });
   }, [debouncedTaxonSearch, selectedTaxon]);
+
+  // User Fetch on Search
+  useEffect(() => {
+    const search = debouncedRecordedBySearch || debouncedIdentifiedBySearch;
+    if (!search || search.length < 2) {
+      setUserResults([]);
+      return;
+    }
+    setIsUserLoading(true);
+    searchProfiles(search).then(resp => {
+      setUserResults(resp.data);
+      setIsUserLoading(false);
+    });
+  }, [debouncedRecordedBySearch, debouncedIdentifiedBySearch]);
 
   const onSubmit = async (data: OccurrenceInput) => {
     setLoading(true);
@@ -633,13 +659,151 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Registrado Por *</label>
-              <Input {...register("recordedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
+              <Controller
+                control={control}
+                name="recordedBy"
+                render={({ field }) => (
+                  <Popover open={openRecordedBy} onOpenChange={setOpenRecordedBy}>
+                    <PopoverTrigger asChild>
+                      <div className="relative group">
+                        <Input 
+                          {...field} 
+                          value={field.value || ""}
+                          placeholder="Nombre del recolector..."
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setRecordedBySearch(e.target.value);
+                            if (!e.target.value) setValue("recorded_by_id", null);
+                          }}
+                          onFocus={() => setOpenRecordedBy(true)}
+                          className="bg-background h-9 focus-visible:ring-primary/20 pr-8" 
+                        />
+                        {field.value && (
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              field.onChange("");
+                              setValue("recorded_by_id", null);
+                              setRecordedBySearch("");
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    </PopoverTrigger>
+                    {userResults.length > 0 && (
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                        <Command>
+                          <CommandList>
+                            <CommandGroup heading="Sugerencias de la Intranet">
+                              {userResults.map((u) => (
+                                <CommandItem
+                                  key={u.id}
+                                  value={u.id}
+                                  onSelect={() => {
+                                    const fullName = `${u.first_name} ${u.last_name}`;
+                                    field.onChange(fullName);
+                                    setValue("recorded_by_id", u.id);
+                                    setOpenRecordedBy(false);
+                                  }}
+                                >
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="font-semibold text-sm">{u.first_name} {u.last_name}</span>
+                                    <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                )}
+              />
               {errors.recordedBy && <p className="text-[10px] text-red-500 mt-1">{errors.recordedBy.message}</p>}
+              {watch("recorded_by_id") && (
+                <div className="flex items-center gap-1.5 mt-1 px-1">
+                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                   <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-tighter">Vinculado a Intranet</span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Identificado Por</label>
-              <Input {...register("identifiedBy")} className="bg-background h-9 focus-visible:ring-primary/20" />
+              <Controller
+                control={control}
+                name="identifiedBy"
+                render={({ field }) => (
+                  <Popover open={openIdentifiedBy} onOpenChange={setOpenIdentifiedBy}>
+                    <PopoverTrigger asChild>
+                      <div className="relative group">
+                        <Input 
+                          {...field} 
+                          value={field.value || ""}
+                          placeholder="Nombre del identificador..."
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setIdentifiedBySearch(e.target.value);
+                            if (!e.target.value) setValue("identified_by_id", null);
+                          }}
+                          onFocus={() => setOpenIdentifiedBy(true)}
+                          className="bg-background h-9 focus-visible:ring-primary/20 pr-8" 
+                        />
+                        {field.value && (
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              field.onChange("");
+                              setValue("identified_by_id", null);
+                              setIdentifiedBySearch("");
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    </PopoverTrigger>
+                    {userResults.length > 0 && (
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                        <Command>
+                          <CommandList>
+                            <CommandGroup heading="Sugerencias de la Intranet">
+                              {userResults.map((u) => (
+                                <CommandItem
+                                  key={u.id}
+                                  value={u.id}
+                                  onSelect={() => {
+                                    const fullName = `${u.first_name} ${u.last_name}`;
+                                    field.onChange(fullName);
+                                    setValue("identified_by_id", u.id);
+                                    setOpenIdentifiedBy(false);
+                                  }}
+                                >
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="font-semibold text-sm">{u.first_name} {u.last_name}</span>
+                                    <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                )}
+              />
+              {watch("identified_by_id") && (
+                <div className="flex items-center gap-1.5 mt-1 px-1">
+                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                   <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-tighter">Vinculado a Intranet</span>
+                </div>
+              )}
             </div>
 
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-muted/20">

@@ -107,7 +107,9 @@ export const occurrenceSchema = z.object({
   catalogNumber: z.string().optional().nullable(),
 
   recordedBy: z.string().min(1, "Recorded By is required"),
+  recorded_by_id: z.string().uuid().optional().nullable(),
   identifiedBy: z.string().optional().nullable(),
+  identified_by_id: z.string().uuid().optional().nullable(),
   identificationMethod: z.string().default("Manual"),
   identificationConfidence: numberOrNull,
   lifeStage: z.string().optional().nullable(),

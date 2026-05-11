@@ -296,3 +296,27 @@ export async function getAvailableUsersForModule(moduleId: string, search: strin
     return { data: [], success: false, error: error.message }
   }
 }
+export async function searchProfiles(search: string = "") {
+  try {
+    const cookieStore = await cookies()
+    const supabase = await createBioIntranetServer(cookieStore)
+
+    let query = supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, avatar_url')
+    
+    if (search) {
+      query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
+    }
+
+    const { data, error } = await query
+      .order('first_name', { ascending: true })
+      .limit(10)
+
+    if (error) throw error
+    return { data: data || [], success: true }
+  } catch (error: any) {
+    console.error('Error searching profiles:', error)
+    return { data: [], success: false, error: error.message }
+  }
+}

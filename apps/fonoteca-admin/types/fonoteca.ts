@@ -125,7 +125,9 @@ export interface Occurrence {
   catalogNumber: string | null;
 
   recordedBy: string;
+  recorded_by_id: string | null;
   identifiedBy: string | null;
+  identified_by_id: string | null;
   identificationMethod: string;
   identificationConfidence: number | null;
   lifeStage: string | null;
