@@ -31,6 +31,9 @@ import {
   Plus,
   Loader2
 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { SearchInput } from "@/components/dashboard/search-input"
+import { PaginationButtons } from "@/components/dashboard/pagination-buttons"
 import { assignUserRole, removeUserRole } from "@/actions/users"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -62,26 +65,23 @@ interface UsersClientProps {
   initialRoles: Role[]
   initialUserRoles: UserRole[]
   moduleId: string
+  totalCount: number
+  initialPermissions: { id: string, action: string }[]
 }
 
 export function UsersClient({ 
   initialProfiles, 
   initialRoles, 
   initialUserRoles,
-  moduleId 
+  moduleId,
+  totalCount,
+  initialPermissions
 }: UsersClientProps) {
-  const [searchTerm, setSearchTerm] = useState("")
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [loadingRoles, setLoadingRoles] = useState<Record<string, boolean>>({})
-
-  // Filter profiles based on search
-  const filteredProfiles = initialProfiles.filter(profile => {
-    const fullName = `${profile.first_name} ${profile.last_name}`.toLowerCase()
-    const email = profile.email?.toLowerCase() || ""
-    const search = searchTerm.toLowerCase()
-    return fullName.includes(search) || email.includes(search)
-  })
 
   // Get roles for a specific profile in this module
   const getUserRoles = (profileId: string) => {
@@ -104,12 +104,13 @@ export function UsersClient({
 
     try {
       if (isAssigned) {
-        await removeUserRole(profileId, roleId)
+        await removeUserRole(profileId, roleId, moduleId)
         showToast.success("Rol eliminado", "El rol ha sido revocado exitosamente.")
       } else {
-        await assignUserRole(profileId, roleId)
+        await assignUserRole(profileId, roleId, moduleId)
         showToast.success("Rol asignado", "El rol ha sido concedido exitosamente.")
       }
+      router.refresh()
     } catch (error) {
       showToast.error("Error", "No se pudo actualizar el rol del usuario.")
     } finally {
@@ -120,29 +121,23 @@ export function UsersClient({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nombre o correo..."
-            className="pl-8 h-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex-1 max-w-sm">
+          <SearchInput placeholder="Buscar por nombre o correo..." />
         </div>
       </div>
 
       <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Roles en este Módulo</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+            <TableRow className="bg-muted/50">
+              <TableHead className="font-bold">Usuario</TableHead>
+              <TableHead className="font-bold">Roles en Fonoteca</TableHead>
+              <TableHead className="text-right font-bold">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProfiles.length > 0 ? (
-              filteredProfiles.map((profile) => {
+            {initialProfiles.length > 0 ? (
+              initialProfiles.map((profile) => {
                 const userRoles = getUserRoles(profile.id)
                 const hasAccess = userRoles.length > 0
 
@@ -210,6 +205,13 @@ export function UsersClient({
         </Table>
       </div>
 
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          Mostrando <span className="font-medium">{initialProfiles.length}</span> de <span className="font-medium">{totalCount}</span> usuarios
+        </p>
+        <PaginationButtons totalCount={totalCount} pageSize={10} />
+      </div>
+
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="sm:max-w-md">
           <SheetHeader className="space-y-1">
@@ -224,7 +226,22 @@ export function UsersClient({
 
           <div className="mt-6 space-y-6">
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Roles Disponibles</h4>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Permisos del Módulo</h4>
+              <div className="flex flex-wrap gap-2">
+                {initialPermissions.length > 0 ? (
+                  initialPermissions.map((perm) => (
+                    <Badge key={perm.id} variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                      {perm.action}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-[10px] text-muted-foreground italic">No hay acciones definidas para este módulo.</span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Asignación de Roles</h4>
               <div className="grid gap-4">
                 {initialRoles.map((role) => {
                   const userRoles = selectedUser ? getUserRoles(selectedUser.id) : []
