@@ -2,32 +2,32 @@
 "use client"
 
 import { useState } from "react"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetDescription,
   SheetFooter
 } from "@/components/ui/sheet"
-import { 
-  Search, 
-  UserCog, 
-  Shield, 
-  ShieldCheck, 
-  X, 
+import {
+  Search,
+  UserCog,
+  Shield,
+  ShieldCheck,
+  X,
   Plus,
   Loader2
 } from "lucide-react"
@@ -69,9 +69,9 @@ interface UsersClientProps {
   initialPermissions: { id: string, action: string }[]
 }
 
-export function UsersClient({ 
-  initialProfiles, 
-  initialRoles, 
+export function UsersClient({
+  initialProfiles,
+  initialRoles,
   initialUserRoles,
   moduleId,
   totalCount,
@@ -126,7 +126,7 @@ export function UsersClient({
         </div>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="bg-card">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -151,11 +151,11 @@ export function UsersClient({
                             {profile.first_name?.[0]}{profile.last_name?.[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm">
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold text-sm whitespace-nowrap">
                             {profile.first_name} {profile.last_name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-[10px] text-muted-foreground truncate">
                             {profile.email}
                           </span>
                         </div>
@@ -165,9 +165,9 @@ export function UsersClient({
                       <div className="flex flex-wrap gap-1.5">
                         {userRoles.length > 0 ? (
                           userRoles.map((role) => (
-                            <Badge 
-                              key={role.id} 
-                              variant="secondary" 
+                            <Badge
+                              key={role.id}
+                              variant="secondary"
                               className="text-[10px] py-0 px-1.5 font-semibold bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
                             >
                               {role.name}
@@ -213,10 +213,9 @@ export function UsersClient({
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="sm:max-w-md">
+        <SheetContent className="sm:max-w-md py-0 px-4">
           <SheetHeader className="space-y-1">
             <SheetTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
               Roles de Usuario
             </SheetTitle>
             <SheetDescription>
@@ -249,12 +248,12 @@ export function UsersClient({
                   const isLoading = selectedUser ? loadingRoles[`${selectedUser.id}-${role.id}`] : false
 
                   return (
-                    <div 
+                    <div
                       key={role.id}
                       className={cn(
                         "flex items-center justify-between p-3 rounded-lg border transition-all",
-                        isAssigned 
-                          ? "bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/30" 
+                        isAssigned
+                          ? "bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/30"
                           : "bg-background border-border hover:border-muted-foreground/20"
                       )}
                     >
@@ -304,7 +303,6 @@ export function UsersClient({
 
             <div className="rounded-lg bg-muted/40 p-3 border border-muted-foreground/10">
               <div className="flex items-start gap-2.5">
-                <Shield className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <div className="space-y-1">
                   <p className="text-[11px] font-semibold">Nota sobre permisos</p>
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
