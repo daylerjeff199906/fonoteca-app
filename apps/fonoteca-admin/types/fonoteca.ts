@@ -98,7 +98,7 @@ export interface Event {
   id: string;
   eventID: string;
   location_id: string;
-  profile_id: string;
+  created_by_id: string;
   eventDate: string;
   eventTime: string | null;
   samplingProtocol: string | null;
@@ -244,6 +244,8 @@ export interface Multimedia {
   title: string | null;
   description: string | null;
   creator: string;
+  creator_id: string | null;
+  created_by_id: string | null;
   rightsHolder: string;
   license: string;
   guano_metadata: Record<string, any>;

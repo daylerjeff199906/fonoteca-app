@@ -82,7 +82,7 @@ export const eventSchema = z.object({
   id: z.string().uuid().optional(),
   eventID: z.string().min(1, "Event ID is required"),
   location_id: z.string().uuid("Invalid Location ID"),
-  profile_id: z.string().uuid("Invalid Profile ID"),
+  created_by_id: z.string().uuid("Invalid Creator ID"),
   eventDate: z.string().min(1, "Event Date is required"), // YYYY-MM-DD
   eventTime: z.string().optional().nullable(), // HH:MM:SS
   samplingProtocol: z.string().optional().nullable(),
@@ -145,7 +145,9 @@ export const multimediaSchema = z.object({
   title: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   creator: z.string().min(1, "Creator is required"),
-  rightsHolder: z.string().default("Instituto de Investigaciones de la Amazonía Peruana (IIAP)"),
+  creator_id: z.string().uuid().optional().nullable(),
+  created_by_id: z.string().uuid().optional().nullable(),
+  rightsHolder: z.string().default("Instituto de Investigaciones de la AmazonIA Peruana (IIAP)"),
   license: z.string().default("http://creativecommons.org/licenses/by-nc/4.0/"),
   guano_metadata: z.record(z.any()).optional().default({}),
   order_index: z.coerce.number().optional().default(0),

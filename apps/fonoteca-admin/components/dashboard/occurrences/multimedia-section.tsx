@@ -12,6 +12,8 @@ import axios from "axios";
 import { R2_PUBLIC_URL } from "@/lib/r2";
 import { cn } from "@/lib/utils";
 import { multimediaSchema } from "@/lib/validations/fonoteca";
+import { searchProfiles } from "@/actions/users";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
@@ -32,6 +34,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MultimediaViewer } from "./multimedia-viewer";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 const BaseSheet = ({
   open,
@@ -130,6 +143,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [urlInput, setUrlInput] = useState("");
   const [urlTitle, setUrlTitle] = useState("");
   const [urlCreator, setUrlCreator] = useState("Dashboard");
+  const [urlCreatorId, setUrlCreatorId] = useState<string | null>(null);
   const [urlRightsHolder, setUrlRightsHolder] = useState("Instituto de Investigaciones de la Amazonía Peruana (IIAP)");
   const [urlLicense, setUrlLicense] = useState("http://creativecommons.org/licenses/by-nc/4.0/");
   const [urlRecordStatus, setUrlRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
@@ -137,6 +151,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [editTitle, setEditTitle] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [editCreator, setEditCreator] = useState("");
+  const [editCreatorId, setEditCreatorId] = useState<string | null>(null);
   const [editRightsHolder, setEditRightsHolder] = useState("");
   const [editLicense, setEditLicense] = useState("");
   const [editTag, setEditTag] = useState("");
@@ -163,12 +178,35 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
 
   // Batch Upload Metadata States
   const [batchCreator, setBatchCreator] = useState("Dashboard");
+  const [batchCreatorId, setBatchCreatorId] = useState<string | null>(null);
   const [batchRightsHolder, setBatchRightsHolder] = useState("Instituto de Investigaciones de la Amazonía Peruana (IIAP)");
   const [batchLicense, setBatchLicense] = useState("http://creativecommons.org/licenses/by-nc/4.0/");
   const [batchRecordStatus, setBatchRecordStatus] = useState<"draft" | "published" | "deleted">("draft");
   const [batchIsPublic, setBatchIsPublic] = useState(true);
   const [batchGuanoMetadata, setBatchGuanoMetadata] = useState<Record<string, any>>({});
   const [showBatchConfig, setShowBatchConfig] = useState(false);
+
+  // Unified User Search States
+  const [userResults, setUserResults] = useState<{ id: string, first_name: string, last_name: string, email: string }[]>([]);
+  const [isUserLoading, setIsUserLoading] = useState(false);
+  const [creatorSearch, setCreatorSearch] = useState("");
+  const debouncedCreatorSearch = useDebounce(creatorSearch, 400);
+  const [openEditCreator, setOpenEditCreator] = useState(false);
+  const [openUrlCreator, setOpenUrlCreator] = useState(false);
+  const [openBatchCreator, setOpenBatchCreator] = useState(false);
+
+  // User Fetch Effect
+  useEffect(() => {
+    if (!debouncedCreatorSearch || debouncedCreatorSearch.length < 2) {
+      setUserResults([]);
+      return;
+    }
+    setIsUserLoading(true);
+    searchProfiles(debouncedCreatorSearch).then(resp => {
+      setUserResults(resp.data);
+      setIsUserLoading(false);
+    });
+  }, [debouncedCreatorSearch]);
 
   const supabase = createFonotecaClient();
 
@@ -250,6 +288,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           title: file.name,
           description: "",
           creator: batchCreator,
+          creator_id: batchCreatorId,
           order_index: items.length + successCount,
           rightsHolder: batchRightsHolder,
           license: batchLicense,
@@ -311,6 +350,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         title: urlTitle || (isSpectro ? `Histograma de ${items.find(i => i.id === activeParentItemId)?.title || "Audio"}` : "Enlace URL"),
         description: "",
         creator: urlCreator || "Dashboard",
+        creator_id: urlCreatorId,
         order_index: isSpectro ? items.filter(it => it.parent_multimedia_id === activeParentItemId).length : items.length,
         rightsHolder: urlRightsHolder || "Instituto de Investigaciones de la Amazonía Peruana (IIAP)",
         license: urlLicense || "http://creativecommons.org/licenses/by-nc/4.0/",
@@ -393,6 +433,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
     setEditTitle(item.title || "");
     setEditUrl(item.identifier);
     setEditCreator(item.creator || "Dashboard");
+    setEditCreatorId(item.creator_id || null);
     setEditRightsHolder(item.rightsHolder || "Instituto de Investigaciones de la Amazonía Peruana (IIAP)");
     setEditLicense(item.license || "http://creativecommons.org/licenses/by-nc/4.0/");
     setEditTag(item.tag || "");
@@ -420,6 +461,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         identifier: editUrl,
         title: editTitle,
         creator: editCreator,
+        creator_id: editCreatorId,
         rightsHolder: editRightsHolder,
         license: editLicense,
         tag: editTag,
@@ -677,7 +719,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       </div>
 
       {list.length === 0 ? (
-        <button 
+        <button
           onClick={() => { setActiveUploadType(MEDIA_TYPE.SOUND); setSelectedFiles([]); setUploadSheetOpen(true); }}
           className="w-full border-2 border-dashed border-muted-foreground/20 rounded-2xl py-12 flex flex-col items-center justify-center bg-muted/5 hover:bg-primary/5 hover:border-primary/40 transition-all group"
         >
@@ -859,7 +901,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       </div>
 
       {list.length === 0 ? (
-        <button 
+        <button
           onClick={() => { setActiveUploadType(uploadType); setSelectedFiles([]); setUploadSheetOpen(true); }}
           className="w-full border-2 border-dashed border-muted-foreground/20 rounded-2xl py-16 flex flex-col items-center justify-center bg-muted/5 hover:bg-primary/5 hover:border-primary/40 transition-all group"
         >
@@ -1089,8 +1131,66 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador</label>
-                      <Input placeholder="Investigador" value={urlCreator} onChange={(e) => setUrlCreator(e.target.value)} className="text-xs h-8 bg-background" />
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador / Autor</label>
+                      <Popover open={openUrlCreator} onOpenChange={setOpenUrlCreator}>
+                        <PopoverTrigger asChild>
+                          <div className="relative group">
+                            <Input
+                              placeholder="Nombre del autor..."
+                              value={urlCreator}
+                              onChange={(e) => {
+                                setUrlCreator(e.target.value);
+                                setCreatorSearch(e.target.value);
+                                if (!e.target.value) setUrlCreatorId(null);
+                              }}
+                              onFocus={() => setOpenUrlCreator(true)}
+                              className="text-xs h-8 bg-background pr-8"
+                            />
+                            {urlCreator && (
+                              <button
+                                type="button"
+                                onClick={() => { setUrlCreator(""); setUrlCreatorId(null); setCreatorSearch(""); }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        </PopoverTrigger>
+                        {userResults.length > 0 && (
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandList>
+                                <CommandGroup heading="Sugerencias de la Intranet">
+                                  {userResults.map((u) => (
+                                    <CommandItem
+                                      key={u.id}
+                                      value={u.id}
+                                      onSelect={() => {
+                                        const fullName = `${u.first_name} ${u.last_name}`;
+                                        setUrlCreator(fullName);
+                                        setUrlCreatorId(u.id);
+                                        setOpenUrlCreator(false);
+                                      }}
+                                    >
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="font-semibold text-sm">{u.first_name} {u.last_name}</span>
+                                        <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        )}
+                      </Popover>
+                      {urlCreatorId && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span className="text-[8px] text-emerald-600 font-bold uppercase">Vinculado a Intranet</span>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Derechos</label>
@@ -1216,6 +1316,69 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                   className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador / Autor</label>
+                <Popover open={openEditCreator} onOpenChange={setOpenEditCreator}>
+                  <PopoverTrigger asChild>
+                    <div className="relative group">
+                      <Input 
+                        placeholder="Nombre del autor..." 
+                        value={editCreator} 
+                        onChange={(e) => {
+                          setEditCreator(e.target.value);
+                          setCreatorSearch(e.target.value);
+                          if (!e.target.value) setEditCreatorId(null);
+                        }}
+                        onFocus={() => setOpenEditCreator(true)}
+                        className="text-xs h-8 bg-background pr-8" 
+                      />
+                      {editCreator && (
+                        <button 
+                          type="button"
+                          onClick={() => { setEditCreator(""); setEditCreatorId(null); setCreatorSearch(""); }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </PopoverTrigger>
+                  {userResults.length > 0 && (
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandList>
+                          <CommandGroup heading="Sugerencias de la Intranet">
+                            {userResults.map((u) => (
+                              <CommandItem
+                                key={u.id}
+                                value={u.id}
+                                onSelect={() => {
+                                  const fullName = `${u.first_name} ${u.last_name}`;
+                                  setEditCreator(fullName);
+                                  setEditCreatorId(u.id);
+                                  setOpenEditCreator(false);
+                                }}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-semibold text-sm">{u.first_name} {u.last_name}</span>
+                                  <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  )}
+                </Popover>
+                {editCreatorId && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[8px] text-emerald-600 font-bold uppercase">Vinculado a Intranet</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="pt-2">
@@ -1232,10 +1395,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
               {showMetadataConfig && (
                 <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 pb-8">
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador</label>
-                      <Input value={editCreator} onChange={(e) => setEditCreator(e.target.value)} className="text-xs h-8 bg-background" />
-                    </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Derechos</label>
                       <Input value={editRightsHolder} onChange={(e) => setEditRightsHolder(e.target.value)} className="text-xs h-8 bg-background" />
@@ -1268,57 +1427,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                       </div>
                     </div>
                   </div>
-
-                  {/* Bioacústica Section - Only for Sound */}
-                  {editingItem?.type === MEDIA_TYPE.SOUND && (
-                    <div className="pt-6 border-t mt-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="h-1 w-1 rounded-full bg-primary" />
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Detalles de Bioacústica</h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Vocalización</label>
-                          <Input
-                            placeholder="Ej: Canto de anuncio, Alarma"
-                            value={editVocalizationType}
-                            onChange={(e) => setEditVocalizationType(e.target.value)}
-                            className="text-xs h-8 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Especies de Fondo</label>
-                          <Input
-                            placeholder="Especies que se escuchan..."
-                            value={editBackgroundSpecies}
-                            onChange={(e) => setEditBackgroundSpecies(e.target.value)}
-                            className="text-xs h-8 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Duración (seg)</label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            value={editDurationSeconds}
-                            onChange={(e) => setEditDurationSeconds(e.target.value)}
-                            className="text-xs h-8 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tamaño (bytes)</label>
-                          <Input
-                            type="number"
-                            placeholder="Peso en bytes"
-                            value={editFileSize}
-                            onChange={(e) => setEditFileSize(e.target.value)}
-                            className="text-xs h-8 bg-background"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* GUANO Section - Only for Sound */}
                   {editType === MEDIA_TYPE.SOUND && (
@@ -1371,6 +1479,57 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 </div>
               )}
             </div>
+
+            {/* Bioacústica Section - Only for Sound - ALWAYS VISIBLE */}
+            {editingItem?.type === MEDIA_TYPE.SOUND && (
+              <div className="pt-6 border-t mt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-1 w-1 rounded-full bg-primary" />
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary">Detalles de Bioacústica</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo de Vocalización</label>
+                    <Input
+                      placeholder="Ej: Canto de anuncio, Alarma"
+                      value={editVocalizationType}
+                      onChange={(e) => setEditVocalizationType(e.target.value)}
+                      className="text-xs h-8 bg-background"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Especies de Fondo</label>
+                    <Input
+                      placeholder="Especies que se escuchan..."
+                      value={editBackgroundSpecies}
+                      onChange={(e) => setEditBackgroundSpecies(e.target.value)}
+                      className="text-xs h-8 bg-background"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Duración (seg)</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={editDurationSeconds}
+                      onChange={(e) => setEditDurationSeconds(e.target.value)}
+                      className="text-xs h-8 bg-background"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tamaño (bytes)</label>
+                    <Input
+                      type="number"
+                      placeholder="Peso en bytes"
+                      value={editFileSize}
+                      onChange={(e) => setEditFileSize(e.target.value)}
+                      className="text-xs h-8 bg-background"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </BaseSheet>
@@ -1520,8 +1679,66 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
               <div className="mt-4 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 pb-8">
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador Común</label>
-                    <Input value={batchCreator} onChange={(e) => setBatchCreator(e.target.value)} className="text-xs h-8 bg-background" />
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Creador / Autor Común</label>
+                    <Popover open={openBatchCreator} onOpenChange={setOpenBatchCreator}>
+                      <PopoverTrigger asChild>
+                        <div className="relative group">
+                          <Input
+                            placeholder="Nombre del autor..."
+                            value={batchCreator}
+                            onChange={(e) => {
+                              setBatchCreator(e.target.value);
+                              setCreatorSearch(e.target.value);
+                              if (!e.target.value) setBatchCreatorId(null);
+                            }}
+                            onFocus={() => setOpenBatchCreator(true)}
+                            className="text-xs h-8 bg-background pr-8"
+                          />
+                          {batchCreator && (
+                            <button
+                              type="button"
+                              onClick={() => { setBatchCreator(""); setBatchCreatorId(null); setCreatorSearch(""); }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </PopoverTrigger>
+                      {userResults.length > 0 && (
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                          <Command>
+                            <CommandList>
+                              <CommandGroup heading="Sugerencias de la Intranet">
+                                {userResults.map((u) => (
+                                  <CommandItem
+                                    key={u.id}
+                                    value={u.id}
+                                    onSelect={() => {
+                                      const fullName = `${u.first_name} ${u.last_name}`;
+                                      setBatchCreator(fullName);
+                                      setBatchCreatorId(u.id);
+                                      setOpenBatchCreator(false);
+                                    }}
+                                  >
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="font-semibold text-sm">{u.first_name} {u.last_name}</span>
+                                      <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      )}
+                    </Popover>
+                    {batchCreatorId && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span className="text-[8px] text-emerald-600 font-bold uppercase">Vinculado a Intranet</span>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Derechos</label>
