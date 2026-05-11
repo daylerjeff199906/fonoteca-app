@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -11,7 +11,6 @@ import {
   TableRow
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -25,18 +24,39 @@ import {
 import {
   Search,
   UserCog,
-  Shield,
-  ShieldCheck,
   X,
   Plus,
-  Loader2
+  Loader2,
+  Trash2,
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SearchInput } from "@/components/dashboard/search-input"
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons"
-import { assignUserRole, removeUserRole } from "@/actions/users"
+import { assignUserRole, removeUserRole, createUser, getAvailableUsersForModule, removeUserFromModule } from "@/actions/users"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Label } from "@/components/ui/label"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 
 interface Profile {
   id: string
@@ -81,7 +101,21 @@ export function UsersClient({
   const searchParams = useSearchParams()
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isCreatingUser, setIsCreatingUser] = useState(false)
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
+  const [availableUsers, setAvailableUsers] = useState<Profile[]>([])
+  const [isFetchingAvailable, setIsFetchingAvailable] = useState(false)
+  const [assignSearch, setAssignSearch] = useState("")
+  const [isRemoveAlertOpen, setIsRemoveAlertOpen] = useState(false)
+  const [userToRemove, setUserToRemove] = useState<Profile | null>(null)
   const [loadingRoles, setLoadingRoles] = useState<Record<string, boolean>>({})
+
+  const [newUser, setNewUser] = useState({
+    first_name: "",
+    last_name: "",
+    email: ""
+  })
 
   // Get roles for a specific profile in this module
   const getUserRoles = (profileId: string) => {
@@ -104,29 +138,248 @@ export function UsersClient({
 
     try {
       if (isAssigned) {
-        await removeUserRole(profileId, roleId, moduleId)
-        showToast.success("Rol eliminado", "El rol ha sido revocado exitosamente.")
+        const res = await removeUserRole(profileId, roleId, moduleId)
+        if (res.success) {
+          showToast.success("Rol eliminado", "El rol ha sido revocado exitosamente.")
+        } else {
+          showToast.error("Error", res.error || "No se pudo eliminar el rol.")
+        }
       } else {
-        await assignUserRole(profileId, roleId, moduleId)
-        showToast.success("Rol asignado", "El rol ha sido concedido exitosamente.")
+        const res = await assignUserRole(profileId, roleId, moduleId)
+        if (res.success) {
+          showToast.success("Rol asignado", "El rol ha sido concedido exitosamente.")
+        } else {
+          showToast.error("Error", res.error || "No se pudo asignar el rol.")
+        }
       }
       router.refresh()
     } catch (error) {
-      showToast.error("Error", "No se pudo actualizar el rol del usuario.")
+      showToast.error("Error", "Ocurrió un error inesperado al actualizar el rol.")
     } finally {
       setLoadingRoles(prev => ({ ...prev, [key]: false }))
     }
   }
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsCreatingUser(true)
+
+    try {
+      const res = await createUser(newUser)
+      if (res.success) {
+        showToast.success("Usuario creado", "El perfil ha sido creado exitosamente.")
+        setIsCreateDialogOpen(false)
+        setNewUser({ first_name: "", last_name: "", email: "" })
+        router.refresh()
+      } else {
+        showToast.error("Error", res.error || "No se pudo crear el usuario.")
+      }
+    } catch (error) {
+      showToast.error("Error", "Ocurrió un error inesperado al crear el usuario.")
+    } finally {
+      setIsCreatingUser(false)
+    }
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isAssignDialogOpen) {
+        fetchAvailableUsers(assignSearch)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [assignSearch, isAssignDialogOpen])
+
+  const fetchAvailableUsers = async (query: string = "") => {
+    setIsFetchingAvailable(true)
+    try {
+      const res = await getAvailableUsersForModule(moduleId, query)
+      if (res.success) {
+        setAvailableUsers(res.data)
+      }
+    } catch (error) {
+      console.error("Error fetching available users:", error)
+    } finally {
+      setIsFetchingAvailable(false)
+    }
+  }
+
+  const handleOpenAssign = () => {
+    setIsAssignDialogOpen(true)
+    setAssignSearch("")
+  }
+
+  const handleRemoveFromModule = async (profileId: string) => {
+    try {
+      const res = await removeUserFromModule(profileId, moduleId)
+      if (res.success) {
+        showToast.success("Usuario eliminado", "El acceso al módulo ha sido revocado.")
+        setIsRemoveAlertOpen(false)
+        setUserToRemove(null)
+        router.refresh()
+      } else {
+        showToast.error("Error", res.error || "No se pudo eliminar el usuario del módulo.")
+      }
+    } catch (error) {
+      showToast.error("Error", "Ocurrió un error inesperado.")
+    }
+  }
+
+  const confirmRemove = (profile: Profile) => {
+    setUserToRemove(profile)
+    setIsRemoveAlertOpen(true)
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1 max-w-sm">
           <SearchInput placeholder="Buscar por nombre o correo..." />
         </div>
+
+        <div className="flex items-center gap-2">
+          <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2 h-9" onClick={handleOpenAssign}>
+                <UserCog className="h-4 w-4" />
+                Asignar Existente
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Asignar Usuario a Fonoteca</DialogTitle>
+                <DialogDescription>
+                  Busca un usuario existente en la base de datos general para darle acceso a este módulo.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre o email..."
+                    className="pl-9"
+                    value={assignSearch}
+                    onChange={(e) => setAssignSearch(e.target.value)}
+                  />
+                </div>
+
+                <div className="min-h-[350px] max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                  {isFetchingAvailable ? (
+                    <div className="space-y-3 py-2">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-8 w-16" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : availableUsers.length > 0 ? (
+                    availableUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar className="h-8 w-8 border">
+                            <AvatarImage src={user.avatar_url || ""} />
+                            <AvatarFallback className="text-[10px]">
+                              {user.first_name?.[0]}{user.last_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-sm truncate">{user.first_name} {user.last_name}</span>
+                            <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="h-8 text-xs px-4"
+                          onClick={() => {
+                            setIsAssignDialogOpen(false)
+                            handleEditRoles(user)
+                          }}
+                        >
+                          Elegir
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="text-sm italic">No se encontraron usuarios disponibles.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 h-9">
+                <Plus className="h-4 w-4" />
+                Crear Usuario
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Perfil</DialogTitle>
+                <DialogDescription>
+                  Ingresa los datos básicos para el nuevo perfil de usuario en la plataforma.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreateUser} className="space-y-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="first_name" className="text-right">Nombre</Label>
+                  <Input
+                    id="first_name"
+                    value={newUser.first_name}
+                    onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="last_name" className="text-right">Apellido</Label>
+                  <Input
+                    id="last_name"
+                    value={newUser.last_name}
+                    onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="button" variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={isCreatingUser}>
+                    {isCreatingUser && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Crear Perfil
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="bg-card">
+      <div className="bg-card border">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -174,22 +427,50 @@ export function UsersClient({
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-[10px] text-muted-foreground italic">
-                            Sin acceso asignado
-                          </span>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] text-muted-foreground border-dashed bg-muted/20"
+                          >
+                            Sin acceso al módulo
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1.5 text-xs"
-                        onClick={() => handleEditRoles(profile)}
-                      >
-                        <UserCog className="h-3.5 w-3.5" />
-                        Gestionar
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant={hasAccess ? "ghost" : "default"}
+                          size="sm"
+                          className={cn(
+                            "h-8 gap-1.5 text-xs",
+                            !hasAccess && "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                          )}
+                          onClick={() => handleEditRoles(profile)}
+                        >
+                          {hasAccess ? (
+                            <>
+                              <UserCog className="h-3.5 w-3.5" />
+                              Gestionar
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-3.5 w-3.5" />
+                              Dar Acceso
+                            </>
+                          )}
+                        </Button>
+                        {hasAccess && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => confirmRemove(profile)}
+                            title="Eliminar del módulo"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
@@ -211,6 +492,29 @@ export function UsersClient({
         </p>
         <PaginationButtons totalCount={totalCount} pageSize={10} />
       </div>
+
+      <AlertDialog open={isRemoveAlertOpen} onOpenChange={setIsRemoveAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              ¿Quitar acceso al módulo?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de revocar todos los permisos de <strong>{userToRemove?.first_name} {userToRemove?.last_name}</strong> en el módulo de Fonoteca.
+              Esta acción no eliminará el perfil del usuario de la plataforma general.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => userToRemove && handleRemoveFromModule(userToRemove.id)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Quitar Acceso
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="sm:max-w-md py-0 px-4">
