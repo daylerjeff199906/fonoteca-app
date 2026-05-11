@@ -42,6 +42,7 @@ import {
   DialogFooter,
   DialogTrigger
 } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -550,20 +551,22 @@ export function UsersClient({
                   const userRoles = selectedUser ? getUserRoles(selectedUser.id) : []
                   const isAssigned = userRoles.some(ur => ur.id === role.id)
                   const isLoading = selectedUser ? loadingRoles[`${selectedUser.id}-${role.id}`] : false
-
                   return (
-                    <div
+                    <label
                       key={role.id}
+                      htmlFor={`role-${role.id}`}
                       className={cn(
-                        "flex items-center justify-between p-3 rounded-lg border transition-all",
+                        "flex items-center justify-between p-3 rounded-none border transition-all cursor-pointer group",
                         isAssigned
                           ? "bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/30"
-                          : "bg-background border-border hover:border-muted-foreground/20"
+                          : "bg-background border-border hover:border-emerald-200 hover:bg-emerald-50/20"
                       )}
                     >
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{role.name}</span>
+                          <span className="font-semibold text-sm group-hover:text-emerald-700 transition-colors">
+                            {role.name}
+                          </span>
                           {isAssigned && (
                             <Badge className="h-4 text-[8px] bg-emerald-500 hover:bg-emerald-600 border-none px-1 uppercase font-bold tracking-tighter">
                               Asignado
@@ -574,32 +577,21 @@ export function UsersClient({
                           {role.description || "Sin descripción disponible para este rol."}
                         </p>
                       </div>
-
-                      <Button
-                        size="sm"
-                        variant={isAssigned ? "destructive" : "outline"}
-                        className={cn(
-                          "h-8 text-[10px] font-bold uppercase tracking-wider gap-1.5",
-                          !isAssigned && "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200"
-                        )}
-                        disabled={isLoading}
-                        onClick={() => selectedUser && handleToggleRole(selectedUser.id, role.id, isAssigned)}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : isAssigned ? (
-                          <>
-                            <X className="h-3 w-3" />
-                            Revocar
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-3 w-3" />
-                            Asignar
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                      
+                      <div className="flex items-center gap-3">
+                        {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                        <Checkbox
+                          id={`role-${role.id}`}
+                          checked={isAssigned}
+                          disabled={isLoading}
+                          onCheckedChange={() => selectedUser && handleToggleRole(selectedUser.id, role.id, isAssigned)}
+                          className={cn(
+                            "h-5 w-5 border-2 transition-transform group-hover:scale-110",
+                            isAssigned && "bg-emerald-500 border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-white"
+                          )}
+                        />
+                      </div>
+                    </label>
                   )
                 })}
               </div>
