@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { eventSchema, EventInput } from "@/lib/validations/fonoteca";
 import { createEvent, updateEvent, getEvent } from "@/actions/events";
 import { getLocations } from "@/actions/locations";
-import { getProfiles, getCurrentProfile } from "@/actions/profiles";
 import { Input } from "@/components/ui/input";
 import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
@@ -21,7 +20,6 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [profiles, setProfiles] = useState<{ id: string, first_name: string, last_name: string }[]>([]);
 
   const { register, handleSubmit, reset, control, formState: { errors }, setValue } = useForm<EventInput>({
     resolver: zodResolver(eventSchema) as any,
@@ -34,18 +32,6 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
   useEffect(() => {
     // Load lists for the pickers
     getLocations({ limit: 100 }).then(resp => setLocations(resp.data));
-    getProfiles().then(resp => {
-      if (resp.data) setProfiles(resp.data);
-    });
-
-    if (!id) {
-      // Set current user as default profile
-      getCurrentProfile().then(resp => {
-        if (resp.data) {
-          setValue("profile_id", resp.data.id);
-        }
-      });
-    }
 
     if (id) {
       setLoading(true);
@@ -158,23 +144,6 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="w-1/4 flex items-center">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Responsable *</label>
-            </div>
-            <div className="w-3/4">
-              <select
-                {...register("profile_id")}
-                className="flex h-8 w-full max-w-xl rounded-md border-none bg-transparent px-2 text-sm shadow-none font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
-              >
-                <option value="">Seleccionar Responsable...</option>
-                {profiles.map(p => (
-                  <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
-                ))}
-              </select>
-              {errors.profile_id && <p className="text-xs text-red-500 mt-1 px-2">{errors.profile_id.message}</p>}
-            </div>
-          </div>
         </div>
       </div>
 

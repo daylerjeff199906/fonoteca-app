@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { multimediaSchema, MultimediaInput } from "@/lib/validations/fonoteca";
 import { createMultimedia, updateMultimedia, getMultimedia } from "@/actions/multimedia";
 import { getOccurrences } from "@/actions/occurrences";
+import { searchProfiles } from "@/actions/users";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 import { Input } from "@/components/ui/input";
@@ -14,16 +16,32 @@ import { showToast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Occurrence, MEDIA_TYPE, MEDIA_TAG } from "@/types/fonoteca";
-import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2, ChevronDown } from "lucide-react";
+import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2, ChevronDown, X, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: string, redirectUrl?: string, defaultOccurrenceId?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(!!id);
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
+  const [creatorSearch, setCreatorSearch] = useState("");
+  const [userResults, setUserResults] = useState<{ id: string, first_name: string, last_name: string, email: string }[]>([]);
+  const [isUserLoading, setIsUserLoading] = useState(false);
+  const debouncedCreatorSearch = useDebounce(creatorSearch, 400);
+  const [openCreator, setOpenCreator] = useState(false);
 
-  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<MultimediaInput>({
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<MultimediaInput>({
     resolver: zodResolver(multimediaSchema) as any,
     defaultValues: {
       type: "Sound",
@@ -68,6 +86,19 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
       });
     }
   }, [id, reset]);
+
+  // User Fetch on Search
+  useEffect(() => {
+    if (!debouncedCreatorSearch || debouncedCreatorSearch.length < 2) {
+      setUserResults([]);
+      return;
+    }
+    setIsUserLoading(true);
+    searchProfiles(debouncedCreatorSearch).then(resp => {
+      setUserResults(resp.data);
+      setIsUserLoading(false);
+    });
+  }, [debouncedCreatorSearch]);
 
   const onSubmit = async (data: MultimediaInput) => {
     setLoading(true);
@@ -155,8 +186,76 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Creador / Autor *</label>
-            <Input {...register("creator")} placeholder="Nombre del autor..." className="h-9" />
+            <Controller
+              control={control}
+              name="creator"
+              render={({ field }) => (
+                <Popover open={openCreator} onOpenChange={setOpenCreator}>
+                  <PopoverTrigger asChild>
+                    <div className="relative group">
+                      <Input
+                        {...field}
+                        placeholder="Nombre del autor..."
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          setCreatorSearch(e.target.value);
+                          if (!e.target.value) setValue("creator_id", null);
+                        }}
+                        onFocus={() => setOpenCreator(true)}
+                        className="bg-background h-9 focus-visible:ring-primary/20 pr-8"
+                      />
+                      {field.value && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            field.onChange("");
+                            setValue("creator_id", null);
+                            setCreatorSearch("");
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </PopoverTrigger>
+                  {userResults.length > 0 && (
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                      <Command>
+                        <CommandList>
+                          <CommandGroup heading="Sugerencias de la Intranet">
+                            {userResults.map((u) => (
+                              <CommandItem
+                                key={u.id}
+                                value={u.id}
+                                onSelect={() => {
+                                  const fullName = `${u.first_name} ${u.last_name}`;
+                                  field.onChange(fullName);
+                                  setValue("creator_id", u.id);
+                                  setOpenCreator(false);
+                                }}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-semibold text-sm">{u.first_name} {u.last_name}</span>
+                                  <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  )}
+                </Popover>
+              )}
+            />
             {errors.creator && <p className="text-[10px] text-red-500 mt-1">{errors.creator.message}</p>}
+            {watch("creator_id") && (
+              <div className="flex items-center gap-1.5 mt-1 px-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-tighter">Vinculado a Intranet</span>
+              </div>
+            )}
           </div>
 
           <input type="hidden" {...register("type")} />

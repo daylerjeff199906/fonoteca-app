@@ -95,6 +95,12 @@ export async function createMultimedia(input: MultimediaInput) {
   const cookieStore = await cookies();
   const supabase = await createFonotecaServer(cookieStore);
 
+  // Get current user for audit
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    input.created_by_id = user.id;
+  }
+
   const parsed = multimediaSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
