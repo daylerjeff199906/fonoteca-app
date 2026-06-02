@@ -163,14 +163,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         }));
         wsSpectrogramRef.current = wsSpectrogram;
 
+        let lastHeight = containerHeight;
         // Resize observer to scale spectrogram canvas dynamically without reloading audio
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 const rect = entry.contentRect;
                 if (rect.height > 0 && wsSpectrogramRef.current) {
-                    const newHeight = rect.height;
-                    if (Math.abs(wsSpectrogramRef.current.height - newHeight) > 1) {
-                        wsSpectrogramRef.current.height = newHeight;
+                    const newHeight = Math.round(rect.height);
+                    if (Math.abs(lastHeight - newHeight) > 1) {
+                        lastHeight = newHeight;
+                        if (wsSpectrogramRef.current.options) {
+                            wsSpectrogramRef.current.options.height = newHeight;
+                        }
                         wsSpectrogramRef.current.render();
                     }
                 }

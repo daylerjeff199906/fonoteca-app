@@ -4,6 +4,7 @@ import { Header } from "../../../components/react/Header";
 import { Footer } from "../../../components/react/Footer";
 import { SpeciesDetailClient } from "../../../components/react/SpeciesDetailClient";
 import { translations, LANGUAGES } from "../../../i18n/data";
+import { getSpeciesById } from "../../../data/species";
 import logoIiap from "../../../assets/logo_iiap.png";
 
 export const prerender = false;
@@ -16,9 +17,21 @@ const content = translations[lang as keyof typeof translations];
 if (!content) {
     return Astro.redirect("/es/");
 }
+
+const species = id ? await getSpeciesById(id) : null;
+const commonName = species ? (species[`commonName_${lang}` as keyof typeof species] || species.commonName_es) : '';
+const pageTitle = species
+    ? `${species.scientificName}${commonName ? ` (${commonName})` : ''} | Fonoteca`
+    : content.nav.library;
+
+const pageDescription = species
+    ? `Detalles, audios, cantos, espectrogramas y distribución de ${species.scientificName} en la Amazonía peruana. Registrado en ${species.location || 'Perú'}.`
+    : "Biblioteca acústica de fauna amazónica - Fonoteca";
+
+const pageImage = species?.mainImage || "/og-image.jpg";
 ---
 
-<Layout title={content.nav.library} lang={lang}>
+<Layout title={pageTitle} lang={lang} description={pageDescription} image={pageImage}>
     <Header
         client:only="react"
         content={content.nav}
