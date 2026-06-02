@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Info, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Info, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Maximize2, Minimize2 } from 'lucide-react';
 import type { Multimedia } from '../../data/species';
 
 interface SpeciesGalleryProps {
@@ -31,6 +31,9 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
     const [activeIndex, setActiveIndex] = useState(0);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const [zoomScale, setZoomScale] = useState(1);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const lightboxRef = useRef<HTMLDivElement>(null);
 
     // Resolve props into unified list of items with url and tag
     const items = React.useMemo(() => {
@@ -57,20 +60,20 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                setLightboxIndex(null);
+                closeLightbox();
             }
             if (items.length <= 1) return;
             
             if (e.key === 'ArrowRight') {
                 if (lightboxIndex !== null) {
-                    setLightboxIndex((prev) => (prev !== null ? (prev + 1) % items.length : null));
+                    handleNextLightbox();
                 } else {
                     nextImage();
                 }
             }
             if (e.key === 'ArrowLeft') {
                 if (lightboxIndex !== null) {
-                    setLightboxIndex((prev) => (prev !== null ? (prev - 1 + items.length) % items.length : null));
+                    handlePrevLightbox();
                 } else {
                     prevImage();
                 }
@@ -79,6 +82,15 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activeIndex, lightboxIndex, items]);
+
+    // Sync fullscreen changes
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
 
     if (items.length === 0) {
         return (
@@ -99,6 +111,47 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
 
     const prevImage = () => {
         setActiveIndex((prev) => (prev - 1 + items.length) % items.length);
+    };
+
+    const handleNextLightbox = () => {
+        setLightboxIndex((prev) => (prev !== null ? (prev + 1) % items.length : null));
+        setZoomScale(1);
+    };
+
+    const handlePrevLightbox = () => {
+        setLightboxIndex((prev) => (prev !== null ? (prev - 1 + items.length) % items.length : null));
+        setZoomScale(1);
+    };
+
+    const closeLightbox = () => {
+        setLightboxIndex(null);
+        setZoomScale(1);
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+    };
+
+    const handleZoomIn = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setZoomScale(prev => Math.min(prev + 0.25, 3));
+    };
+
+    const handleZoomOut = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setZoomScale(prev => Math.max(prev - 0.25, 1));
+    };
+
+    const handleToggleFullscreen = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!lightboxRef.current) return;
+
+        if (!document.fullscreenElement) {
+            lightboxRef.current.requestFullscreen().catch((err) => {
+                console.error(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
     };
 
     const currentItem = items[activeIndex];
@@ -199,7 +252,10 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                         return (
                             <button
                                 key={idx}
-                                onClick={() => setActiveIndex(idx)}
+                                onClick={() => {
+                                    setActiveIndex(idx);
+                                    setZoomScale(1);
+                                }}
                                 className={`w-16 h-16 rounded-md overflow-hidden bg-black border-2 transition-all flex-shrink-0 cursor-pointer ${
                                     isActive
                                         ? 'border-blue-500 scale-105'
@@ -217,91 +273,109 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                 </div>
             )}
 
-            {/* Facebook-style Lightbox Overlay */}
+            {/* Facebook-style Lightbox Overlay (Solid Black, Faithful to attached image) */}
             <AnimatePresence>
                 {lightboxIndex !== null && (
                     <motion.div
+                        ref={lightboxRef}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[300] bg-black/98 flex items-center justify-center p-4 md:p-10 backdrop-blur-md"
-                        onClick={() => setLightboxIndex(null)}
+                        className="fixed inset-0 z-[350] bg-black flex flex-col justify-between select-none"
+                        onClick={closeLightbox}
                     >
-                        {/* Close Button */}
-                        <button
-                            className="absolute top-6 right-6 z-10 p-3 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/5 backdrop-blur-md cursor-pointer"
-                            onClick={() => setLightboxIndex(null)}
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
-
-                        {/* Navigation Chevrons inside Lightbox */}
-                        {items.length > 1 && (
-                            <>
+                        {/* Top Control Bar */}
+                        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+                            {/* Top Left: Close Button (Brand badge removed) */}
+                            <div className="flex items-center gap-3 pointer-events-auto">
                                 <button
-                                    className="absolute left-6 top-1/2 -translate-y-1/2 z-10 p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all backdrop-blur-md cursor-pointer"
+                                    className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
+                                    onClick={closeLightbox}
+                                    title={lang === 'es' ? 'Cerrar' : 'Close'}
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Top Right: Actions group (Zoom In, Zoom Out, Fullscreen) */}
+                            <div className="flex items-center gap-2 pointer-events-auto">
+                                <button
+                                    onClick={handleZoomIn}
+                                    className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
+                                    title={lang === 'es' ? 'Acercar' : 'Zoom In'}
+                                >
+                                    <ZoomIn className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={handleZoomOut}
+                                    className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
+                                    title={lang === 'es' ? 'Alejar' : 'Zoom Out'}
+                                >
+                                    <ZoomOut className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={handleToggleFullscreen}
+                                    className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
+                                    title={isFullscreen ? (lang === 'es' ? 'Salir de pantalla completa' : 'Exit fullscreen') : (lang === 'es' ? 'Pantalla completa' : 'Fullscreen')}
+                                >
+                                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Middle Viewport (Contains navigation buttons at the screen edges and 100% height central image) */}
+                        <div className="relative flex-grow w-full h-full flex items-center justify-center">
+                            
+                            {/* Left Navigation Chevron (Absolute edge position, matching FB) */}
+                            {items.length > 1 && (
+                                <button
+                                    className="absolute left-6 z-40 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer border border-white/5"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setLightboxIndex((prev) => (prev !== null ? (prev - 1 + items.length) % items.length : null));
+                                        handlePrevLightbox();
                                     }}
                                 >
                                     <ChevronLeft className="w-8 h-8" />
                                 </button>
+                            )}
+
+                            {/* Center Active Image Container - Height 100% (h-screen/h-full) and Width Auto */}
+                            <motion.div
+                                key={lightboxIndex}
+                                initial={{ scale: 0.97, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.97, opacity: 0 }}
+                                className="relative h-screen w-auto flex items-center justify-center transition-transform duration-200 pointer-events-auto"
+                                style={{ transform: `scale(${zoomScale})` }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <img
+                                    src={items[lightboxIndex].url}
+                                    className="h-full w-auto max-w-none object-contain"
+                                    alt={`Facebook view ${lightboxIndex + 1}`}
+                                />
+                            </motion.div>
+
+                            {/* Right Navigation Chevron (Absolute edge position, matching FB) */}
+                            {items.length > 1 && (
                                 <button
-                                    className="absolute right-6 top-1/2 -translate-y-1/2 z-10 p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all backdrop-blur-md cursor-pointer"
+                                    className="absolute right-6 z-40 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer border border-white/5"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setLightboxIndex((prev) => (prev !== null ? (prev + 1) % items.length : null));
+                                        handleNextLightbox();
                                     }}
                                 >
                                     <ChevronRight className="w-8 h-8" />
                                 </button>
-                            </>
-                        )}
-
-                        {/* Image Counter */}
-                        <div className="absolute top-6 left-1/2 -translate-x-1/2 text-white/80 text-[10px] font-bold bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-md uppercase tracking-[0.2em] pointer-events-none">
-                            {lightboxIndex + 1} / {items.length}
+                            )}
                         </div>
 
-                        {/* Image Display */}
-                        <motion.div
-                            key={lightboxIndex}
-                            initial={{ scale: 0.98, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.98, opacity: 0 }}
-                            className="relative w-full h-full flex flex-col items-center justify-center pointer-events-none"
-                        >
-                            <div className="relative bg-[#050505] p-2 md:p-3 rounded-2xl border border-white/10 flex items-center justify-center max-w-[95vw] max-h-[85vh] overflow-hidden pointer-events-auto">
-                                <img
-                                    src={items[lightboxIndex].url}
-                                    className="max-w-full max-h-[70vh] md:max-h-[75vh] w-auto h-auto object-contain transition-all rounded-lg"
-                                    alt={`Lightbox species ${lightboxIndex + 1}`}
-                                />
+                        {/* Bottom Information Bar (Clean and simple counter, tag and name removed) */}
+                        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col items-center gap-2">
+                            {/* Centered Counter */}
+                            <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
+                                {lightboxIndex + 1} / {items.length}
                             </div>
-
-                            {/* Tag badge in Lightbox */}
-                            {items[lightboxIndex].tag && (
-                                <div className="mt-4 text-accent-green text-[10px] font-semibold uppercase tracking-[0.2em] bg-accent-green/10 border border-accent-green/20 px-3 py-1 rounded backdrop-blur-md select-none pointer-events-auto">
-                                    {getTagLabel(items[lightboxIndex].tag, lang)}
-                                </div>
-                            )}
-
-                            {/* Info text inside Lightbox */}
-                            {items[lightboxIndex].title && (
-                                <div className="mt-2 text-white/90 text-xs text-center font-normal max-w-md pointer-events-auto px-4">
-                                    {items[lightboxIndex].title}
-                                </div>
-                            )}
-
-                            <div className="mt-1 text-white/20 text-[9px] tracking-[0.4em] uppercase pointer-events-none font-medium">
-                                Visualización de Registro
-                            </div>
-                        </motion.div>
-
-                        {/* ESC key hint */}
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/20 text-[8px] tracking-[0.5em] uppercase">
-                            Presiona ESC para cerrar
                         </div>
                     </motion.div>
                 )}
