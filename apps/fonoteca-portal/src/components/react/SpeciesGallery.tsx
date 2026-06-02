@@ -34,6 +34,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
     const [zoomScale, setZoomScale] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const lightboxRef = useRef<HTMLDivElement>(null);
+    const viewportRef = useRef<HTMLDivElement>(null);
 
     // Resolve props into unified list of items with url and tag
     const items = React.useMemo(() => {
@@ -153,6 +154,10 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
             document.exitFullscreen();
         }
     };
+
+    // Calculate drag bounds dynamically to prevent image from leaving the screen viewport
+    const xDragLimit = typeof window !== 'undefined' ? Math.max(0, (window.innerWidth * (zoomScale - 1)) / 2) : 0;
+    const yDragLimit = typeof window !== 'undefined' ? Math.max(0, (window.innerHeight * (zoomScale - 1)) / 2) : 0;
 
     const currentItem = items[activeIndex];
 
@@ -286,7 +291,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                     >
                         {/* Top Control Bar */}
                         <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-                            {/* Top Left: Close Button (Brand badge removed) */}
+                            {/* Top Left: Close Button */}
                             <div className="flex items-center gap-3 pointer-events-auto">
                                 <button
                                     className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
@@ -323,13 +328,13 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                             </div>
                         </div>
 
-                        {/* Middle Viewport (Contains navigation buttons at the screen edges and 100% height central image) */}
-                        <div className="relative flex-grow w-full h-full flex items-center justify-center">
+                        {/* Middle Viewport (Contains navigation chevrons and active image) */}
+                        <div ref={viewportRef} className="relative flex-grow w-full h-full flex items-center justify-center overflow-hidden">
                             
-                            {/* Left Navigation Chevron (Absolute edge position, matching FB) */}
+                            {/* Left Navigation Chevron */}
                             {items.length > 1 && (
                                 <button
-                                    className="absolute left-6 z-40 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer border border-white/5"
+                                    className="absolute left-6 z-45 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer border border-white/5"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handlePrevLightbox();
@@ -339,27 +344,34 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                                 </button>
                             )}
 
-                            {/* Center Active Image Container - Height 100% (h-screen/h-full) and Width Auto */}
-                            <motion.div
-                                key={lightboxIndex}
-                                initial={{ scale: 0.97, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.97, opacity: 0 }}
-                                className="relative h-screen w-auto flex items-center justify-center transition-transform duration-200 pointer-events-auto"
-                                style={{ transform: `scale(${zoomScale})` }}
+                            {/* Center Active Image - Mathematically precise boundaries prevent image from flying off the viewport */}
+                            <motion.img
+                                drag={zoomScale > 1}
+                                dragConstraints={{
+                                    left: -xDragLimit,
+                                    right: xDragLimit,
+                                    top: -yDragLimit,
+                                    bottom: yDragLimit
+                                }}
+                                dragElastic={0.15}
+                                animate={{
+                                    x: zoomScale === 1 ? 0 : undefined,
+                                    y: zoomScale === 1 ? 0 : undefined,
+                                    scale: zoomScale
+                                }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                src={items[lightboxIndex].url}
+                                className={`h-full w-auto max-w-none object-contain pointer-events-auto ${
+                                    zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+                                }`}
+                                alt={`Facebook view ${lightboxIndex + 1}`}
                                 onClick={(e) => e.stopPropagation()}
-                            >
-                                <img
-                                    src={items[lightboxIndex].url}
-                                    className="h-full w-auto max-w-none object-contain"
-                                    alt={`Facebook view ${lightboxIndex + 1}`}
-                                />
-                            </motion.div>
+                            />
 
-                            {/* Right Navigation Chevron (Absolute edge position, matching FB) */}
+                            {/* Right Navigation Chevron */}
                             {items.length > 1 && (
                                 <button
-                                    className="absolute right-6 z-40 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer border border-white/5"
+                                    className="absolute right-6 z-45 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-sm cursor-pointer border border-white/5"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleNextLightbox();
@@ -370,7 +382,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                             )}
                         </div>
 
-                        {/* Bottom Information Bar (Clean and simple counter, tag and name removed) */}
+                        {/* Bottom Information Bar */}
                         <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none flex flex-col items-center gap-2">
                             {/* Centered Counter */}
                             <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
