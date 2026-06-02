@@ -4,7 +4,7 @@ import Spectrogram from 'wavesurfer.js/dist/plugins/spectrogram.esm.js';
 import Timeline from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js';
 import Regions from 'wavesurfer.js/dist/plugins/regions.esm.js';
-import { X, Music, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Music, ChevronLeft, ChevronRight, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
 
 interface AudioPlayerProps {
     audioUrl: string;
@@ -53,6 +53,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     const timelineRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
     const wsRegionsRef = useRef<any>(null);
+    const wsSpectrogramRef = useRef<any>(null);
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState('0:00');
@@ -66,6 +67,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     const [durationSeconds, setDurationSeconds] = useState(0);
     const [selectedRange, setSelectedRange] = useState<{ start: number; end: number } | null>(null);
     const [frequencyUnit, setFrequencyUnit] = useState<'kHz' | 'Hz'>('kHz');
+    const [colorMapType, setColorMapType] = useState<'color' | 'grayscale'>('color');
     const [showBottomDetails, setShowBottomDetails] = useState(false);
     const [activeDetailTab, setActiveDetailTab] = useState<'info' | 'multimedia'>('info');
 
@@ -88,8 +90,44 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         if (onClose) onClose();
     };
 
+    // Helper to recursively find canvas within Shadow DOM / standard DOM
+    const getCanvasFromRef = (ref: HTMLDivElement | null): HTMLCanvasElement | null => {
+        if (!ref) return null;
+        let canvas = ref.querySelector('canvas');
+        if (canvas) return canvas;
+
+        if (ref.shadowRoot) {
+            canvas = ref.shadowRoot.querySelector('canvas');
+            if (canvas) return canvas;
+        }
+
+        const deepSearch = (element: Element): HTMLCanvasElement | null => {
+            if (element.tagName === 'CANVAS') {
+                return element as HTMLCanvasElement;
+            }
+            if (element.shadowRoot) {
+                const found = deepSearch(element.shadowRoot as unknown as Element);
+                if (found) return found;
+            }
+            for (let i = 0; i < element.children.length; i++) {
+                const found = deepSearch(element.children[i]);
+                if (found) return found;
+            }
+            return null;
+        };
+
+        for (let i = 0; i < ref.children.length; i++) {
+            const found = deepSearch(ref.children[i]);
+            if (found) return found;
+        }
+        return null;
+    };
+
     useEffect(() => {
         if (!waveformRef.current || !spectrogramRef.current || !timelineRef.current) return;
+
+        // Measure container height dynamically on mount
+        const containerHeight = spectrogramRef.current?.clientHeight || 280;
 
         const ws = WaveSurfer.create({
             container: waveformRef.current,
@@ -101,12 +139,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             barGap: 3,
             normalize: true,
             plugins: [
-                Spectrogram.create({
-                    container: spectrogramRef.current,
-                    labels: false, // We render our own premium ticks
-                    height: 180,
-                    splitChannels: false,
-                }),
                 Timeline.create({
                     container: timelineRef.current,
                 }),
@@ -119,6 +151,35 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 }),
             ],
         });
+
+        // Create manually registered spectrogram to allow dynamic resizing of height
+        const wsSpectrogram = ws.registerPlugin(Spectrogram.create({
+            container: spectrogramRef.current,
+            labels: false, // We render our own premium ticks
+            height: containerHeight,
+            splitChannels: false,
+            scale: 'linear',
+            colorMap: colorMapType === 'color' ? 'roseus' : 'gray',
+        }));
+        wsSpectrogramRef.current = wsSpectrogram;
+
+        // Resize observer to scale spectrogram canvas dynamically without reloading audio
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const rect = entry.contentRect;
+                if (rect.height > 0 && wsSpectrogramRef.current) {
+                    const newHeight = rect.height;
+                    if (Math.abs(wsSpectrogramRef.current.height - newHeight) > 1) {
+                        wsSpectrogramRef.current.height = newHeight;
+                        wsSpectrogramRef.current.render();
+                    }
+                }
+            }
+        });
+
+        if (spectrogramRef.current) {
+            resizeObserver.observe(spectrogramRef.current);
+        }
 
         // Initialize Regions plugin for Range Selection
         const wsRegions = ws.registerPlugin(Regions.create());
@@ -168,10 +229,19 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             if (onFinish) onFinish();
         });
 
-        return () => ws.destroy();
-    }, [audioUrl]);
+        return () => {
+            resizeObserver.disconnect();
+            ws.destroy();
+        };
+    }, [audioUrl, colorMapType]);
+
+
 
     const togglePlay = () => wavesurferRef.current?.playPause();
+
+    const handleRewind = () => {
+        wavesurferRef.current?.setTime(0);
+    };
 
     const handleZoom = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newZoom = Number(e.target.value);
@@ -186,10 +256,28 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     };
 
     const playSelection = () => {
-        const activeRegions = wsRegionsRef.current?.getRegions();
-        if (activeRegions && activeRegions.length > 0) {
-            activeRegions[0].play();
-        }
+        if (!wavesurferRef.current || !selectedRange) return;
+
+        // Seek to the start of the selection and play
+        wavesurferRef.current.setTime(selectedRange.start);
+        wavesurferRef.current.play();
+
+        // Monitor playback to pause at the end
+        const handleTimeUpdate = () => {
+            const current = wavesurferRef.current?.getCurrentTime() || 0;
+            if (current >= selectedRange.end) {
+                wavesurferRef.current?.pause();
+                wavesurferRef.current?.un('audioprocess', handleTimeUpdate);
+            }
+        };
+
+        // Remove previous listener if any, then add new one
+        wavesurferRef.current.on('audioprocess', handleTimeUpdate);
+
+        // Also clean up listener when paused manually
+        wavesurferRef.current.once('pause', () => {
+            wavesurferRef.current?.un('audioprocess', handleTimeUpdate);
+        });
     };
 
     const clearSelection = () => {
@@ -200,14 +288,23 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     // Advanced canvas capture for scientific publishing
     const downloadCapture = async () => {
         try {
-            const specCanvas = spectrogramRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
-            const waveCanvas = waveformRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
-            const timeCanvas = timelineRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
-
+            const specCanvas = getCanvasFromRef(spectrogramRef.current);
+            const waveCanvas = getCanvasFromRef(waveformRef.current);
+            const timeCanvas = getCanvasFromRef(timelineRef.current);
+            
             if (!specCanvas || !waveCanvas) {
                 console.error("Canvas elements not found");
                 return;
             }
+
+            const specRect = specCanvas.getBoundingClientRect();
+            const waveRect = waveCanvas.getBoundingClientRect();
+            const timeRect = timeCanvas ? timeCanvas.getBoundingClientRect() : { height: 0 };
+
+            const specDisplayWidth = specRect.width || specCanvas.width;
+            const specDisplayHeight = specRect.height || specCanvas.height;
+            const waveDisplayHeight = waveRect.height || waveCanvas.height;
+            const timeDisplayHeight = timeRect.height || 0;
 
             // Setup dimensions
             const marginX = 80; // Left margin for frequency ticks (64px + padding)
@@ -215,10 +312,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             const headerHeight = 90; // Space for professional header at the top
             const footerHeight = 45; // Space for logo/footer at the bottom
             const spacing = 15; // Vertical spacing between components
-
+            
             // Base width matches the spectrogram's canvas width
-            const width = specCanvas.width + marginX + legendWidth;
-            const height = headerHeight + specCanvas.height + waveCanvas.height + (timeCanvas ? timeCanvas.height : 0) + (spacing * 3) + footerHeight;
+            const width = specDisplayWidth + marginX + legendWidth;
+            const height = headerHeight + specDisplayHeight + waveDisplayHeight + timeDisplayHeight + (spacing * 3) + footerHeight;
 
             // Create composite canvas
             const compositeCanvas = document.createElement('canvas');
@@ -261,26 +358,25 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
             // --- DRAW SPECTROGRAM ---
             const specY = headerHeight + spacing;
-            ctx.drawImage(specCanvas, marginX, specY);
+            ctx.drawImage(specCanvas, marginX, specY, specDisplayWidth, specDisplayHeight);
 
             // --- DRAW FREQUENCY Y-AXIS (LEFT) ---
             ctx.fillStyle = '#9ca3af';
             ctx.font = '9px monospace';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-
+            
             const tickCount = 6;
             const maxFreq = sampleRate / 2;
-            const specHeight = specCanvas.height;
-
+            
             for (let i = 0; i < tickCount; i++) {
                 const ratio = i / (tickCount - 1);
                 const freq = maxFreq - ratio * maxFreq; // Max at the top, 0 at the bottom
-                const y = specY + ratio * specHeight;
-
+                const y = specY + ratio * specDisplayHeight;
+                
                 const textVal = frequencyUnit === 'kHz' ? (freq / 1000).toFixed(1) : Math.round(freq).toString();
                 ctx.fillText(textVal, marginX - 10, y);
-
+                
                 // Draw small tick mark
                 ctx.strokeStyle = '#374151';
                 ctx.beginPath();
@@ -291,43 +387,48 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
             // Vertical label for Frequency Y-axis
             ctx.save();
-            ctx.translate(25, specY + specHeight / 2);
+            ctx.translate(25, specY + specDisplayHeight / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.fillStyle = '#4b5563';
             ctx.font = 'bold 9px monospace';
             ctx.textAlign = 'center';
-            const freqAxisLabel = frequencyUnit === 'kHz'
-                ? (lang === 'es' ? 'FRECUENCIA (kHz)' : 'FREQUENCY (kHz)')
+            const freqAxisLabel = frequencyUnit === 'kHz' 
+                ? (lang === 'es' ? 'FRECUENCIA (kHz)' : 'FREQUENCY (kHz)') 
                 : (lang === 'es' ? 'FRECUENCIA (Hz)' : 'FREQUENCY (Hz)');
             ctx.fillText(freqAxisLabel, 0, 0);
             ctx.restore();
 
             // --- DRAW AMPLITUDE LEGEND (RIGHT) ---
-            const legendX = marginX + specCanvas.width + 15;
+            const legendX = marginX + specDisplayWidth + 15;
             // Draw vertical gradient bar
-            const gradient = ctx.createLinearGradient(legendX, specY, legendX, specY + specHeight);
-            gradient.addColorStop(0, '#ef4444');
-            gradient.addColorStop(0.16, '#f97316');
-            gradient.addColorStop(0.33, '#eab308');
-            gradient.addColorStop(0.5, '#22c55e');
-            gradient.addColorStop(0.66, '#3b82f6');
-            gradient.addColorStop(0.83, '#6366f1');
-            gradient.addColorStop(1, '#dbeafe');
-
+            const gradient = ctx.createLinearGradient(legendX, specY, legendX, specY + specDisplayHeight);
+            if (colorMapType === 'color') {
+                gradient.addColorStop(0, '#ef4444');
+                gradient.addColorStop(0.16, '#f97316');
+                gradient.addColorStop(0.33, '#eab308');
+                gradient.addColorStop(0.5, '#22c55e');
+                gradient.addColorStop(0.66, '#3b82f6');
+                gradient.addColorStop(0.83, '#6366f1');
+                gradient.addColorStop(1, '#dbeafe');
+            } else {
+                gradient.addColorStop(0, '#000000');
+                gradient.addColorStop(1, '#ffffff');
+            }
+            
             ctx.fillStyle = gradient;
-            ctx.fillRect(legendX, specY, 12, specHeight);
+            ctx.fillRect(legendX, specY, 12, specDisplayHeight);
 
             // Draw ticks: 0 down to -30 dB
             ctx.fillStyle = '#9ca3af';
             ctx.font = '8px monospace';
             ctx.textAlign = 'left';
-
+            
             const dbTicks = ['0', '-5', '-10', '-15', '-20', '-25', '-30'];
             for (let i = 0; i < dbTicks.length; i++) {
                 const ratio = i / (dbTicks.length - 1);
-                const y = specY + ratio * specHeight;
+                const y = specY + ratio * specDisplayHeight;
                 ctx.fillText(`${dbTicks[i]} dB`, legendX + 18, y);
-
+                
                 // Draw tick mark
                 ctx.strokeStyle = '#374151';
                 ctx.beginPath();
@@ -338,7 +439,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
             // Vertical label for Amplitude axis
             ctx.save();
-            ctx.translate(legendX + 55, specY + specHeight / 2);
+            ctx.translate(legendX + 55, specY + specDisplayHeight / 2);
             ctx.rotate(Math.PI / 2);
             ctx.fillStyle = '#4b5563';
             ctx.font = 'bold 8px monospace';
@@ -347,42 +448,41 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             ctx.restore();
 
             // --- DRAW WAVEFORM ---
-            const waveY = specY + specHeight + spacing;
-            ctx.drawImage(waveCanvas, marginX, waveY);
+            const waveY = specY + specDisplayHeight + spacing;
+            ctx.drawImage(waveCanvas, marginX, waveY, specDisplayWidth, waveDisplayHeight);
 
             // --- DRAW TIMELINE (IF AVAILABLE) ---
-            let currentY = waveY + waveCanvas.height + spacing;
+            const timeY = waveY + waveDisplayHeight + spacing;
             if (timeCanvas) {
-                ctx.drawImage(timeCanvas, marginX, currentY);
-                currentY += timeCanvas.height + spacing;
+                ctx.drawImage(timeCanvas, marginX, timeY, specDisplayWidth, timeDisplayHeight);
             }
 
             // --- DRAW RANGE HIGHLIGHT OVERLAY (IF ACTIVE) ---
             if (selectedRange && durationSeconds > 0) {
-                const activeWidth = specCanvas.width;
+                const activeWidth = specDisplayWidth;
                 const startRatio = selectedRange.start / durationSeconds;
                 const endRatio = selectedRange.end / durationSeconds;
                 const selectX = marginX + startRatio * activeWidth;
                 const selectWidth = (endRatio - startRatio) * activeWidth;
-
+                
                 // Draw filled green rectangle with transparency
                 ctx.fillStyle = 'rgba(69, 164, 94, 0.12)';
-                ctx.fillRect(selectX, specY, selectWidth, specHeight + waveCanvas.height + spacing + (timeCanvas ? timeCanvas.height + spacing : 0));
-
+                ctx.fillRect(selectX, specY, selectWidth, specDisplayHeight + waveDisplayHeight + spacing + (timeCanvas ? timeDisplayHeight + spacing : 0));
+                
                 // Draw solid vertical borders for range limits
                 ctx.strokeStyle = 'rgba(69, 164, 94, 0.7)';
                 ctx.lineWidth = 1.5;
-
+                
                 // Left border
                 ctx.beginPath();
                 ctx.moveTo(selectX, specY);
-                ctx.lineTo(selectX, currentY - spacing);
+                ctx.lineTo(selectX, timeY + (timeCanvas ? timeDisplayHeight : 0));
                 ctx.stroke();
-
+                
                 // Right border
                 ctx.beginPath();
                 ctx.moveTo(selectX + selectWidth, specY);
-                ctx.lineTo(selectX + selectWidth, currentY - spacing);
+                ctx.lineTo(selectX + selectWidth, timeY + (timeCanvas ? timeDisplayHeight : 0));
                 ctx.stroke();
 
                 // Label text over selected range
@@ -500,9 +600,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                         </div>
 
                         {/* Dynamic Spectrogram Row with left axis and right legend */}
-                        <div className="flex flex-row flex-1 relative min-h-[180px] bg-black">
+                        <div className="flex flex-row relative flex-1 min-h-[220px] bg-black">
                             {/* LEFT: Custom vertical Y-Axis ticks */}
-                            <div className="w-16 flex-shrink-0 flex flex-col justify-between py-1 border-r border-gray-900 font-mono text-[9px] text-gray-500 pr-2 select-none relative z-10 bg-black">
+                            <div className="w-16 flex-shrink-0 flex flex-col justify-between py-0.5 border-r border-gray-900 font-mono text-[9px] text-gray-500 pr-2 select-none relative z-10 bg-black">
                                 <div className="absolute left-1.5 top-1/2 -translate-y-1/2 -rotate-90 origin-left whitespace-nowrap text-[8px] tracking-widest uppercase font-black text-gray-600">
                                     {frequencyUnit === 'kHz' ? (lang === 'es' ? 'Frecuencia (kHz)' : 'Frequency (kHz)') : (lang === 'es' ? 'Frecuencia (Hz)' : 'Frequency (Hz)')}
                                 </div>
@@ -515,17 +615,19 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                             </div>
 
                             {/* CENTER: Spectrogram Canvas */}
-                            <div ref={spectrogramRef} className="flex-1 relative overflow-hidden bg-black" />
+                            <div ref={spectrogramRef} className="flex-grow h-full relative overflow-hidden bg-black [&>div]:h-full [&>div>div]:h-full [&_canvas]:block [&_canvas]:h-full [&_canvas]:w-full" />
 
                             {/* RIGHT: Beautiful Amplitude Gradient scale legend */}
-                            <div className="w-16 flex-shrink-0 flex flex-row items-stretch py-1 border-l border-gray-900 pl-2 font-mono text-[9px] text-gray-500 select-none relative z-10 bg-black">
+                            <div className="w-16 flex-shrink-0 flex flex-row items-stretch py-0.5 border-l border-gray-900 pl-2 font-mono text-[9px] text-gray-500 select-none relative z-10 bg-black">
                                 <div
-                                    className="w-2.5 my-1.5 rounded-sm flex-shrink-0"
+                                    className="w-2.5 rounded-sm flex-shrink-0"
                                     style={{
-                                        background: 'linear-gradient(to bottom, #ef4444 0%, #f97316 16%, #eab308 33%, #22c55e 50%, #3b82f6 66%, #6366f1 83%, #dbeafe 100%)'
+                                        background: colorMapType === 'color'
+                                            ? 'linear-gradient(to bottom, #ef4444 0%, #f97316 16%, #eab308 33%, #22c55e 50%, #3b82f6 66%, #6366f1 83%, #dbeafe 100%)'
+                                            : 'linear-gradient(to bottom, #000000 0%, #ffffff 100%)'
                                     }}
                                 />
-                                <div className="flex-1 flex flex-col justify-between pl-1.5 my-1.5">
+                                <div className="flex-1 flex flex-col justify-between pl-1.5 py-0">
                                     {['0', '-5', '-10', '-15', '-20', '-25', '-30'].map((db, idx) => (
                                         <div key={idx} className="flex items-center gap-1 h-0">
                                             <div className="w-1 h-px bg-gray-800"></div>
@@ -613,6 +715,15 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                 )}
                             </button>
 
+                            <button
+                                onClick={handleRewind}
+                                disabled={!isReady}
+                                className="w-10 h-10 flex-shrink-0 bg-gray-800 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition-transform disabled:opacity-50"
+                                title={lang === 'es' ? 'Rebobinar al inicio' : 'Rewind to start'}
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                            </button>
+
                             <div className="font-mono text-sm tracking-wider flex items-center gap-2">
                                 <span className="text-accent-green font-medium min-w-[50px]">{currentTime}</span>
                                 <span className="text-gray-600">/</span>
@@ -620,8 +731,29 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                             </div>
                         </div>
 
-                        {/* Tools Area (Zoom, Volume, Details, Screenshot) */}
+                        {/* Tools Area (Zoom, Volume, Palette, Details, Screenshot) */}
                         <div className="flex flex-wrap items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0 bg-[#121212] px-4 py-2 rounded-lg border border-gray-800/60">
+                            {/* ColorMap Palette selector */}
+                            <div className="flex items-center gap-1.5" title={lang === 'es' ? 'Paleta de colores' : 'Color Palette'}>
+                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mr-1">{lang === 'es' ? 'Espectro' : 'Palette'}</span>
+                                <div className="flex rounded bg-gray-900 p-0.5 border border-gray-800">
+                                    <button
+                                        onClick={() => setColorMapType('color')}
+                                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-all ${colorMapType === 'color' ? 'bg-accent-green text-black' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Color
+                                    </button>
+                                    <button
+                                        onClick={() => setColorMapType('grayscale')}
+                                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-all ${colorMapType === 'grayscale' ? 'bg-accent-green text-black' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        {lang === 'es' ? 'Gris' : 'Gray'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="w-px h-6 bg-gray-800 hidden sm:block"></div>
+
                             {/* Hz/kHz unit selector */}
                             <div className="flex items-center gap-1.5" title="Unidad del espectrograma">
                                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mr-1">Eje Y</span>
