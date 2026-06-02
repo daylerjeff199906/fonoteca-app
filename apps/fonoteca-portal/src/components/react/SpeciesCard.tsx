@@ -226,7 +226,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
             href={detailLink}
             className="group block rounded-2xl transition-all duration-300 relative flex flex-col overflow-hidden shadow-none border-none"
         >
-            <div className="aspect-[6/5] relative overflow-hidden">
+            <div className="aspect-[6/5] relative overflow-hidden rounded-2xl">
                 <MediaViewer
                     src={coverImage}
                     alt={species.scientificName}

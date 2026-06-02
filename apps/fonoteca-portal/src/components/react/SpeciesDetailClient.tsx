@@ -98,6 +98,50 @@ const AudioListTable: React.FC<{
     );
 };
 
+const formatOccurrenceDate = (dateStr?: string | null) => {
+    if (!dateStr) return '';
+    const clean = dateStr.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean) || /^\d{4}-\d{2}-\d{2}/.test(clean)) {
+        const parts = clean.split('T')[0].split('-');
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const months = [
+            'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+        ];
+        return `${day} ${months[monthIdx]} ${year}`;
+    }
+    try {
+        const date = new Date(clean);
+        if (isNaN(date.getTime())) return clean.toUpperCase();
+        const months = [
+            'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+        ];
+        return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch (e) {
+        return clean.toUpperCase();
+    }
+};
+
+const parseScientificName = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return { italicName: name, authorName: '' };
+
+    let italicWords = 2;
+    if (parts.length > 2) {
+        const thirdWord = parts[2];
+        if (/^[a-z]/.test(thirdWord)) {
+            italicWords = 3;
+        }
+    }
+
+    const italicName = parts.slice(0, italicWords).join(' ');
+    const authorName = parts.slice(italicWords).join(' ');
+    return { italicName, authorName };
+};
+
 export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [species, setSpecies] = useState<Species | null>(null);
     const [loading, setLoading] = useState(true);
@@ -217,6 +261,17 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     ].filter(Boolean);
     const taxonomy = taxonomyParts.length > 0 ? taxonomyParts.join(" - ") : undefined;
 
+    const scientificNameParsed = parseScientificName(species.scientificName);
+
+    const breadcrumbs = [
+        { name: species.kingdom || "Animalia", italic: false },
+        { name: species.phylum, italic: false },
+        { name: species.class_name, italic: false },
+        { name: species.order, italic: false },
+        { name: species.family, italic: false },
+        { name: species.genus, italic: true },
+    ].filter(item => item.name);
+
     const sections = [
         { id: 'at-a-glance', label: lang === 'es' ? 'En un vistazo' : 'At a glance' },
         { id: 'distribution', label: lang === 'es' ? 'Distribución' : 'Distribution' },
@@ -243,54 +298,74 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
             {/* Top Spacer for Navigation */}
             <div className="bg-primary-dark h-24 w-full"></div>
 
-            {/* Header Section (Mockup Inspired) */}
-            <header className="bg-[#f4f1ea] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                <div className="container mx-auto px-6 py-12 max-w-8xl">
-                    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
-                        {/* Species Circle Image */}
-                        {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in flex items-center justify-center">
-                                <img
-                                    src={species.mainImage}
-                                    alt={commonName}
-                                    className="max-w-full max-h-full object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden border border-gray-100 dark:border-gray-800 rounded-none bg-gray-50/50 dark:bg-gray-800/50 flex flex-col items-center justify-center p-4">
-                                <span className="text-gray-400 dark:text-gray-500 text-sm font-medium text-center uppercase tracking-widest">{lang === 'es' ? 'Sin imagen profesional disponible' : 'No professional image available'}</span>
-                            </div>
-                        )}
+            {/* Header Section (GBIF Inspired / Faithful to Image) */}
+            <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                <div className="container mx-auto px-6 pt-10 pb-0 max-w-8xl relative">
+                    {/* Top right metadata (Synced / Modified) */}
+                    <div className="absolute top-10 right-6 hidden md:block text-right text-[11px] text-gray-400 dark:text-gray-500 font-medium leading-relaxed">
+                        <div>Synced 4 days ago</div>
+                        <div>Modified {species.databaseDetails?.occurrence_date ? formatOccurrenceDate(species.databaseDetails.occurrence_date) : '2 February 2026'}</div>
+                    </div>
 
-                        {/* Title & Scientific Information */}
-                        <div className="flex-1 text-center md:text-left space-y-4">
-                            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-serif italic text-gray-900 dark:text-white leading-tight">
-                                {species.scientificName}
-                            </h1>
-                            <div className="space-y-1">
-                                <p className="text-sm font-bold text-accent-green uppercase tracking-widest">
-                                    {species.family} ({species.order})
-                                </p>
-                            </div>
+                    <div className="flex flex-col items-center text-center space-y-4 max-w-4xl mx-auto pb-10">
+                        {/* Occurrence Badge */}
+                        <div className="text-[10px] md:text-xs font-bold tracking-widest text-gray-500 uppercase flex items-center justify-center gap-2">
+                            <span>{species.databaseDetails?.basisOfRecord ? species.databaseDetails.basisOfRecord.toUpperCase() : 'OCCURRENCE'}</span>
+                            <span className="text-gray-300 dark:text-gray-700">|</span>
+                            <span>{formatOccurrenceDate(species.databaseDetails?.occurrence_date || '2026-01-08')}</span>
                         </div>
 
-                        {/* Status Indicators Area */}
-                        <div className="grid grid-cols-2 gap-8 md:gap-12 xl:gap-16 shrink-0 items-center justify-center">
-                            <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:text-primary-dark transition-colors mb-2">
-                                    <Bird size={32} />
-                                </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Categoría' : 'Category'}</p>
-                                <p className="text-sm font-black text-gray-800 dark:text-gray-200">{species.category}</p>
-                            </div>
+                        {/* Scientific Name & Authorship */}
+                        <h1 className="text-2xl md:text-4xl text-gray-800 dark:text-white leading-tight">
+                            <span className="italic font-semibold">
+                                {scientificNameParsed.italicName}
+                            </span>
+                            {scientificNameParsed.authorName && (
+                                <span className="ml-2 text-gray-600 dark:text-gray-400 font-light text-xl md:text-2xl">
+                                    {scientificNameParsed.authorName}
+                                </span>
+                            )}
+                        </h1>
 
-                            <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform mb-2">
-                                    <Database size={32} />
-                                </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Tipo de Registro' : 'Basis of Record'}</p>
-                                <p className="text-sm font-black text-gray-800 dark:text-gray-200 tracking-tight whitespace-nowrap">{species.databaseDetails?.basisOfRecord || 'Observation'}</p>
-                            </div>
+                        {/* Common Name, Language & Location */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            <span className="font-bold text-gray-800 dark:text-gray-200">
+                                {commonName}
+                            </span>
+                            <span className="text-gray-400 dark:text-gray-500">In {lang === 'es' ? 'Spanish' : lang === 'pt' ? 'Portuguese' : 'English'}</span>
+                            <span className="text-gray-300 dark:text-gray-700">•</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200">
+                                Observed in {species.databaseDetails?.country || '---'}
+                            </span>
+                        </div>
+
+                        {/* Taxonomic Breadcrumbs */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[11px] md:text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                            {breadcrumbs.map((crumb, idx) => (
+                                <React.Fragment key={idx}>
+                                    <span className={`${crumb.italic ? 'italic text-accent-green font-semibold' : 'font-medium'}`}>
+                                        {crumb.name}
+                                    </span>
+                                    {idx < breadcrumbs.length - 1 && (
+                                        <span className="text-gray-300 dark:text-gray-700 font-light text-[10px]">›</span>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Metadata fallback for mobile */}
+                    <div className="md:hidden border-t border-gray-100 dark:border-gray-900 py-3 flex justify-between text-[10px] text-gray-400 dark:text-gray-500">
+                        <div>Synced 4 days ago</div>
+                        <div>Modified {species.databaseDetails?.occurrence_date ? formatOccurrenceDate(species.databaseDetails.occurrence_date) : '2 February 2026'}</div>
+                    </div>
+
+                    {/* Active tab "DETAILS" at bottom left */}
+                    <div className="flex border-t border-transparent pt-3 pb-0">
+                        <div className="border-b-2 border-accent-green pb-3">
+                            <span className="text-xs font-black tracking-widest text-accent-green uppercase select-none cursor-default">
+                                {lang === 'es' ? 'DETALLES' : 'DETAILS'}
+                            </span>
                         </div>
                     </div>
                 </div>
