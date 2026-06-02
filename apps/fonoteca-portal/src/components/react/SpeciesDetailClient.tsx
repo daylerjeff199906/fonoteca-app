@@ -16,8 +16,12 @@ import {
     Lock,
     Music,
     Activity,
-    Database
+    Database,
+    FolderPlus,
+    FolderCheck,
+    DatabaseZap
 } from 'lucide-react';
+import { useAudioRequestStore } from '../../store/useAudioRequestStore';
 
 interface Props {
     id: string;
@@ -54,6 +58,8 @@ const AudioListTable: React.FC<{
     lang: string;
     onSelect: (idx: number) => void;
 }> = ({ audios, species, lang, onSelect }) => {
+    const { addToCart, removeFromCart, isInCart } = useAudioRequestStore();
+
     return (
         <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl">
             <table className="w-full text-left text-sm whitespace-nowrap">
@@ -69,29 +75,60 @@ const AudioListTable: React.FC<{
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {audios.map((audio, idx) => (
-                        <tr key={audio.id || idx} onClick={() => onSelect(idx)} className="hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors group cursor-pointer">
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-medium">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.occurrence_date || '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{audio.duration_seconds ? `${Number(audio.duration_seconds).toFixed(2)}s` : '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[120px] truncate text-xs" title={audio.background_species}>{audio.background_species || '-'}</td>
-                            <td className="px-4 py-3">
-                                <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-500 uppercase tracking-tight">
-                                    {audio.vocalization_type || audio.title || (lang === 'es' ? 'Canto' : 'Call')}
-                                </span>
-                            </td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={species.location}>{species.location || '-'}</td>
-                            <td className="px-4 py-3 text-center">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onSelect(idx); }}
-                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10 text-accent-green group-hover:bg-accent-green group-hover:text-white transition-colors"
-                                    title={lang === 'es' ? 'Reproducir audio' : 'Play audio'}
-                                >
-                                    <Music size={14} />
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
+                    {audios.map((audio, idx) => {
+                        const audioId = audio.id || audio.url;
+                        const isAdded = isInCart(audioId);
+
+                        return (
+                            <tr key={audio.id || idx} onClick={() => onSelect(idx)} className="hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors group cursor-pointer">
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-medium">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.occurrence_date || '-'}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{audio.duration_seconds ? `${Number(audio.duration_seconds).toFixed(2)}s` : '-'}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[120px] truncate text-xs" title={audio.background_species}>{audio.background_species || '-'}</td>
+                                <td className="px-4 py-3">
+                                    <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                        {audio.vocalization_type || audio.title || (lang === 'es' ? 'Canto' : 'Call')}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={species.location}>{species.location || '-'}</td>
+                                <td className="px-4 py-3 text-center">
+                                    <div className="inline-flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onSelect(idx); }}
+                                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-colors"
+                                            title={lang === 'es' ? 'Reproducir audio' : 'Play audio'}
+                                        >
+                                            <Music size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (isAdded) {
+                                                    removeFromCart(audioId);
+                                                } else {
+                                                    addToCart({
+                                                        multimediaId: audioId,
+                                                        title: audio.title || (lang === 'es' ? 'Canto' : 'Call'),
+                                                        scientificName: species.scientificName,
+                                                        vocalizationType: audio.vocalization_type,
+                                                        duration: audio.duration_seconds
+                                                    });
+                                                }
+                                            }}
+                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all border ${
+                                                isAdded
+                                                    ? 'bg-accent-green text-white border-accent-green'
+                                                    : 'bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 dark:border-gray-800 text-gray-400 hover:text-accent-green'
+                                            }`}
+                                            title={isAdded ? (lang === 'es' ? 'En la Solicitud' : 'In Request') : (lang === 'es' ? 'Añadir a Solicitud' : 'Add to Request')}
+                                        >
+                                            {isAdded ? <FolderCheck size={14} /> : <FolderPlus size={14} />}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
@@ -229,6 +266,8 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState('at-a-glance');
     const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
+
+    const { addToCartBulk, setIsCartOpen } = useAudioRequestStore();
 
     const currentLang = lang as Language;
 
@@ -507,6 +546,28 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
                                     <FileText size={14} />
                                     <span>CITATIONS</span>
+                                </button>
+
+                                <hr className="border-gray-100 dark:border-gray-800" />
+
+                                <button 
+                                    onClick={() => {
+                                        if (species.audios && species.audios.length > 0) {
+                                            const itemsToRequest = species.audios.map((audio: any) => ({
+                                                multimediaId: audio.id || audio.url,
+                                                title: audio.title || (lang === 'es' ? 'Canto' : 'Call'),
+                                                scientificName: species.scientificName,
+                                                vocalizationType: audio.vocalization_type,
+                                                duration: audio.duration_seconds
+                                            }));
+                                            addToCartBulk(itemsToRequest);
+                                            setIsCartOpen(true);
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-black tracking-widest uppercase transition-all shadow-sm group duration-300 mt-2"
+                                >
+                                    <DatabaseZap size={14} className="group-hover:scale-110 transition-transform" />
+                                    <span>{lang === 'es' ? 'Solicitar paquete WAV' : lang === 'pt' ? 'Solicitar pacote WAV' : 'Request WAV Package'}</span>
                                 </button>
                             </div>
                         </div>
