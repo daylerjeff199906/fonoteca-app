@@ -582,9 +582,9 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 description={lang === 'es' ? 'Resumen general y galería de identificación visual.' : 'Quick summary and visual identification gallery.'}
                             />
                             {/* Gallery Inside Sections */}
-                            {species.galleryImages && species.galleryImages.length > 0 && (
+                            {((species.galleryImages && species.galleryImages.length > 0) || (species.spectrograms && species.spectrograms.length > 0)) && (
                                 <div className="pt-4 mb-16">
-                                    <SpeciesGallery images={species.galleryImages.map(img => img.url)} />
+                                    <SpeciesGallery mediaItems={[...species.galleryImages, ...species.spectrograms]} lang={lang} />
                                 </div>
                             )}
 
@@ -736,19 +736,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 />
                             )}
 
-                            {/* Spectrograms Gallery */}
-                            {species.spectrograms && species.spectrograms.length > 0 && (
-                                <div className="pt-12 space-y-8">
-                                    <div className="flex items-center gap-4">
-                                        <hr className="flex-1 border-gray-100 dark:border-gray-800" />
-                                        <h4 className="text-[10px] uppercase font-black tracking-widest text-gray-400 dark:text-gray-500">Visual Analysis Gallery</h4>
-                                        <hr className="flex-1 border-gray-100 dark:border-gray-800" />
-                                    </div>
-                                    <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800">
-                                        <SpeciesGallery images={species.spectrograms.map(img => img.url)} contain />
-                                    </div>
-                                </div>
-                            )}
+
                         </section>
 
                         {/* Section: Ecology / Characteristics */}
