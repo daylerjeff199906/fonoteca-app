@@ -98,6 +98,131 @@ const AudioListTable: React.FC<{
     );
 };
 
+const localizedStrings = {
+    es: {
+        occurrence: "Ocurrencia",
+        inLang: "En español",
+        observedIn: "Observado en",
+        synced: "Sincronizado hace 4 días",
+        modified: "Modificado",
+        months: [
+            'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+            'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+        ]
+    },
+    en: {
+        occurrence: "Occurrence",
+        inLang: "In English",
+        observedIn: "Observed in",
+        synced: "Synced 4 days ago",
+        modified: "Modified",
+        months: [
+            'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+        ]
+    },
+    pt: {
+        occurrence: "Ocorrência",
+        inLang: "Em português",
+        observedIn: "Observado em",
+        synced: "Sincronizado há 4 dias",
+        modified: "Modificado",
+        months: [
+            'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+            'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'
+        ]
+    }
+};
+
+const geoLabels = {
+    es: {
+        higherGeography: "Geografía superior",
+        continent: "Continente",
+        country: "País o área",
+        stateProvince: "Departamento/Estado/Provincia",
+        province: "Provincia",
+        district: "Distrito",
+        locality: "Localidad",
+        latitude: "Latitud decimal",
+        longitude: "Longitud decimal",
+        categoryProperty: "Categoría / Propiedad",
+        detailedValue: "Valor Detallado"
+    },
+    en: {
+        higherGeography: "Higher geography",
+        continent: "Continent",
+        country: "Country or area",
+        stateProvince: "State/Province",
+        province: "Province",
+        district: "District",
+        locality: "Locality",
+        latitude: "Decimal latitude",
+        longitude: "Decimal longitude",
+        categoryProperty: "Category / Property",
+        detailedValue: "Detailed Value"
+    },
+    pt: {
+        higherGeography: "Geografia superior",
+        continent: "Continente",
+        country: "País ou área",
+        stateProvince: "Estado/Província",
+        province: "Província",
+        district: "Distrito",
+        locality: "Localidade",
+        latitude: "Latitude decimal",
+        longitude: "Longitude decimal",
+        categoryProperty: "Categoria / Propriedade",
+        detailedValue: "Valor Detalhado"
+    }
+};
+
+const getLocalizedContinent = (cont: string | null | undefined, lang: string) => {
+    if (!cont) return '';
+    const clean = cont.trim().toLowerCase();
+    if (clean === 'south america' || clean === 'southamerica') {
+        return lang === 'es' ? 'Sudamérica' : lang === 'pt' ? 'América do Sul' : 'South America';
+    }
+    return cont;
+};
+
+const formatOccurrenceDate = (dateStr?: string | null, lang: string = 'es') => {
+    if (!dateStr) return '';
+    const clean = dateStr.trim();
+    const activeLang = (lang === 'es' || lang === 'en' || lang === 'pt') ? lang : 'es';
+    const months = localizedStrings[activeLang].months;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean) || /^\d{4}-\d{2}-\d{2}/.test(clean)) {
+        const parts = clean.split('T')[0].split('-');
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        return `${day} ${months[monthIdx]} ${year}`;
+    }
+    try {
+        const date = new Date(clean);
+        if (isNaN(date.getTime())) return clean.toUpperCase();
+        return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch (e) {
+        return clean.toUpperCase();
+    }
+};
+
+const parseScientificName = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return { italicName: name, authorName: '' };
+
+    let italicWords = 2;
+    if (parts.length > 2) {
+        const thirdWord = parts[2];
+        if (/^[a-z]/.test(thirdWord)) {
+            italicWords = 3;
+        }
+    }
+
+    const italicName = parts.slice(0, italicWords).join(' ');
+    const authorName = parts.slice(italicWords).join(' ');
+    return { italicName, authorName };
+};
+
 export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [species, setSpecies] = useState<Species | null>(null);
     const [loading, setLoading] = useState(true);
@@ -217,6 +342,37 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     ].filter(Boolean);
     const taxonomy = taxonomyParts.length > 0 ? taxonomyParts.join(" - ") : undefined;
 
+    const scientificNameParsed = parseScientificName(species.scientificName);
+
+    const breadcrumbs = [
+        { name: species.kingdom || "Animalia", italic: false },
+        { name: species.phylum, italic: false },
+        { name: species.class_name, italic: false },
+        { name: species.order, italic: false },
+        { name: species.family, italic: false },
+        { name: species.genus, italic: true },
+    ].filter(item => item.name);
+
+    const activeLang = (lang === 'es' || lang === 'en' || lang === 'pt') ? lang : 'es';
+
+    const higherGeography = [
+        getLocalizedContinent(species.databaseDetails?.continent, activeLang),
+        species.databaseDetails?.country,
+        species.databaseDetails?.stateProvince
+    ].filter(Boolean).join("; ");
+
+    const geoRows = [
+        { label: geoLabels[activeLang].higherGeography, value: higherGeography },
+        { label: geoLabels[activeLang].continent, value: getLocalizedContinent(species.databaseDetails?.continent, activeLang) },
+        { label: geoLabels[activeLang].country, value: species.databaseDetails?.country },
+        { label: geoLabels[activeLang].stateProvince, value: species.databaseDetails?.stateProvince },
+        { label: geoLabels[activeLang].province, value: species.databaseDetails?.province },
+        { label: geoLabels[activeLang].district, value: species.databaseDetails?.district },
+        { label: geoLabels[activeLang].locality, value: species.databaseDetails?.locality || species.location },
+        { label: geoLabels[activeLang].latitude, value: species.databaseDetails?.decimalLatitude?.toString() },
+        { label: geoLabels[activeLang].longitude, value: species.databaseDetails?.decimalLongitude?.toString() },
+    ].filter(row => row.value);
+
     const sections = [
         { id: 'at-a-glance', label: lang === 'es' ? 'En un vistazo' : 'At a glance' },
         { id: 'distribution', label: lang === 'es' ? 'Distribución' : 'Distribution' },
@@ -243,55 +399,61 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
             {/* Top Spacer for Navigation */}
             <div className="bg-primary-dark h-24 w-full"></div>
 
-            {/* Header Section (Mockup Inspired) */}
-            <header className="bg-[#f4f1ea] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                <div className="container mx-auto px-6 py-12 max-w-8xl">
-                    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
-                        {/* Species Circle Image */}
-                        {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in flex items-center justify-center">
-                                <img
-                                    src={species.mainImage}
-                                    alt={commonName}
-                                    className="max-w-full max-h-full object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden border border-gray-100 dark:border-gray-800 rounded-none bg-gray-50/50 dark:bg-gray-800/50 flex flex-col items-center justify-center p-4">
-                                <span className="text-gray-400 dark:text-gray-500 text-sm font-medium text-center uppercase tracking-widest">{lang === 'es' ? 'Sin imagen profesional disponible' : 'No professional image available'}</span>
-                            </div>
-                        )}
+            {/* Header Section (GBIF Inspired / Faithful to Image) */}
+            <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                <div className="container mx-auto px-6 pt-10 pb-8 max-w-8xl relative">
+                    {/* Top right metadata (Synced / Modified) */}
+                    <div className="absolute top-10 right-6 hidden md:block text-right text-[11px] text-gray-400 dark:text-gray-500 font-medium leading-relaxed">
+                        <div>{localizedStrings[activeLang].synced}</div>
+                        <div>{localizedStrings[activeLang].modified} {species.databaseDetails?.occurrence_date ? formatOccurrenceDate(species.databaseDetails.occurrence_date, activeLang) : '2 February 2026'}</div>
+                    </div>
 
-                        {/* Title & Scientific Information */}
-                        <div className="flex-1 text-center md:text-left space-y-4">
-                            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-serif italic text-gray-900 dark:text-white leading-tight">
-                                {species.scientificName}
-                            </h1>
-                            <div className="space-y-1">
-                                <p className="text-sm font-bold text-accent-green uppercase tracking-widest">
-                                    {species.family} ({species.order})
-                                </p>
-                            </div>
+                    <div className="flex flex-col items-center text-center space-y-4 max-w-4xl mx-auto">
+                        {/* Occurrence Badge */}
+                        <div className="text-[10px] md:text-xs font-bold tracking-widest text-gray-500 uppercase flex items-center justify-center gap-2">
+                            <span>{species.databaseDetails?.basisOfRecord ? species.databaseDetails.basisOfRecord.toUpperCase() : localizedStrings[activeLang].occurrence.toUpperCase()}</span>
+                            <span className="text-gray-300 dark:text-gray-700">|</span>
+                            <span>{formatOccurrenceDate(species.databaseDetails?.occurrence_date || '2026-01-08', activeLang)}</span>
                         </div>
 
-                        {/* Status Indicators Area */}
-                        <div className="grid grid-cols-2 gap-8 md:gap-12 xl:gap-16 shrink-0 items-center justify-center">
-                            <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:text-primary-dark transition-colors mb-2">
-                                    <Bird size={32} />
-                                </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Categoría' : 'Category'}</p>
-                                <p className="text-sm font-black text-gray-800 dark:text-gray-200">{species.category}</p>
-                            </div>
+                        {/* Scientific Name & Authorship */}
+                        <h1 className="text-2xl md:text-4xl text-gray-800 dark:text-white leading-tight">
+                            <span className="italic font-semibold">
+                                {scientificNameParsed.italicName}
+                            </span>
+                            {scientificNameParsed.authorName && (
+                                <span className="ml-2 text-gray-600 dark:text-gray-400 font-light text-xl md:text-2xl">
+                                    {scientificNameParsed.authorName}
+                                </span>
+                            )}
+                        </h1>
 
-                            <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform mb-2">
-                                    <Database size={32} />
-                                </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Tipo de Registro' : 'Basis of Record'}</p>
-                                <p className="text-sm font-black text-gray-800 dark:text-gray-200 tracking-tight whitespace-nowrap">{species.databaseDetails?.basisOfRecord || 'Observation'}</p>
-                            </div>
+                        {/* Location Subtitle */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            <span className="font-bold text-gray-800 dark:text-gray-200">
+                                {localizedStrings[activeLang].observedIn} {species.databaseDetails?.country || '---'}
+                            </span>
                         </div>
+
+                        {/* Taxonomic Breadcrumbs */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[11px] md:text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                            {breadcrumbs.map((crumb, idx) => (
+                                <React.Fragment key={idx}>
+                                    <span className={`${crumb.italic ? 'italic text-accent-green font-semibold' : 'font-medium'}`}>
+                                        {crumb.name}
+                                    </span>
+                                    {idx < breadcrumbs.length - 1 && (
+                                        <span className="text-gray-300 dark:text-gray-700 font-light text-[10px]">›</span>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Metadata fallback for mobile */}
+                    <div className="md:hidden border-t border-gray-100 dark:border-gray-900 mt-6 py-3 flex justify-between text-[10px] text-gray-400 dark:text-gray-500">
+                        <div>{localizedStrings[activeLang].synced}</div>
+                        <div>{localizedStrings[activeLang].modified} {species.databaseDetails?.occurrence_date ? formatOccurrenceDate(species.databaseDetails.occurrence_date, activeLang) : '2 February 2026'}</div>
                     </div>
                 </div>
             </header>
@@ -442,7 +604,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Distribución y Lugar' : 'Distribution & Location'}
                                 description={lang === 'es' ? 'Áreas geográficas y contexto de observación.' : 'Geographic ranges and observation context.'}
                             />
-                            <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
+                            <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group mb-6">
                                 <div className="w-full relative z-10">
                                     <SpeciesDistributionMap
                                         scientificName={species.scientificName}
@@ -450,34 +612,36 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                         longitude={species.databaseDetails?.decimalLongitude ?? undefined}
                                     />
                                 </div>
-                                <div className="w-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 mt-2 rounded-xl flex flex-wrap justify-between items-center gap-4">
-                                    <div className="flex-1 min-w-[200px]">
-                                        <h4 className="text-sm font-black text-gray-900 dark:text-white">{species.location}</h4>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{species.databaseDetails?.country || 'Perú'}</span>
-                                            <span className="text-[10px] text-gray-300">•</span>
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails?.stateProvince || 'Loreto'}</span>
-                                            {species.databaseDetails?.province && (
-                                                <>
-                                                    <span className="text-[10px] text-gray-300">•</span>
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails.province}</span>
-                                                </>
-                                            )}
-                                            {species.databaseDetails?.district && (
-                                                <>
-                                                    <span className="text-[10px] text-gray-300">•</span>
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails.district}</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {species.databaseDetails?.ecosystem_name && (
-                                        <span className="px-3 py-1 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green whitespace-nowrap">
-                                            {species.databaseDetails.ecosystem_name}
-                                        </span>
-                                    )}
-                                </div>
                             </div>
+
+                            {geoRows.length > 0 && (
+                                <div className="w-full mt-6 overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm bg-white dark:bg-gray-900">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-100 dark:bg-gray-800">
+                                                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">
+                                                    {geoLabels[activeLang].categoryProperty}
+                                                </th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">
+                                                    {geoLabels[activeLang].detailedValue}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-sm">
+                                            {geoRows.map((row, idx) => (
+                                                <tr key={`geo-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                    <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">
+                                                        {row.label}
+                                                    </td>
+                                                    <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
+                                                        {row.value}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </section>
 
                         {/* Section: Audios & Analysis */}
@@ -568,30 +732,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                         {/* Removed Taxonomy and Details Sections */}
 
-                        {/* CTA / Support Section */}
-                        <div className="pt-24 pb-12">
-                            <div className="relative overflow-hidden bg-gradient-to-br from-primary-dark to-[#0c141d] rounded-lg p-10 md:p-16 text-white border border-white/5 group">
-                                {/* Decorative elements */}
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-accent-green/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-accent-green/20 transition-all duration-700"></div>
-                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-green/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
-
-                                <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
-                                    <div className="flex-1 space-y-8">
-                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-md rounded-full text-[10px] font-black tracking-[0.2em] uppercase text-accent-green border border-accent-green/20">
-                                            <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse"></span>
-                                            INVESTIGACIÓN Y CONSERVACIÓN
-                                        </div>
-                                        <h3 className="text-4xl md:text-5xl font-black leading-[1.1] tracking-tight">
-                                            Ayúdanos a proteger la biodiversidad amazónica
-                                        </h3>
-                                    </div>
-                                    <div className="w-56 h-56 md:w-72 md:h-72 shrink-0 relative animate-float transition-transform duration-700 group-hover:scale-110">
-                                        <div className="absolute inset-0 bg-accent-green/20 blur-[60px] rounded-full"></div>
-                                        <img src="/images/logo-mini.webp" alt="Support" className="relative z-10 w-full h-full object-contain filter brightness-90 contrast-125" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Removed CTA / Support Section */}
 
                     </div>
                 </div>
