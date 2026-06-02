@@ -428,13 +428,8 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             )}
                         </h1>
 
-                        {/* Common Name, Language & Location */}
+                        {/* Location Subtitle */}
                         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium">
-                            <span className="font-bold text-gray-800 dark:text-gray-200">
-                                {commonName}
-                            </span>
-                            <span className="text-gray-400 dark:text-gray-500">{localizedStrings[activeLang].inLang}</span>
-                            <span className="text-gray-300 dark:text-gray-700">•</span>
                             <span className="font-bold text-gray-800 dark:text-gray-200">
                                 {localizedStrings[activeLang].observedIn} {species.databaseDetails?.country || '---'}
                             </span>
@@ -638,7 +633,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                     <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">
                                                         {row.label}
                                                     </td>
-                                                    <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 font-mono text-xs">
+                                                    <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
                                                         {row.value}
                                                     </td>
                                                 </tr>
