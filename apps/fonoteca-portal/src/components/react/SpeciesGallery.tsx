@@ -31,7 +31,6 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
     const [activeIndex, setActiveIndex] = useState(0);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-    const [zoomScale, setZoomScale] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const lightboxRef = useRef<HTMLDivElement>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -116,30 +115,17 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
 
     const handleNextLightbox = () => {
         setLightboxIndex((prev) => (prev !== null ? (prev + 1) % items.length : null));
-        setZoomScale(1);
     };
 
     const handlePrevLightbox = () => {
         setLightboxIndex((prev) => (prev !== null ? (prev - 1 + items.length) % items.length : null));
-        setZoomScale(1);
     };
 
     const closeLightbox = () => {
         setLightboxIndex(null);
-        setZoomScale(1);
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(() => {});
         }
-    };
-
-    const handleZoomIn = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setZoomScale(prev => Math.min(prev + 0.25, 3));
-    };
-
-    const handleZoomOut = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setZoomScale(prev => Math.max(prev - 0.25, 1));
     };
 
     const handleToggleFullscreen = (e: React.MouseEvent) => {
@@ -154,10 +140,6 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
             document.exitFullscreen();
         }
     };
-
-    // Calculate drag bounds dynamically to prevent image from leaving the screen viewport
-    const xDragLimit = typeof window !== 'undefined' ? Math.max(0, (window.innerWidth * (zoomScale - 1)) / 2) : 0;
-    const yDragLimit = typeof window !== 'undefined' ? Math.max(0, (window.innerHeight * (zoomScale - 1)) / 2) : 0;
 
     const currentItem = items[activeIndex];
 
@@ -259,7 +241,6 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                                 key={idx}
                                 onClick={() => {
                                     setActiveIndex(idx);
-                                    setZoomScale(1);
                                 }}
                                 className={`w-16 h-16 rounded-md overflow-hidden bg-black border-2 transition-all flex-shrink-0 cursor-pointer ${
                                     isActive
@@ -302,22 +283,8 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                                 </button>
                             </div>
 
-                            {/* Top Right: Actions group (Zoom In, Zoom Out, Fullscreen) */}
+                            {/* Top Right: Actions group (Fullscreen) */}
                             <div className="flex items-center gap-2 pointer-events-auto">
-                                <button
-                                    onClick={handleZoomIn}
-                                    className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
-                                    title={lang === 'es' ? 'Acercar' : 'Zoom In'}
-                                >
-                                    <ZoomIn className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={handleZoomOut}
-                                    className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
-                                    title={lang === 'es' ? 'Alejar' : 'Zoom Out'}
-                                >
-                                    <ZoomOut className="w-4 h-4" />
-                                </button>
                                 <button
                                     onClick={handleToggleFullscreen}
                                     className="w-9 h-9 rounded-full bg-[#1c1d1e] hover:bg-[#2d2e2f] text-white flex items-center justify-center transition-all cursor-pointer"
@@ -344,26 +311,12 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                                 </button>
                             )}
 
-                            {/* Center Active Image - Mathematically precise boundaries prevent image from flying off the viewport */}
+                            {/* Center Active Image */}
                             <motion.img
-                                drag={zoomScale > 1}
-                                dragConstraints={{
-                                    left: -xDragLimit,
-                                    right: xDragLimit,
-                                    top: -yDragLimit,
-                                    bottom: yDragLimit
-                                }}
-                                dragElastic={0.15}
-                                animate={{
-                                    x: zoomScale === 1 ? 0 : undefined,
-                                    y: zoomScale === 1 ? 0 : undefined,
-                                    scale: zoomScale
-                                }}
+                                animate={{ x: 0, y: 0, scale: 1 }}
                                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                 src={items[lightboxIndex].url}
-                                className={`h-full w-auto max-w-none object-contain pointer-events-auto ${
-                                    zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
-                                }`}
+                                className="h-full w-auto max-w-none object-contain pointer-events-auto"
                                 alt={`Facebook view ${lightboxIndex + 1}`}
                                 onClick={(e) => e.stopPropagation()}
                             />

@@ -19,7 +19,9 @@ import {
     Database,
     FolderPlus,
     FolderCheck,
-    DatabaseZap
+    DatabaseZap,
+    X,
+    Check
 } from 'lucide-react';
 import { useAudioRequestStore } from '../../store/useAudioRequestStore';
 
@@ -264,7 +266,21 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState('at-a-glance');
+    const [isCitationOpen, setIsCitationOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
+
+    const generateCitationText = () => {
+        if (!species) return "";
+        const author = species.databaseDetails?.identifiedBy || species.databaseDetails?.rightsHolder || "Biblioteca Acústica de Fauna Amazónica";
+        const year = species.databaseDetails?.occurrence_date ? new Date(species.databaseDetails.occurrence_date).getFullYear() : new Date().getFullYear();
+        const scientificName = species.scientificName;
+        const catalogNum = species.databaseDetails?.catalogNumber ? ` (Catálogo: ${species.databaseDetails.catalogNumber})` : "";
+        const url = typeof window !== 'undefined' ? window.location.href : `https://fonoteca.iiap.gob.pe/${lang}/species/${species.id}`;
+        const accessDate = new Date().toLocaleDateString(lang === 'es' ? 'es-PE' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        return `${author} (${year}). Registro de espécimen de ${scientificName}${catalogNum}. Biblioteca Acústica de Fauna Amazónica. Recuperado el ${accessDate} de ${url}`;
+    };
 
     const { addToCartBulk, setIsCartOpen } = useAudioRequestStore();
 
@@ -409,6 +425,10 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
         { label: geoLabels[activeLang].locality, value: species.databaseDetails?.locality || species.location },
         { label: geoLabels[activeLang].latitude, value: species.databaseDetails?.decimalLatitude?.toString() },
         { label: geoLabels[activeLang].longitude, value: species.databaseDetails?.decimalLongitude?.toString() },
+        { label: lang === 'es' ? 'Datum Geodésico' : 'Geodetic Datum', value: species.databaseDetails?.geodeticDatum },
+        { label: lang === 'es' ? 'Protocolo de Georreferenciación' : 'Georeference Protocol', value: species.databaseDetails?.georeferenceProtocol },
+        { label: lang === 'es' ? 'Fuentes de Georreferenciación' : 'Georeference Sources', value: species.databaseDetails?.georeferenceSources },
+        { label: lang === 'es' ? 'Fecha de Georreferenciación' : 'Georeferenced Date', value: species.databaseDetails?.georeferencedDate },
     ].filter(row => row.value);
 
     const sections = [
@@ -542,7 +562,10 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     <Share2 size={14} />
                                     <span>SHARE FACTSHEET</span>
                                 </button>
-                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
+                                <button 
+                                    onClick={() => setIsCitationOpen(true)}
+                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group"
+                                >
                                     <FileText size={14} />
                                     <span>CITATIONS</span>
                                 </button>
@@ -626,10 +649,16 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                 </tr>
                                                 {[
                                                     { label: lang === 'es' ? 'ID de Ocurrencia' : 'Occurrence ID', value: species.databaseDetails.occurrenceID },
+                                                    { label: lang === 'es' ? 'Número de Catálogo' : 'Catalog Number', value: species.databaseDetails.catalogNumber },
                                                     { label: lang === 'es' ? 'Fecha de Ocurrencia' : 'Occurrence Date', value: species.databaseDetails.occurrence_date },
                                                     { label: lang === 'es' ? 'Método de Identificación' : 'Identification Method', value: species.databaseDetails.identificationMethod },
                                                     { label: lang === 'es' ? 'Etapa de Vida' : 'Life Stage', value: species.databaseDetails.lifeStage },
                                                     { label: lang === 'es' ? 'Sexo' : 'Sex', value: species.databaseDetails.sex },
+                                                    { label: lang === 'es' ? 'Identificado Por' : 'Identified By', value: species.databaseDetails.identifiedBy },
+                                                    { label: lang === 'es' ? 'Fecha Identificado' : 'Date Identified', value: species.databaseDetails.dateIdentified },
+                                                    { label: lang === 'es' ? 'Comentarios de Identificación' : 'Identification Remarks', value: species.databaseDetails.identificationRemarks },
+                                                    { label: lang === 'es' ? 'Licencia' : 'License', value: species.databaseDetails.license },
+                                                    { label: lang === 'es' ? 'Titular de Derechos' : 'Rights Holder', value: species.databaseDetails.rightsHolder },
                                                 ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`id-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
@@ -639,18 +668,72 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                                                 {/* Specimen Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen' : 'Specimen and Collection'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen y Colección' : 'Specimen and Collection'}</td>
                                                 </tr>
                                                 {[
-                                                    { label: lang === 'es' ? 'Institución' : 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
-                                                    { label: lang === 'es' ? 'Colección' : 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
+                                                    { label: lang === 'es' ? 'Institución / Museo' : 'Institution / Museum', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
+                                                    { label: lang === 'es' ? 'Colección Biológica' : 'Biological Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
                                                     { label: lang === 'es' ? 'Base del Registro' : 'Basis of Record', value: species.databaseDetails.basisOfRecord },
+                                                    { label: lang === 'es' ? 'Preparaciones' : 'Preparations', value: species.databaseDetails.preparations },
+                                                    { label: lang === 'es' ? 'Disposición' : 'Disposition', value: species.databaseDetails.disposition },
+                                                    { label: lang === 'es' ? 'Conteo de Individuos' : 'Individual Count', value: species.databaseDetails.individualCount?.toString() },
+                                                    { label: lang === 'es' ? 'Testigo Físico (Voucher)' : 'Witness Voucher', value: species.databaseDetails.has_cloud_voucher ? (lang === 'es' ? 'Sí' : 'Yes') : null },
+                                                    { label: lang === 'es' ? 'Hábitat / Ecosistema' : 'Habitat / Ecosystem', value: species.databaseDetails.ecosystem_name },
+                                                    { 
+                                                        label: lang === 'es' ? 'Propiedades Dinámicas (Medidas)' : 'Dynamic Properties', 
+                                                        value: species.databaseDetails.dynamicProperties ? (
+                                                            typeof species.databaseDetails.dynamicProperties === 'object' 
+                                                                ? Object.entries(species.databaseDetails.dynamicProperties).map(([k, v]) => `${k}: ${v}`).join('; ') 
+                                                                : species.databaseDetails.dynamicProperties.toString()
+                                                        ) : null 
+                                                    },
                                                 ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`spec-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
                                                     </tr>
                                                 ))}
+
+                                                {/* Ambient Group */}
+                                                {((species.databaseDetails.temperature_c !== null && species.databaseDetails.temperature_c !== undefined) ||
+                                                  (species.databaseDetails.relative_humidity_percent !== null && species.databaseDetails.relative_humidity_percent !== undefined) ||
+                                                  (species.databaseDetails.elevation_masl !== null && species.databaseDetails.elevation_masl !== undefined)) && (
+                                                    <>
+                                                        <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                            <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">3. {lang === 'es' ? 'Condiciones Ambientales' : 'Environmental Conditions'}</td>
+                                                        </tr>
+                                                        {[
+                                                            { label: lang === 'es' ? 'Temperatura' : 'Temperature', value: species.databaseDetails.temperature_c !== null && species.databaseDetails.temperature_c !== undefined ? `${species.databaseDetails.temperature_c} °C` : null },
+                                                            { label: lang === 'es' ? 'Humedad Relativa' : 'Relative Humidity', value: species.databaseDetails.relative_humidity_percent !== null && species.databaseDetails.relative_humidity_percent !== undefined ? `${species.databaseDetails.relative_humidity_percent} %` : null },
+                                                            { label: lang === 'es' ? 'Elevación' : 'Elevation', value: species.databaseDetails.elevation_masl !== null && species.databaseDetails.elevation_masl !== undefined ? `${species.databaseDetails.elevation_masl} m s.n.m.` : null },
+                                                        ].filter(item => item.value).map((item, idx) => (
+                                                            <tr key={`amb-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                                <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                                <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </>
+                                                )}
+
+                                                {/* Event Group */}
+                                                {(species.databaseDetails.eventID || species.databaseDetails.eventDate || species.databaseDetails.samplingProtocol) && (
+                                                    <>
+                                                        <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                            <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">4. {lang === 'es' ? 'Evento' : 'Event'}</td>
+                                                        </tr>
+                                                        {[
+                                                            { label: lang === 'es' ? 'ID de Evento' : 'Event ID', value: species.databaseDetails.eventID },
+                                                            { label: lang === 'es' ? 'Fecha de Evento' : 'Event Date', value: species.databaseDetails.eventDate },
+                                                            { label: lang === 'es' ? 'Hora de Evento' : 'Event Time', value: species.databaseDetails.eventTime },
+                                                            { label: lang === 'es' ? 'Protocolo de Muestreo' : 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
+                                                        ].filter(item => item.value).map((item, idx) => (
+                                                            <tr key={`evt-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                                <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                                <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -797,6 +880,72 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Citation Modal */}
+            <AnimatePresence>
+                {isCitationOpen && (
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setIsCitationOpen(false)}>
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setIsCitationOpen(false)}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                            
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2">
+                                <FileText size={18} className="text-accent-green" />
+                                {lang === 'es' ? 'Citar este Registro' : 'Cite this Record'}
+                            </h3>
+                            
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">
+                                {lang === 'es' 
+                                    ? 'Utilice la siguiente referencia para citar esta ocurrencia y sus registros acústicos asociados:' 
+                                    : 'Use the following reference to cite this occurrence and its associated acoustic records:'}
+                            </p>
+                            
+                            <div className="bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl p-4 mb-6 font-mono text-xs text-gray-700 dark:text-gray-300 leading-relaxed select-all">
+                                {generateCitationText()}
+                            </div>
+                            
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={() => setIsCitationOpen(false)}
+                                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 rounded-lg text-xs font-bold transition-all"
+                                >
+                                    {lang === 'es' ? 'Cerrar' : 'Close'}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(generateCitationText());
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }}
+                                    className="px-5 py-2 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check size={14} />
+                                            {lang === 'es' ? '¡Copiado!' : 'Copied!'}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Share2 size={14} />
+                                            {lang === 'es' ? 'Copiar Cita' : 'Copy Citation'}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
