@@ -814,22 +814,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
                             <div className="w-px h-6 bg-gray-800 hidden sm:block"></div>
 
-                            {/* Zoom */}
-                            <div className="flex items-center gap-2" title="Zoom Espectrograma">
-                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mr-1">Zoom</span>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="20"
-                                    step="0.5"
-                                    value={zoom}
-                                    onChange={handleZoom}
-                                    className="w-16 md:w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent-green"
-                                />
-                            </div>
-
-                            <div className="w-px h-6 bg-gray-800 hidden sm:block"></div>
-
                             {/* Volume */}
                             <div className="flex items-center gap-2" title="Volumen">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-400">
