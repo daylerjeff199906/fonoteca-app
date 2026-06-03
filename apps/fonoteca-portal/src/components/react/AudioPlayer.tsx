@@ -163,28 +163,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         }));
         wsSpectrogramRef.current = wsSpectrogram;
 
-        let lastHeight = containerHeight;
-        // Resize observer to scale spectrogram canvas dynamically without reloading audio
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const rect = entry.contentRect;
-                if (rect.height > 0 && wsSpectrogramRef.current) {
-                    const newHeight = Math.round(rect.height);
-                    if (Math.abs(lastHeight - newHeight) > 1) {
-                        lastHeight = newHeight;
-                        if (wsSpectrogramRef.current.options) {
-                            wsSpectrogramRef.current.options.height = newHeight;
-                        }
-                        wsSpectrogramRef.current.render();
-                    }
-                }
-            }
-        });
-
-        if (spectrogramRef.current) {
-            resizeObserver.observe(spectrogramRef.current);
-        }
-
         // Initialize Regions plugin for Range Selection
         const wsRegions = ws.registerPlugin(Regions.create());
         wsRegionsRef.current = wsRegions;
@@ -234,10 +212,45 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         });
 
         return () => {
-            resizeObserver.disconnect();
             ws.destroy();
         };
     }, [audioUrl, colorMapType]);
+
+    // Handle container resize when window size changes
+    useEffect(() => {
+        const handleResize = () => {
+            if (!spectrogramRef.current || !wsSpectrogramRef.current) return;
+            const newHeight = spectrogramRef.current.clientHeight;
+            if (newHeight > 0) {
+                if (wsSpectrogramRef.current.options) {
+                    wsSpectrogramRef.current.options.height = newHeight;
+                }
+                wsSpectrogramRef.current.render();
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Handle container resize when layout mode transitions (isExpanded or showBottomDetails toggle)
+    useEffect(() => {
+        if (!wsSpectrogramRef.current || !spectrogramRef.current) return;
+        
+        // Wait for CSS transitions (300ms) to settle before measuring clientHeight
+        const timer = setTimeout(() => {
+            if (!spectrogramRef.current || !wsSpectrogramRef.current) return;
+            const newHeight = spectrogramRef.current.clientHeight;
+            if (newHeight > 0) {
+                if (wsSpectrogramRef.current.options) {
+                    wsSpectrogramRef.current.options.height = newHeight;
+                }
+                wsSpectrogramRef.current.render();
+            }
+        }, 350);
+
+        return () => clearTimeout(timer);
+    }, [isExpanded, showBottomDetails]);
 
 
 
@@ -702,7 +715,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
                     {/* Controls Area (Console Style) */}
                     <div className="bg-[#181818] p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-800 flex-shrink-0">
-                        <div className="flex items-center gap-6 w-full sm:w-auto">
+                        <div className="flex items-center gap-3 sm:gap-4 justify-center sm:justify-start w-full sm:w-auto">
+                            {onPrev && (
+                                <button
+                                    onClick={onPrev}
+                                    disabled={!hasPrev}
+                                    className="w-10 h-10 flex-shrink-0 bg-gray-800 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition-transform disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title={lang === 'es' ? 'Audio anterior' : 'Previous audio'}
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                            )}
+
                             <button
                                 onClick={togglePlay}
                                 disabled={!isReady}
@@ -719,6 +743,17 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                 )}
                             </button>
 
+                            {onNext && (
+                                <button
+                                    onClick={onNext}
+                                    disabled={!hasNext}
+                                    className="w-10 h-10 flex-shrink-0 bg-gray-800 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition-transform disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title={lang === 'es' ? 'Siguiente audio' : 'Next audio'}
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            )}
+
                             <button
                                 onClick={handleRewind}
                                 disabled={!isReady}
@@ -728,10 +763,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                 <RotateCcw className="w-4 h-4" />
                             </button>
 
-                            <div className="font-mono text-sm tracking-wider flex items-center gap-2">
-                                <span className="text-accent-green font-medium min-w-[50px]">{currentTime}</span>
-                                <span className="text-gray-600">/</span>
-                                <span className="text-gray-400 min-w-[50px]">{duration}</span>
+                            <div className="font-mono text-xs sm:text-sm tracking-wider flex items-center gap-1.5 ml-2">
+                                <span className="text-accent-green font-medium min-w-[40px] sm:min-w-[50px]">{currentTime}</span>
+                                <span className="text-gray-650">/</span>
+                                <span className="text-gray-400 min-w-[40px] sm:min-w-[50px]">{duration}</span>
                             </div>
                         </div>
 
@@ -861,28 +896,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                             className={`bg-[#0d0d0d] border-t border-gray-800 flex flex-col transition-all duration-300 ${showBottomDetails ? 'h-[40%] min-h-[220px] opacity-100' : 'h-0 opacity-0 pointer-events-none'
                                 } overflow-hidden`}
                         >
-                            {/* Tab Header */}
+                            {/* Panel Header */}
                             <div className="px-6 py-2 bg-[#070707] border-b border-gray-800 flex items-center justify-between flex-shrink-0 select-none">
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setActiveDetailTab('info')}
-                                        className={`px-3 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all border ${activeDetailTab === 'info'
-                                            ? 'bg-accent-green text-black border-accent-green'
-                                            : 'text-gray-400 hover:text-white border-transparent'
-                                            }`}
-                                    >
-                                        {lang === 'es' ? 'Ficha Técnica' : 'Technical Profile'}
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveDetailTab('multimedia')}
-                                        className={`px-3 py-1 rounded text-[9px] font-black uppercase tracking-wider transition-all border ${activeDetailTab === 'multimedia'
-                                            ? 'bg-accent-green text-black border-accent-green'
-                                            : 'text-gray-400 hover:text-white border-transparent'
-                                            }`}
-                                    >
-                                        {lang === 'es' ? 'Análisis Visual' : 'Visual Analysis'}
-                                    </button>
-                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-accent-green">
+                                    {lang === 'es' ? 'Ficha Técnica' : 'Technical Profile'}
+                                </span>
 
                                 <button
                                     onClick={() => setShowBottomDetails(false)}
@@ -892,52 +910,29 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                 </button>
                             </div>
 
-                            {/* Tab Contents */}
-                            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-black/25">
-                                {activeDetailTab === 'info' ? (
-                                    <div className="px-4">
-                                        <div className="border border-gray-800 rounded-lg overflow-hidden bg-[#111] w-full">
-                                            <table className="w-full text-left text-xs">
-                                                <tbody className="divide-y divide-gray-800/50">
-                                                    {[
-                                                        { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName },
-                                                        { label: lang === 'es' ? 'Autor' : 'Author', value: species.databaseDetails?.identifiedBy || 'Desconocido' },
-                                                        { label: lang === 'es' ? 'Fecha' : 'Date', value: species.databaseDetails?.occurrence_date },
-                                                        { label: lang === 'es' ? 'Localidad' : 'Locality', value: species.location },
-                                                        { label: lang === 'es' ? 'País' : 'Country', value: species.databaseDetails?.country || 'Perú' },
-                                                        { label: 'ID Ocurrencia', value: species.databaseDetails?.occurrenceID },
-                                                    ].filter(item => item.value).map((item, i) => (
-                                                        <tr key={i} className="hover:bg-[#1a1a1a] transition-colors">
-                                                            <td className="px-3 py-2 text-gray-500 font-medium w-1/3 border-r border-gray-800/50">{item.label}</td>
-                                                            <td className="px-3 py-2 text-gray-300 font-medium break-all">{item.value}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                            {/* Panel Contents */}
+                            <div className="flex-grow overflow-y-auto p-4 md:p-6 bg-black/25">
+                                <div className="px-2 sm:px-4">
+                                    <div className="border border-gray-800 rounded-lg overflow-hidden bg-[#111] w-full">
+                                        <table className="w-full text-left text-xs">
+                                            <tbody className="divide-y divide-gray-800/50">
+                                                {[
+                                                    { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName },
+                                                    { label: lang === 'es' ? 'Autor' : 'Author', value: species.databaseDetails?.identifiedBy || 'Desconocido' },
+                                                    { label: lang === 'es' ? 'Fecha' : 'Date', value: species.databaseDetails?.occurrence_date },
+                                                    { label: lang === 'es' ? 'Localidad' : 'Locality', value: species.location },
+                                                    { label: lang === 'es' ? 'País' : 'Country', value: species.databaseDetails?.country || 'Perú' },
+                                                    { label: 'ID Ocurrencia', value: species.databaseDetails?.occurrenceID },
+                                                ].filter(item => item.value).map((item, i) => (
+                                                    <tr key={i} className="hover:bg-[#1a1a1a] transition-colors">
+                                                        <td className="px-3 py-2 text-gray-500 font-medium w-1/3 border-r border-gray-800/50">{item.label}</td>
+                                                        <td className="px-3 py-2 text-gray-300 font-medium break-all">{item.value}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                ) : (
-                                    /* Multimedia Tab - Spectrogram associated specifically with the audio */
-                                    <div className="px-4 w-full">
-                                        <div className="flex flex-col items-center justify-center h-full min-h-[150px] w-full">
-                                            {allImages.length > 0 ? (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
-                                                    {allImages.map((img, idx) => (
-                                                        <div key={idx} className="bg-black/30 border border-gray-800 rounded-lg p-2.5 flex flex-col items-center gap-2 hover:border-accent-green/30 transition-colors">
-                                                            <img src={img} alt="Espectrograma Asociado" className="max-h-24 object-contain rounded" />
-                                                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Espectrograma {idx + 1}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center text-gray-600 py-6">
-                                                    <Music className="w-10 h-10 mx-auto mb-2 text-gray-700" />
-                                                    <p className="text-xs uppercase tracking-widest font-bold">No hay análisis visuales específicos para este audio</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         </div>
                     )}

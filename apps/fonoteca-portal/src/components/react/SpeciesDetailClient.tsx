@@ -115,11 +115,10 @@ const AudioListTable: React.FC<{
                                                     });
                                                 }
                                             }}
-                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all border ${
-                                                isAdded
-                                                    ? 'bg-accent-green text-white border-accent-green'
-                                                    : 'bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 dark:border-gray-800 text-gray-400 hover:text-accent-green'
-                                            }`}
+                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all border ${isAdded
+                                                ? 'bg-accent-green text-white border-accent-green'
+                                                : 'bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 dark:border-gray-800 text-gray-400 hover:text-accent-green'
+                                                }`}
                                             title={isAdded ? (lang === 'es' ? 'En la Solicitud' : 'In Request') : (lang === 'es' ? 'Añadir a Solicitud' : 'Add to Request')}
                                         >
                                             {isAdded ? <FolderCheck size={14} /> : <FolderPlus size={14} />}
@@ -456,8 +455,8 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         </div>
 
                         {/* Scientific Name & Authorship */}
-                        <h1 className="text-2xl md:text-4xl text-gray-800 dark:text-white leading-tight">
-                            <span className="italic font-semibold">
+                        <h1 className="text-2xl md:text-4xl lg:text-5xl text-gray-800 dark:text-white">
+                            <span className="italic">
                                 {scientificNameParsed.italicName}
                             </span>
                             {scientificNameParsed.authorName && (
@@ -550,7 +549,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                                 <hr className="border-gray-100 dark:border-gray-800" />
 
-                                <button 
+                                <button
                                     onClick={() => {
                                         if (species.audios && species.audios.length > 0) {
                                             const itemsToRequest = species.audios.map((audio: any) => ({
@@ -733,6 +732,18 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     autoplay={true}
                                     species={species}
                                     lang={lang}
+                                    onNext={() => {
+                                        if (selectedAudioIndex < species.audios.length - 1) {
+                                            setSelectedAudioIndex(selectedAudioIndex + 1);
+                                        }
+                                    }}
+                                    onPrev={() => {
+                                        if (selectedAudioIndex > 0) {
+                                            setSelectedAudioIndex(selectedAudioIndex - 1);
+                                        }
+                                    }}
+                                    hasNext={selectedAudioIndex < species.audios.length - 1}
+                                    hasPrev={selectedAudioIndex > 0}
                                 />
                             )}
 
