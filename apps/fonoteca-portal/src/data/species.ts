@@ -13,6 +13,7 @@ export interface DbMultimedia {
     duration_seconds: number | null;
     file_size_bytes: number | null;
     parent_multimedia_id: string | null;
+    is_public?: boolean;
 }
 
 export interface DbLocation {
@@ -22,6 +23,12 @@ export interface DbLocation {
     decimalLatitude: number | null;
     decimalLongitude: number | null;
     coordinateUncertaintyInMeters: number | null;
+    country?: string | null;
+    stateProvince?: string | null;
+    geodeticDatum?: string | null;
+    georeferenceProtocol?: string | null;
+    georeferenceSources?: string | null;
+    georeferencedDate?: string | null;
     created_at: string;
     district?: {
         name: string;
@@ -88,7 +95,18 @@ export interface DbOccurrence {
     occurrenceRemarks: string | null;
     microhabitat_remarks: string | null;
     identificationMethod: string | null;
+    preparations?: string | null;
+    disposition?: string | null;
+    individualCount?: number | null;
+    dynamicProperties?: any;
+    dateIdentified?: string | null;
+    identificationRemarks?: string | null;
+    license?: string | null;
+    rightsHolder?: string | null;
+    has_cloud_voucher?: boolean;
     events?: {
+        id?: string;
+        eventID?: string;
         eventDate: string;
         eventTime: string | null;
         samplingProtocol: string | null;
@@ -162,6 +180,7 @@ export interface Species {
         collectionCode: string | null;
         collectionName: string | null;
         catalogNumber: string | null;
+        eventID: string | null;
         eventDate: string | null;
         eventTime: string | null;
         lifeStage: string | null;
@@ -186,6 +205,20 @@ export interface Species {
         samplingProtocol: string | null;
         ecosystem_name: string | null;
         microhabitat_remarks: string | null;
+        // New fields
+        preparations: string | null;
+        disposition: string | null;
+        individualCount: number | null;
+        dynamicProperties: any;
+        dateIdentified: string | null;
+        identificationRemarks: string | null;
+        license: string | null;
+        rightsHolder: string | null;
+        has_cloud_voucher: boolean | null;
+        geodeticDatum: string | null;
+        georeferenceProtocol: string | null;
+        georeferenceSources: string | null;
+        georeferencedDate: string | null;
     };
 }
 
@@ -269,6 +302,15 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
             microhabitat_remarks,
             basisOfRecord,
             catalogNumber,
+            preparations,
+            disposition,
+            individualCount:individualcount,
+            dynamicProperties:dynamicproperties,
+            dateIdentified:dateidentified,
+            identificationRemarks:identificationremarks,
+            license,
+            rightsHolder:rightsholder,
+            has_cloud_voucher,
             institutions (
                 name,
                 code
@@ -295,8 +337,30 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                     )
                 )
             ),
-            locations!inner (*),
+            locations:locations!inner (
+                locality,
+                decimalLatitude,
+                decimalLongitude,
+                coordinateUncertaintyInMeters,
+                country,
+                stateProvince:stateprovince,
+                geodeticDatum:geodeticdatum,
+                georeferenceProtocol:georeferenceprotocol,
+                georeferenceSources:georeferencesources,
+                georeferencedDate:georeferenceddate,
+                district:ubigeo_districts (
+                    name,
+                    province:ubigeo_provinces (
+                        name,
+                        department:ubigeo_departments (
+                            name
+                        )
+                    )
+                )
+            ),
             events (
+                id,
+                eventID,
                 eventDate,
                 eventTime,
                 samplingProtocol
@@ -319,7 +383,8 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                 background_species,
                 duration_seconds,
                 file_size_bytes,
-                parent_multimedia_id
+                parent_multimedia_id,
+                is_public
             )
         `, { count: 'exact' })
         .eq('record_status', 'published');
@@ -369,7 +434,7 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
     const speciesList: Species[] = (occurrences || []).map((occ) => {
         const taxon = occ.taxa;
         const loc = occ.locations;
-        const media = occ.multimedia || [];
+        const media = (occ.multimedia || []).filter((m) => m.is_public !== false);
 
         const isImage = (m: DbMultimedia): boolean => !!(m.type === 'Still' || m.format?.includes('image'));
         const isAudio = (m: DbMultimedia): boolean => !!(m.type === 'Sound' || m.format?.includes('audio'));
@@ -471,14 +536,15 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                 collectionCode: occ.collections?.code || null,
                 collectionName: occ.collections?.name || null,
                 catalogNumber: occ.catalogNumber,
+                eventID: occ.events?.eventID || null,
                 eventDate: occ.events?.eventDate || null,
                 eventTime: occ.events?.eventTime || null,
                 lifeStage: occ.lifeStage,
                 sex: occ.sex,
                 identifiedBy: occ.identifiedBy,
                 continent: "South America",
-                country: "Perú",
-                stateProvince: loc?.district?.province?.department?.name || null,
+                country: loc?.country || "Perú",
+                stateProvince: loc?.stateProvince || loc?.district?.province?.department?.name || null,
                 province: loc?.district?.province?.name || null,
                 district: loc?.district?.name || null,
                 locality: loc?.locality || null,
@@ -495,6 +561,20 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
                 identificationMethod: occ.identificationMethod,
                 samplingProtocol: occ.events?.samplingProtocol || null,
                 ecosystem_name: occ.ecosystems?.name || null,
+                // New fields
+                preparations: occ.preparations || null,
+                disposition: occ.disposition || null,
+                individualCount: occ.individualCount || null,
+                dynamicProperties: occ.dynamicProperties || null,
+                dateIdentified: occ.dateIdentified || null,
+                identificationRemarks: occ.identificationRemarks || null,
+                license: occ.license || null,
+                rightsHolder: occ.rightsHolder || null,
+                has_cloud_voucher: occ.has_cloud_voucher || null,
+                geodeticDatum: loc?.geodeticDatum || null,
+                georeferenceProtocol: loc?.georeferenceProtocol || null,
+                georeferenceSources: loc?.georeferenceSources || null,
+                georeferencedDate: loc?.georeferencedDate || null,
             }
         };
     });
@@ -514,6 +594,15 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             occurrenceID,
             basisOfRecord,
             catalogNumber,
+            preparations,
+            disposition,
+            individualCount:individualcount,
+            dynamicProperties:dynamicproperties,
+            dateIdentified:dateidentified,
+            identificationRemarks:identificationremarks,
+            license,
+            rightsHolder:rightsholder,
+            has_cloud_voucher,
             institutions (
                 name,
                 code
@@ -534,6 +623,8 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             identificationMethod,
             microhabitat_remarks,
             events (
+                id,
+                eventID,
                 eventDate,
                 eventTime,
                 samplingProtocol
@@ -560,6 +651,12 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
                 locality,
                 decimalLatitude,
                 decimalLongitude,
+                country,
+                stateProvince:stateprovince,
+                geodeticDatum:geodeticdatum,
+                georeferenceProtocol:georeferenceprotocol,
+                georeferenceSources:georeferencesources,
+                georeferencedDate:georeferenceddate,
                 district:ubigeo_districts (
                     name,
                     province:ubigeo_provinces (
@@ -588,7 +685,8 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
                 background_species,
                 duration_seconds,
                 file_size_bytes,
-                parent_multimedia_id
+                parent_multimedia_id,
+                is_public
             )
         `)
         .eq('id', id)
@@ -604,7 +702,7 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
 
     const taxon = occurrence.taxa;
     const loc = occurrence.locations;
-    const media = occurrence.multimedia || [];
+    const media = (occurrence.multimedia || []).filter((m) => m.is_public !== false);
 
     const isImage = (m: DbMultimedia): boolean => !!(m.type === 'Still' || m.format?.includes('image'));
     const isAudio = (m: DbMultimedia): boolean => !!(m.type === 'Sound' || m.format?.includes('audio'));
@@ -704,14 +802,15 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             collectionCode: occurrence.collections?.code || null,
             collectionName: occurrence.collections?.name || null,
             catalogNumber: occurrence.catalogNumber,
+            eventID: occurrence.events?.eventID || null,
             eventDate: occurrence.events?.eventDate || null,
             eventTime: occurrence.events?.eventTime || null,
             lifeStage: occurrence.lifeStage,
             sex: occurrence.sex,
             identifiedBy: occurrence.identifiedBy,
             continent: "South America",
-            country: "Perú",
-            stateProvince: loc?.district?.province?.department?.name || null,
+            country: loc?.country || "Perú",
+            stateProvince: loc?.stateProvince || loc?.district?.province?.department?.name || null,
             province: loc?.district?.province?.name || null,
             district: loc?.district?.name || null,
             locality: loc?.locality || null,
@@ -728,6 +827,20 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             identificationMethod: occurrence.identificationMethod,
             samplingProtocol: occurrence.events?.samplingProtocol || null,
             ecosystem_name: occurrence.ecosystems?.name || null,
+            // New fields
+            preparations: occurrence.preparations || null,
+            disposition: occurrence.disposition || null,
+            individualCount: occurrence.individualCount || null,
+            dynamicProperties: occurrence.dynamicProperties || null,
+            dateIdentified: occurrence.dateIdentified || null,
+            identificationRemarks: occurrence.identificationRemarks || null,
+            license: occurrence.license || null,
+            rightsHolder: occurrence.rightsHolder || null,
+            has_cloud_voucher: occurrence.has_cloud_voucher || null,
+            geodeticDatum: loc?.geodeticDatum || null,
+            georeferenceProtocol: loc?.georeferenceProtocol || null,
+            georeferenceSources: loc?.georeferenceSources || null,
+            georeferencedDate: loc?.georeferencedDate || null,
         }
     };
 }

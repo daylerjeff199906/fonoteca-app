@@ -25,6 +25,12 @@ export interface Location {
   decimalLongitude: number | null;
   coordinateUncertaintyInMeters: number | null;
   ubigeo_district_id: string | null;
+  country: string | null;
+  stateProvince: string | null;
+  geodeticDatum: string | null;
+  georeferenceProtocol: string | null;
+  georeferenceSources: string | null;
+  georeferencedDate: string | null;
   created_at: string;
   updated_at: string;
 
@@ -147,6 +153,15 @@ export interface Occurrence {
   
   // Physical Voucher
   has_cloud_voucher: boolean;
+
+  preparations: string | null;
+  disposition: string | null;
+  individualCount: number | null;
+  dynamicProperties: Record<string, any> | null;
+  dateIdentified: string | null;
+  identificationRemarks: string | null;
+  license: string | null;
+  rightsHolder: string | null;
 
   created_at: string;
   updated_at: string;

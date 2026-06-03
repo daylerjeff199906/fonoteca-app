@@ -27,7 +27,7 @@ export const AudioList: React.FC<AudioListProps> = ({ allSpecies, lang }) => {
         return allSpecies.flatMap(species =>
             species.audios.map((audio, index) => ({
                 id: `${species.id}-${index}`,
-                title: audio.title,
+                title: audio.title || "Audio",
                 speciesName: species[`commonName_${lang}`] as string,
                 scientificName: species.scientificName,
                 category: species.category,
@@ -37,7 +37,7 @@ export const AudioList: React.FC<AudioListProps> = ({ allSpecies, lang }) => {
                 format: "MP3", // Placeholder
                 url: audio.url,
                 mainImage: species.mainImage,
-                spectrogramImage: audio.spectrogramImage
+                spectrogramImage: audio.spectrogramImage ?? undefined
             }))
         );
     }, [allSpecies, lang]);
