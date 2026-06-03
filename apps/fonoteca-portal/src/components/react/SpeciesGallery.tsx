@@ -155,7 +155,6 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
         }
     };
 
-    // Calculate drag bounds dynamically to prevent image from leaving the screen viewport
     const xDragLimit = typeof window !== 'undefined' ? Math.max(0, (window.innerWidth * (zoomScale - 1)) / 2) : 0;
     const yDragLimit = typeof window !== 'undefined' ? Math.max(0, (window.innerHeight * (zoomScale - 1)) / 2) : 0;
 

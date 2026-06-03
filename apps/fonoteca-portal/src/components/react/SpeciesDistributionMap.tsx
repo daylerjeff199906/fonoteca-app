@@ -113,6 +113,12 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
           center={mapCenter} 
           zoom={mapZoom} 
           style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom={false}
+          doubleClickZoom={false}
+          zoomControl={false}
+          touchZoom={false}
+          boxZoom={false}
+          keyboard={false}
         >
           {/* Component to update view when coordinates change */}
           <ChangeView center={mapCenter} zoom={mapZoom} />

@@ -125,6 +125,14 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
       record_status: "draft",
       event_id: defaultEventId || undefined,
       has_cloud_voucher: false,
+      preparations: "",
+      disposition: "",
+      individualCount: 1,
+      dynamicProperties: "{}",
+      dateIdentified: "",
+      identificationRemarks: "",
+      license: "",
+      rightsHolder: "",
     }
   });
 
@@ -143,7 +151,13 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
         setLoading(false);
         setIsFetching(false);
         if (resp.data) {
-          reset(resp.data as any);
+          const loadedData = { ...resp.data } as any;
+          if (loadedData.dynamicProperties && typeof loadedData.dynamicProperties === "object") {
+            loadedData.dynamicProperties = JSON.stringify(loadedData.dynamicProperties, null, 2);
+          } else {
+            loadedData.dynamicProperties = "{}";
+          }
+          reset(loadedData);
 
           if (resp.data.collection) {
             setSelectedInstitutionId(resp.data.collection.institution_id);
@@ -235,11 +249,24 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
 
   const onSubmit = async (data: OccurrenceInput) => {
     setLoading(true);
+    let finalData = { ...data };
+    if (typeof data.dynamicProperties === "string" && data.dynamicProperties.trim() !== "") {
+      try {
+        finalData.dynamicProperties = JSON.parse(data.dynamicProperties);
+      } catch (e) {
+        showToast.error("Error de Formato", "Propiedades Dinámicas debe ser un JSON válido.");
+        setLoading(false);
+        return;
+      }
+    } else if (!data.dynamicProperties) {
+      finalData.dynamicProperties = {};
+    }
+
     let resp;
     if (id) {
-      resp = await updateOccurrence(id, data);
+      resp = await updateOccurrence(id, finalData);
     } else {
-      resp = await createOccurrence(data);
+      resp = await createOccurrence(finalData);
     }
     setLoading(false);
 
@@ -599,6 +626,12 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
               {errors.ecosystem_id && <p className="text-[10px] text-red-500 mt-1">{errors.ecosystem_id.message}</p>}
             </div>
 
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Conteo de Individuos</label>
+              <Input type="number" min={1} {...register("individualCount")} placeholder="Ex: 1" className="bg-background h-9 focus-visible:ring-primary/20" />
+              {errors.individualCount && <p className="text-[10px] text-red-500 mt-1">{errors.individualCount.message}</p>}
+            </div>
+
             <div className="flex flex-col gap-1 lg:col-span-3">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Descripción de Hábitat (Microhábitat)</label>
               <Textarea
@@ -650,6 +683,16 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   </div>
                 )}
               />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Fecha de Identificación</label>
+              <Input type="date" {...register("dateIdentified")} className="bg-background h-9 focus-visible:ring-primary/20" />
+            </div>
+
+            <div className="flex flex-col gap-1 lg:col-span-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Comentarios de Identificación</label>
+              <Textarea {...register("identificationRemarks")} placeholder="Escriba comentarios sobre la determinación taxonómica..." className="bg-background min-h-[60px] focus-visible:ring-primary/20" />
             </div>
           </div>
         </FormSection>
@@ -862,6 +905,35 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                   <p className="text-[9px] text-muted-foreground">Ingrese el código único asignado por la institución/colección.</p>
                 </div>
               )}
+            </div>
+
+            {/* Specimen Details (Preparations, Disposition, License, RightsHolder, Dynamic Properties) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-muted/20">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Preparaciones (Specimen Preparations)</label>
+                <Input {...register("preparations")} placeholder="Ex: tejido, piel, esqueleto completo" className="bg-background h-9 focus-visible:ring-primary/20" />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Disposición (Specimen Disposition)</label>
+                <Input {...register("disposition")} placeholder="Ex: en colección, duplicado" className="bg-background h-9 focus-visible:ring-primary/20" />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Licencia (Darwin Core License)</label>
+                <Input {...register("license")} placeholder="Ex: CC BY-NC 4.0" className="bg-background h-9 focus-visible:ring-primary/20" />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Titular de Derechos (Rights Holder)</label>
+                <Input {...register("rightsHolder")} placeholder="Ex: IIAP / Colección Científica" className="bg-background h-9 focus-visible:ring-primary/20" />
+              </div>
+
+              <div className="flex flex-col gap-1 lg:col-span-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Propiedades Dinámicas (dynamicProperties JSON)</label>
+                <Textarea {...register("dynamicProperties")} placeholder='Ex: { "weight_g": 12.5, "snout_vent_length_mm": 45.2 }' className="bg-background min-h-[80px] font-mono text-xs focus-visible:ring-primary/20" />
+                <p className="text-[10px] text-muted-foreground">Debe ser un objeto JSON válido.</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
