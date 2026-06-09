@@ -48,14 +48,14 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-[#0c141d]/95 backdrop-blur-xl border border-accent-green/30 p-4 rounded-2xl shadow-2xl z-50">
+      <div className="bg-white/95 dark:bg-[#0c141d]/95 backdrop-blur-xl border border-gray-200 dark:border-accent-green/30 p-4 rounded-2xl shadow-xl z-50">
         <div className="flex items-center gap-3 mb-2">
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: data.fill }}></div>
-            <p className="text-[10px] font-black text-accent-green uppercase tracking-[0.2em]">{data.name}</p>
+            <p className="text-[10px] font-semibold text-accent-green uppercase tracking-[0.2em]">{data.name}</p>
         </div>
         <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">{data.value}</span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Species</span>
+            <span className="text-3xl font-light text-gray-900 dark:text-white">{data.value}</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-widest">Species</span>
         </div>
       </div>
     );
@@ -102,18 +102,18 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
             };
         });
 
-    if (!isMounted) return <div className="h-[600px] w-full bg-[#0c141d] animate-pulse rounded-[3rem]" />;
+    if (!isMounted) return <div className="h-[600px] w-full bg-gray-100 dark:bg-[#0c141d] animate-pulse rounded-[3rem]" />;
 
     return (
-        <section className="py-24 bg-white dark:bg-[#04070a] overflow-hidden">
+        <section className="py-24 bg-white dark:bg-[#04070a] overflow-hidden transition-colors duration-300">
             <div className="container mx-auto px-6">
-                <div className="relative bg-[#0c141d] rounded-[3.5rem] p-8 md:p-16 overflow-hidden border border-white/5 shadow-2xl">
+                <div className="relative bg-gray-50 dark:bg-[#0c141d] rounded-[3.5rem] p-8 md:p-16 overflow-hidden border border-gray-200/60 dark:border-white/5 shadow-xl dark:shadow-2xl transition-colors duration-300">
                     {/* Background Visual Elements */}
-                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-accent-green/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
+                    <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-accent-green/10 dark:bg-accent-green/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
                     
                     {/* Grid Pattern */}
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+                    <div className="absolute inset-0 text-gray-200 dark:text-white opacity-[0.15] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
                         {/* Left Side: Text and Content */}
@@ -126,16 +126,16 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="h-px w-8 bg-accent-green"></div>
-                                    <span className="text-accent-green font-black text-[10px] uppercase tracking-[0.4em]">
+                                    <span className="text-accent-green font-semibold text-[10px] uppercase tracking-[0.4em]">
                                         {chartContent.title_sm}
                                     </span>
                                 </div>
-                                <h2 className="text-4xl md:text-5xl lg:text-6xl text-white font-bold tracking-tighter leading-[1.1]">
+                                <h2 className="text-4xl md:text-5xl lg:text-6xl text-gray-900 dark:text-white font-light tracking-tight leading-[1.1]">
                                     {chartContent.title.split(' ').map((word, i) => (
-                                        <span key={i} className={i > 2 ? 'text-accent-green/90' : ''}>{word} </span>
+                                        <span key={i} className={i > 2 ? 'text-accent-green font-normal' : ''}>{word} </span>
                                     ))}
                                 </h2>
-                                <p className="text-gray-400 text-lg leading-relaxed max-w-md font-light">
+                                <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed max-w-md font-light">
                                     {chartContent.desc}
                                 </p>
                             </motion.div>
@@ -149,14 +149,14 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                         whileInView={{ opacity: 1, scale: 1 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.1 }}
-                                        className="group p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-accent-green/20 transition-all"
+                                        className="group p-6 rounded-3xl bg-white dark:bg-white/5 border border-gray-200/60 dark:border-white/5 hover:border-accent-green/30 dark:hover:border-accent-green/20 transition-all shadow-sm dark:shadow-none"
                                     >
-                                        <metric.icon className="w-5 h-5 text-accent-green/50 mb-4 group-hover:text-accent-green transition-colors" />
+                                        <metric.icon className="w-5 h-5 text-accent-green/60 dark:text-accent-green/50 mb-4 group-hover:text-accent-green transition-colors" />
                                         <div className="space-y-1">
-                                            <div className="text-3xl font-bold text-white tracking-tighter">
+                                            <div className="text-3xl font-light text-gray-900 dark:text-white tracking-tighter">
                                                 <CountUp value={metric.value} />
                                             </div>
-                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                            <div className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                                                 {metric.label}
                                             </div>
                                         </div>
@@ -172,10 +172,10 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 transition={{ delay: 0.5 }}
                                 className="inline-flex items-center gap-4 group"
                             >
-                                <span className="h-12 px-8 rounded-full bg-accent-green text-black font-bold text-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span className="h-12 px-8 rounded-full bg-accent-green text-black font-semibold text-sm flex items-center justify-center group-hover:scale-105 transition-transform">
                                     {chartContent.button}
                                 </span>
-                                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white group-hover:bg-white/10 transition-all">
+                                <div className="w-12 h-12 rounded-full border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-900 dark:text-white group-hover:bg-gray-100 dark:group-hover:bg-white/10 transition-all">
                                     <ArrowRight className="w-5 h-5" />
                                 </div>
                             </motion.a>
@@ -202,8 +202,8 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                         endAngle={-180}
                                     >
                                         <RadialBar
-                                            background={{ fill: 'rgba(255,255,255,0.03)' }}
-                                            label={{ position: 'insideStart', fill: '#fff', fontSize: 10, fontWeight: 'bold' }}
+                                            background={{ fill: 'var(--radial-bar-bg, rgba(0,0,0,0.03))' }}
+                                            label={{ position: 'insideStart', fill: '#fff', fontSize: 10, fontWeight: 'medium' }}
                                             dataKey="value"
                                             cornerRadius={10}
                                         />
@@ -218,7 +218,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                                 fontSize: '11px',
                                                 textTransform: 'uppercase',
                                                 letterSpacing: '0.1em',
-                                                fontWeight: '700'
+                                                fontWeight: '500'
                                             }}
                                         />
                                     </RadialBarChart>
@@ -228,7 +228,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 flex flex-col items-center justify-center">
                                     <div className="absolute inset-0 bg-accent-green/20 rounded-full blur-2xl animate-pulse"></div>
                                     <Activity className="w-8 h-8 text-accent-green mb-2 relative z-10" />
-                                    <span className="text-[8px] font-black text-accent-green uppercase tracking-[0.3em] relative z-10">Live Data</span>
+                                    <span className="text-[8px] font-semibold text-accent-green uppercase tracking-[0.3em] relative z-10">Live Data</span>
                                 </div>
                             </motion.div>
 
