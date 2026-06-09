@@ -249,7 +249,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
 
             <div className="py-5 flex-1 flex flex-col relative ">
                 <div className="mb-4">
-                    <h4 className="text-[#0c141d] italic font-serif dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-2 text-lg">
+                    <h4 className="text-[#0c141d] italic dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-2 text-lg">
                         {species.scientificName}
                     </h4>
                     {species.location && species.location !== 'All' && (

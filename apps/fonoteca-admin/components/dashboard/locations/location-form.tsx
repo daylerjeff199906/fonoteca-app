@@ -79,6 +79,12 @@ export function LocationForm({
       decimalLongitude: null,
       coordinateUncertaintyInMeters: null,
       ubigeo_district_id: null,
+      country: "Perú",
+      stateProvince: "",
+      geodeticDatum: "WGS84",
+      georeferenceProtocol: "",
+      georeferenceSources: "",
+      georeferencedDate: "",
     }
   });
 
@@ -237,6 +243,16 @@ export function LocationForm({
             <Input {...register("locality")} placeholder="Ex: Río Itaya, Quebrada Tamshiyacu" className="bg-background h-9 focus-visible:ring-primary/20" />
             {errors.locality && <p className="text-[10px] text-red-500 mt-1">{errors.locality.message}</p>}
           </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">País (Opcional)</label>
+            <Input {...register("country")} placeholder="Ex: Perú" className="bg-background h-9 focus-visible:ring-primary/20" />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-muted-foreground uppercase cursor-pointer">Departamento/Estado/Provincia (Opcional)</label>
+            <Input {...register("stateProvince")} placeholder="Ex: Loreto" className="bg-background h-9 focus-visible:ring-primary/20" />
+          </div>
         </div>
       </FormSection>
 
@@ -380,6 +396,22 @@ export function LocationForm({
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase">Incertidumbre (m)</label>
               <Input type="number" step="any" {...register("coordinateUncertaintyInMeters")} placeholder="10" className="bg-muted/20 h-9 focus-visible:ring-primary/20" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Datum Geodésico</label>
+              <Input {...register("geodeticDatum")} placeholder="Ex: WGS84" className="bg-background h-9 focus-visible:ring-primary/20" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Protocolo de Georreferenciación</label>
+              <Input {...register("georeferenceProtocol")} placeholder="Ex: GPS de mano" className="bg-background h-9 focus-visible:ring-primary/20" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Fuentes de Georreferenciación</label>
+              <Input {...register("georeferenceSources")} placeholder="Ex: Google Earth, GPS log" className="bg-background h-9 focus-visible:ring-primary/20" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Fecha de Georreferenciación</label>
+              <Input type="date" {...register("georeferencedDate")} className="bg-background h-9 focus-visible:ring-primary/20" />
             </div>
           </div>
           <div className="lg:col-span-2">

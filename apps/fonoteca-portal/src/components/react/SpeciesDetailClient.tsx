@@ -1,25 +1,19 @@
-import React, { useEffect, useState, useRef } from 'react';
-import WaveSurfer from 'wavesurfer.js';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 import { getSpeciesById, type Species } from '../../data/species';
-import { translations, type Language } from '../../i18n/data';
+import { type Language } from '../../i18n/data';
 import { SpeciesGallery } from './SpeciesGallery';
 import { AudioPlayer } from './AudioPlayer';
 import { SpeciesDistributionMap } from './SpeciesDistributionMap';
 import {
-    Bird,
-    TrendingDown,
-    MapPin,
     FileText,
     Share2,
     ChevronRight,
-    Lock,
     Music,
-    Activity,
-    Database,
     FolderPlus,
     FolderCheck,
-    DatabaseZap
+    DatabaseZap,
+    X,
+    Check
 } from 'lucide-react';
 import { useAudioRequestStore } from '../../store/useAudioRequestStore';
 
@@ -115,11 +109,10 @@ const AudioListTable: React.FC<{
                                                     });
                                                 }
                                             }}
-                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all border ${
-                                                isAdded
-                                                    ? 'bg-accent-green text-white border-accent-green'
-                                                    : 'bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 dark:border-gray-800 text-gray-400 hover:text-accent-green'
-                                            }`}
+                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all border ${isAdded
+                                                ? 'bg-accent-green text-white border-accent-green'
+                                                : 'bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 dark:border-gray-800 text-gray-400 hover:text-accent-green'
+                                                }`}
                                             title={isAdded ? (lang === 'es' ? 'En la Solicitud' : 'In Request') : (lang === 'es' ? 'Añadir a Solicitud' : 'Add to Request')}
                                         >
                                             {isAdded ? <FolderCheck size={14} /> : <FolderPlus size={14} />}
@@ -265,7 +258,21 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState('at-a-glance');
+    const [isCitationOpen, setIsCitationOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
+
+    const generateCitationText = () => {
+        if (!species) return "";
+        const author = species.databaseDetails?.identifiedBy || species.databaseDetails?.rightsHolder || "Biblioteca Acústica de Fauna Amazónica";
+        const year = species.databaseDetails?.occurrence_date ? new Date(species.databaseDetails.occurrence_date).getFullYear() : new Date().getFullYear();
+        const scientificName = species.scientificName;
+        const catalogNum = species.databaseDetails?.catalogNumber ? ` (Catálogo: ${species.databaseDetails.catalogNumber})` : "";
+        const url = typeof window !== 'undefined' ? window.location.href : `https://fonoteca.iiap.gob.pe/${lang}/species/${species.id}`;
+        const accessDate = new Date().toLocaleDateString(lang === 'es' ? 'es-PE' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        return `${author} (${year}). Registro de espécimen de ${scientificName}${catalogNum}. Biblioteca Acústica de Fauna Amazónica. Recuperado el ${accessDate} de ${url}`;
+    };
 
     const { addToCartBulk, setIsCartOpen } = useAudioRequestStore();
 
@@ -410,13 +417,18 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
         { label: geoLabels[activeLang].locality, value: species.databaseDetails?.locality || species.location },
         { label: geoLabels[activeLang].latitude, value: species.databaseDetails?.decimalLatitude?.toString() },
         { label: geoLabels[activeLang].longitude, value: species.databaseDetails?.decimalLongitude?.toString() },
+        { label: lang === 'es' ? 'Datum Geodésico' : 'Geodetic Datum', value: species.databaseDetails?.geodeticDatum },
+        { label: lang === 'es' ? 'Protocolo de Georreferenciación' : 'Georeference Protocol', value: species.databaseDetails?.georeferenceProtocol },
+        { label: lang === 'es' ? 'Fuentes de Georreferenciación' : 'Georeference Sources', value: species.databaseDetails?.georeferenceSources },
+        { label: lang === 'es' ? 'Fecha de Georreferenciación' : 'Georeferenced Date', value: species.databaseDetails?.georeferencedDate },
     ].filter(row => row.value);
 
     const sections = [
         { id: 'at-a-glance', label: lang === 'es' ? 'En un vistazo' : 'At a glance' },
         { id: 'distribution', label: lang === 'es' ? 'Distribución' : 'Distribution' },
         { id: 'audios', label: lang === 'es' ? 'Audios' : 'Audios' },
-        { id: 'characteristics', label: lang === 'es' ? 'Características' : 'Ecology' },
+        { id: 'characteristics', label: lang === 'es' ? 'Ecología y Descripción' : 'Ecology & Description' },
+        { id: 'citation', label: lang === 'es' ? 'Citación' : 'Citation' },
     ];
 
     const getDriveIframe = (url: string) => {
@@ -456,8 +468,8 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                         </div>
 
                         {/* Scientific Name & Authorship */}
-                        <h1 className="text-2xl md:text-4xl text-gray-800 dark:text-white leading-tight">
-                            <span className="italic font-semibold">
+                        <h1 className="text-2xl md:text-4xl lg:text-5xl text-gray-800 dark:text-white">
+                            <span className="italic">
                                 {scientificNameParsed.italicName}
                             </span>
                             {scientificNameParsed.authorName && (
@@ -543,14 +555,20 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     <Share2 size={14} />
                                     <span>SHARE FACTSHEET</span>
                                 </button>
-                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
+                                <button
+                                    onClick={() => {
+                                        document.getElementById('citation')?.scrollIntoView({ behavior: 'smooth' });
+                                        setActiveSection('citation');
+                                    }}
+                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-550 hover:text-accent-green transition-colors group"
+                                >
                                     <FileText size={14} />
                                     <span>CITATIONS</span>
                                 </button>
 
                                 <hr className="border-gray-100 dark:border-gray-800" />
 
-                                <button 
+                                <button
                                     onClick={() => {
                                         if (species.audios && species.audios.length > 0) {
                                             const itemsToRequest = species.audios.map((audio: any) => ({
@@ -564,7 +582,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                             setIsCartOpen(true);
                                         }
                                     }}
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-black tracking-widest uppercase transition-all shadow-sm group duration-300 mt-2"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-black tracking-widest uppercase transition-all group duration-300 mt-2"
                                 >
                                     <DatabaseZap size={14} className="group-hover:scale-110 transition-transform" />
                                     <span>{lang === 'es' ? 'Solicitar paquete WAV' : lang === 'pt' ? 'Solicitar pacote WAV' : 'Request WAV Package'}</span>
@@ -627,10 +645,16 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                                 </tr>
                                                 {[
                                                     { label: lang === 'es' ? 'ID de Ocurrencia' : 'Occurrence ID', value: species.databaseDetails.occurrenceID },
+                                                    { label: lang === 'es' ? 'Número de Catálogo' : 'Catalog Number', value: species.databaseDetails.catalogNumber },
                                                     { label: lang === 'es' ? 'Fecha de Ocurrencia' : 'Occurrence Date', value: species.databaseDetails.occurrence_date },
                                                     { label: lang === 'es' ? 'Método de Identificación' : 'Identification Method', value: species.databaseDetails.identificationMethod },
                                                     { label: lang === 'es' ? 'Etapa de Vida' : 'Life Stage', value: species.databaseDetails.lifeStage },
                                                     { label: lang === 'es' ? 'Sexo' : 'Sex', value: species.databaseDetails.sex },
+                                                    { label: lang === 'es' ? 'Identificado Por' : 'Identified By', value: species.databaseDetails.identifiedBy },
+                                                    { label: lang === 'es' ? 'Fecha Identificado' : 'Date Identified', value: species.databaseDetails.dateIdentified },
+                                                    { label: lang === 'es' ? 'Comentarios de Identificación' : 'Identification Remarks', value: species.databaseDetails.identificationRemarks },
+                                                    { label: lang === 'es' ? 'Licencia' : 'License', value: species.databaseDetails.license },
+                                                    { label: lang === 'es' ? 'Titular de Derechos' : 'Rights Holder', value: species.databaseDetails.rightsHolder },
                                                 ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`id-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
@@ -640,18 +664,72 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                                                 {/* Specimen Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen' : 'Specimen and Collection'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen y Colección' : 'Specimen and Collection'}</td>
                                                 </tr>
                                                 {[
-                                                    { label: lang === 'es' ? 'Institución' : 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
-                                                    { label: lang === 'es' ? 'Colección' : 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
+                                                    { label: lang === 'es' ? 'Institución / Museo' : 'Institution / Museum', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
+                                                    { label: lang === 'es' ? 'Colección Biológica' : 'Biological Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
                                                     { label: lang === 'es' ? 'Base del Registro' : 'Basis of Record', value: species.databaseDetails.basisOfRecord },
+                                                    { label: lang === 'es' ? 'Preparaciones' : 'Preparations', value: species.databaseDetails.preparations },
+                                                    { label: lang === 'es' ? 'Disposición' : 'Disposition', value: species.databaseDetails.disposition },
+                                                    { label: lang === 'es' ? 'Conteo de Individuos' : 'Individual Count', value: species.databaseDetails.individualCount?.toString() },
+                                                    { label: lang === 'es' ? 'Testigo Físico (Voucher)' : 'Witness Voucher', value: species.databaseDetails.has_cloud_voucher ? (lang === 'es' ? 'Sí' : 'Yes') : null },
+                                                    { label: lang === 'es' ? 'Hábitat / Ecosistema' : 'Habitat / Ecosystem', value: species.databaseDetails.ecosystem_name },
+                                                    {
+                                                        label: lang === 'es' ? 'Propiedades Dinámicas (Medidas)' : 'Dynamic Properties',
+                                                        value: species.databaseDetails.dynamicProperties ? (
+                                                            typeof species.databaseDetails.dynamicProperties === 'object'
+                                                                ? Object.entries(species.databaseDetails.dynamicProperties).map(([k, v]) => `${k}: ${v}`).join('; ')
+                                                                : species.databaseDetails.dynamicProperties.toString()
+                                                        ) : null
+                                                    },
                                                 ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`spec-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
                                                         <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
                                                     </tr>
                                                 ))}
+
+                                                {/* Ambient Group */}
+                                                {((species.databaseDetails.temperature_c !== null && species.databaseDetails.temperature_c !== undefined) ||
+                                                    (species.databaseDetails.relative_humidity_percent !== null && species.databaseDetails.relative_humidity_percent !== undefined) ||
+                                                    (species.databaseDetails.elevation_masl !== null && species.databaseDetails.elevation_masl !== undefined)) && (
+                                                        <>
+                                                            <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                                <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">3. {lang === 'es' ? 'Condiciones Ambientales' : 'Environmental Conditions'}</td>
+                                                            </tr>
+                                                            {[
+                                                                { label: lang === 'es' ? 'Temperatura' : 'Temperature', value: species.databaseDetails.temperature_c !== null && species.databaseDetails.temperature_c !== undefined ? `${species.databaseDetails.temperature_c} °C` : null },
+                                                                { label: lang === 'es' ? 'Humedad Relativa' : 'Relative Humidity', value: species.databaseDetails.relative_humidity_percent !== null && species.databaseDetails.relative_humidity_percent !== undefined ? `${species.databaseDetails.relative_humidity_percent} %` : null },
+                                                                { label: lang === 'es' ? 'Elevación' : 'Elevation', value: species.databaseDetails.elevation_masl !== null && species.databaseDetails.elevation_masl !== undefined ? `${species.databaseDetails.elevation_masl} m s.n.m.` : null },
+                                                            ].filter(item => item.value).map((item, idx) => (
+                                                                <tr key={`amb-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                                    <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                                    <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </>
+                                                    )}
+
+                                                {/* Event Group */}
+                                                {(species.databaseDetails.eventID || species.databaseDetails.eventDate || species.databaseDetails.samplingProtocol) && (
+                                                    <>
+                                                        <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                            <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">4. {lang === 'es' ? 'Evento' : 'Event'}</td>
+                                                        </tr>
+                                                        {[
+                                                            { label: lang === 'es' ? 'ID de Evento' : 'Event ID', value: species.databaseDetails.eventID },
+                                                            { label: lang === 'es' ? 'Fecha de Evento' : 'Event Date', value: species.databaseDetails.eventDate },
+                                                            { label: lang === 'es' ? 'Hora de Evento' : 'Event Time', value: species.databaseDetails.eventTime },
+                                                            { label: lang === 'es' ? 'Protocolo de Muestreo' : 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
+                                                        ].filter(item => item.value).map((item, idx) => (
+                                                            <tr key={`evt-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                                <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                                <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -733,10 +811,20 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     autoplay={true}
                                     species={species}
                                     lang={lang}
+                                    onNext={() => {
+                                        if (selectedAudioIndex < species.audios.length - 1) {
+                                            setSelectedAudioIndex(selectedAudioIndex + 1);
+                                        }
+                                    }}
+                                    onPrev={() => {
+                                        if (selectedAudioIndex > 0) {
+                                            setSelectedAudioIndex(selectedAudioIndex - 1);
+                                        }
+                                    }}
+                                    hasNext={selectedAudioIndex < species.audios.length - 1}
+                                    hasPrev={selectedAudioIndex > 0}
                                 />
                             )}
-
-
                         </section>
 
                         {/* Section: Ecology / Characteristics */}
@@ -745,43 +833,84 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Ecología y Descripción' : 'Ecology & Description'}
                                 description={lang === 'es' ? 'Comportamiento y características físicas detalladas.' : 'Detailed behavior and physical characteristics.'}
                             />
-                            <div className="prose prose-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-none">
-                                <p className="mb-8 p-8 bg-gray-50 dark:bg-gray-900 rounded-sm italic border-l-8 border-accent-green font-medium">
-                                    {description}
-                                </p>
-                                {species.databaseDetails?.occurrenceRemarks && (
-                                    <div className="mb-4 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl">
-                                        <h5 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Observaciones de campo</h5>
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm italic">
-                                            "{species.databaseDetails.occurrenceRemarks}"
-                                        </p>
-                                    </div>
-                                )}
-                                {species.databaseDetails?.microhabitat_remarks && (
-                                    <div className="mb-8 p-6 bg-accent-green/5 border border-accent-green/10 rounded-xl">
-                                        <h5 className="text-[10px] font-black text-accent-green uppercase tracking-widest mb-2">Microhábitat</h5>
-                                        <p className="text-gray-700 dark:text-gray-300 text-sm">
-                                            {species.databaseDetails.microhabitat_remarks}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
 
-                            {characteristics && characteristics.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {characteristics.map((char, idx) => (
-                                        <div key={idx} className="flex gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 items-start group hover:border-accent-green/20 transition-colors">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-accent-green mt-2 group-hover:scale-150 transition-transform" />
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed">{char}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm bg-white dark:bg-gray-900 mb-8">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-100 dark:bg-gray-800">
+                                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">
+                                                {lang === 'es' ? 'Categoría / Propiedad' : 'Category / Property'}
+                                            </th>
+                                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">
+                                                {lang === 'es' ? 'Valor Detallado' : 'Detailed Value'}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { label: lang === 'es' ? 'Descripción del Registro' : 'Record Description', value: description },
+                                            { label: lang === 'es' ? 'Observaciones de Campo' : 'Field Observations', value: species.databaseDetails?.occurrenceRemarks },
+                                            { label: lang === 'es' ? 'Microhábitat' : 'Microhabitat', value: species.databaseDetails?.microhabitat_remarks },
+                                            {
+                                                label: lang === 'es' ? 'Características Ecológicas' : 'Ecological Characteristics',
+                                                value: characteristics && characteristics.length > 0 ? (
+                                                    <ul className="list-disc list-inside space-y-1.5 py-2">
+                                                        {characteristics.map((char, idx) => (
+                                                            <li key={idx} className="text-gray-700 dark:text-gray-300 font-medium">{char}</li>
+                                                        ))}
+                                                    </ul>
+                                                ) : null
+                                            },
+                                        ].filter(row => row.value).map((row, idx) => (
+                                            <tr key={`eco-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                <td className="px-6 py-4 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800 align-top">
+                                                    {row.label}
+                                                </td>
+                                                <td className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
+                                                    {row.value}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </section>
 
-                        {/* Removed Taxonomy and Details Sections */}
+                        {/* Section: Citation */}
+                        <section id="citation" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
+                            <SectionHeader
+                                title={lang === 'es' ? 'Citación' : 'Citation'}
+                                description={lang === 'es' ? 'Utilice la siguiente referencia para citar esta ocurrencia y sus registros acústicos asociados.' : 'Use the following reference to cite this occurrence and its associated acoustic records.'}
+                            />
 
-                        {/* Removed CTA / Support Section */}
+                            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                                <div className="bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl p-4 mb-6 font-mono text-xs text-gray-700 dark:text-gray-300 leading-relaxed select-all">
+                                    {generateCitationText()}
+                                </div>
+                                <div className="flex justify-start">
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(generateCitationText());
+                                            setCopied(true);
+                                            setTimeout(() => setCopied(false), 2000);
+                                        }}
+                                        className="px-5 py-2.5 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                                    >
+                                        {copied ? (
+                                            <>
+                                                <Check size={14} />
+                                                {lang === 'es' ? '¡Copiado!' : 'Copied!'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Share2 size={14} />
+                                                {lang === 'es' ? 'Copiar Cita' : 'Copy Citation'}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
 
                     </div>
                 </div>
