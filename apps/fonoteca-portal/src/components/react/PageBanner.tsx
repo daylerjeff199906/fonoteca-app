@@ -25,7 +25,7 @@ export const PageBanner: React.FC<PageBannerProps> = ({ title, subtitle, image, 
 
         const img = new window.Image();
         img.src = image;
-        
+
         img.onload = () => setCurrentImage(image);
         img.onerror = () => setCurrentImage(defaultImage);
     }, [image]);
@@ -58,7 +58,7 @@ export const PageBanner: React.FC<PageBannerProps> = ({ title, subtitle, image, 
                 )}
 
                 {taxonomy && (
-                    <div className="mb-4 text-accent-green font-bold text-xs md:text-sm uppercase tracking-widest animate-fade-up" style={{ animationDelay: "0.1s" }}>
+                    <div className="mb-4 text-accent-green  text-xs md:text-sm uppercase tracking-widest animate-fade-up" style={{ animationDelay: "0.1s" }}>
                         {taxonomy}
                     </div>
                 )}

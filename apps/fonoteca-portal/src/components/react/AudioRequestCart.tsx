@@ -246,7 +246,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                    <h3 className="text-sm font-black text-gray-900 dark:text-white tracking-tight uppercase flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight uppercase flex items-center gap-2">
                         {t.title}
                     </h3>
                     <button
@@ -271,7 +271,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-xs font-black tracking-widest text-gray-400 uppercase">
+                                    <div className="flex justify-between items-center text-xs font-bold tracking-widest text-gray-400 uppercase">
                                         <span>{t.itemsLabel}</span>
                                         <span>{cartItems.length}</span>
                                     </div>
@@ -319,7 +319,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
                             {/* Full Name */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.fullName} *</label>
+                                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.fullName} *</label>
                                 <div className="relative">
                                     <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input
@@ -336,7 +336,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
                             {/* Institution */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.institution} *</label>
+                                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.institution} *</label>
                                 <div className="relative">
                                     <Building2 size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input
@@ -353,7 +353,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
                             {/* Email */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.email} *</label>
+                                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.email} *</label>
                                 <div className="relative">
                                     <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input
@@ -370,7 +370,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
                             {/* Usage Category */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.category} *</label>
+                                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.category} *</label>
                                 <div className="relative">
                                     <BookOpen size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <select
@@ -388,7 +388,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
                             {/* Rationale */}
                             <div className="space-y-1">
-                                <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.rationale} *</label>
+                                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.rationale} *</label>
                                 <textarea
                                     value={rationale}
                                     onChange={(e) => setRationale(e.target.value)}
@@ -444,7 +444,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
                         <button
                             onClick={() => setStep('form')}
                             disabled={cartItems.length === 0}
-                            className="w-full py-3 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-black tracking-widest uppercase transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-bold tracking-widest uppercase transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {t.proceedBtn}
                         </button>
@@ -462,7 +462,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                className="col-span-2 py-3 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-black tracking-widest uppercase transition-colors shadow-sm flex items-center justify-center gap-2"
+                                className="col-span-2 py-3 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-bold tracking-widest uppercase transition-colors shadow-sm flex items-center justify-center gap-2"
                                 disabled={submitting}
                             >
                                 {submitting ? (
@@ -483,7 +483,7 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
                     {step === 'success' && (
                         <button
                             onClick={handleClose}
-                            className="w-full py-3 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-black tracking-widest uppercase transition-colors shadow-sm"
+                            className="w-full py-3 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs font-bold tracking-widest uppercase transition-colors shadow-sm"
                         >
                             {t.closeBtn}
                         </button>
