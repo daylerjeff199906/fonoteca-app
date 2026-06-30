@@ -17,64 +17,14 @@ interface ClassExplorerProps {
 }
 
 export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) => {
-    const classTranslations: Record<string, any> = {
-        es: {
-            title: "Nuestra Diversidad Biológica",
-            subtitle: "Explora la riqueza sonora de la Amazonía a través de sus diferentes clases taxonómicas. Cada grabación es un testimonio único de la vida silvestre.",
-            button: "Ver todas las especies"
-        },
-        en: {
-            title: "Our Biological Diversity",
-            subtitle: "Explore the sonic richness of the Amazon through its different taxonomic classes. Each recording is a unique testimony of wildlife.",
-            button: "View all species"
-        },
-        pt: {
-            title: "Nossa Diversidade Biológica",
-            subtitle: "Explore a riqueza sonora da Amazônia através de suas diferentes classes taxonômicas. Cada gravação é um testemunho único da vida selvagem.",
-            button: "Ver todas las especies"
-        }
-    };
-
-    const t = classTranslations[lang] || classTranslations.es;
-
     // Filter classes to show only those with count > 0
     const displayClasses = classes.filter(c => c.count > 0);
 
     return (
-        <section className="py-20 bg-white dark:bg-[#04070a] overflow-hidden">
-            <div className="container mx-auto px-6">
-                <div className="flex flex-col lg:flex-row items-center gap-12 mb-16">
-                    {/* Left Side: Content */}
-                    <div className="w-full lg:w-1/2 space-y-6">
-                        <h2
-                            className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight"
-                        >
-                            {t.title}
-                        </h2>
-                        <p
-                            className="text-lg text-gray-600 dark:text-gray-400 max-w-xl leading-relaxed"
-                        >
-                            {t.subtitle}
-                        </p>
-                    </div>
-
-                    {/* Right Side: Feature Image */}
-                    <div className="w-full lg:w-1/2">
-                        <div
-                            className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl"
-                        >
-                            <img
-                                src="https://www.actualidadambiental.pe/wp-content/uploads/2018/08/investigadores-en-madre-de-dios_thomas-muller-1.jpg"
-                                alt="Forest ambience"
-                                className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                        </div>
-                    </div>
-                </div>
-
+        <section className="pb-24 bg-white dark:bg-[#0c141d] overflow-hidden transition-colors duration-300">
+            <div className="container mx-auto px-6 md:px-12 lg:px-20">
                 {/* Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 pt-20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 pt-4">
                     {displayClasses.map((cls, idx) => {
                         // Safe JSON parsing for label_name
                         let labelObj: any = null;

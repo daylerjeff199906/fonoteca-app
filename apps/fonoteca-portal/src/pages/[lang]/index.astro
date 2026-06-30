@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import { Header } from "../../components/react/Header";
 import { Footer } from "../../components/react/Footer";
 import { Hero } from "../../components/react/Hero";
+import { CollectionStats } from "../../components/react/CollectionStats";
 import { ClassExplorer } from "../../components/react/ClassExplorer";
 import { StatsChart } from "../../components/react/StatsChart";
 import { PlaylistCarousel } from "../../components/react/PlaylistCarousel";
@@ -56,7 +57,13 @@ const statsContent = {
             client:only="react"
             content={content.hero}
             lang={lang as string}
+        />
+
+        <CollectionStats
+            client:only="react"
+            lang={lang as string}
             stats={realStats}
+            statsContent={content.stats}
         />
 
         <ClassExplorer
