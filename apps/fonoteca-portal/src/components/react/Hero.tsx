@@ -18,7 +18,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang }) => {
     };
 
     return (
-        <section className="relative w-full h-screen min-h-[600px] flex items-center bg-black overflow-hidden font-sans">
+        <section className="relative w-full h-[65vh] min-h-[480px] flex items-center bg-black overflow-hidden font-sans">
             {/* Background Image with Cinematic Overlay */}
             <div className="absolute inset-0 z-0">
                 <img

@@ -20,8 +20,18 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
     return (
         <section className="pb-24 bg-white dark:bg-[#0c141d] overflow-hidden transition-colors duration-300">
             <div className="container mx-auto px-6 md:px-12 lg:px-20">
+                {/* Section Title */}
+                <div className="mb-10">
+                    <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-accent-green font-medium mb-2 block">
+                        {lang === 'es' ? 'Explorar la Biblioteca' : lang === 'pt' ? 'Explorar a Biblioteca' : 'Explore the Library'}
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-light text-primary-dark dark:text-white tracking-tight">
+                        {lang === 'es' ? 'Clases Taxonómicas' : lang === 'pt' ? 'Classes Taxonômicas' : 'Taxonomic Classes'}
+                    </h2>
+                </div>
+
                 {/* Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {displayClasses.map((cls, idx) => {
                         // Safe JSON parsing for label_name
                         let labelObj: any = null;

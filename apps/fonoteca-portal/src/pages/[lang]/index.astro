@@ -5,7 +5,7 @@ import { Footer } from "../../components/react/Footer";
 import { Hero } from "../../components/react/Hero";
 import { CollectionStats } from "../../components/react/CollectionStats";
 import { ClassExplorer } from "../../components/react/ClassExplorer";
-import { StatsChart } from "../../components/react/StatsChart";
+import { HowItWorks } from "../../components/react/HowItWorks";
 import { PlaylistCarousel } from "../../components/react/PlaylistCarousel";
 import { getAllSpecies } from "../../data/species";
 import { translations, LANGUAGES } from "../../i18n/data";
@@ -87,15 +87,10 @@ const statsContent = {
             </div>
         </section>
 
-        <section class="bg-gray-50 dark:bg-[#0c141d]">
-            <StatsChart
-                client:only="react"
-                statsContent={statsContent}
-                chartContent={content.chart}
-                lang={lang as string}
-                classData={speciesByClassData}
-            />
-        </section>
+        <HowItWorks
+            client:only="react"
+            lang={lang as string}
+        />
 
         {/* Especies de la colección */}
         <section
