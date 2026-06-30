@@ -116,7 +116,9 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                 <div className="max-w-[1600px] mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
-                            <span className="text-[10px]  uppercase tracking-[0.4em] text-accent-green">VITAL SIGNS</span>
+                            <span className="text-[10px]  uppercase tracking-[0.4em] text-accent-green">
+                                Estadísticas
+                            </span>
                             <div className="h-px w-20 bg-accent-green/30"></div>
                         </div>
                         <a href={`/${lang}/stats`} className="text-[10px]  uppercase tracking-widest text-white hover:text-accent-green flex items-center gap-2 transition-colors">
