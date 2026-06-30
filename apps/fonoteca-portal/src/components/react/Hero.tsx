@@ -4,6 +4,7 @@ import { Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
+import { landingImages } from '../../config/landingImages';
 
 interface HeroProps {
     content: typeof translations.es.hero;
@@ -53,8 +54,8 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
             {/* Background Image with Cinematic Overlay */}
             <div className="absolute inset-0 z-0">
                 <img
-                    src="https://images.unsplash.com/photo-1547234935-80c7145ec969?q=80&w=2074&auto=format&fit=crop"
-                    alt="Amazon Forest"
+                    src={landingImages.hero.src}
+                    alt={landingImages.hero.alt}
                     className="w-full h-full object-cover opacity-60 scale-105 animate-slow-zoom"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
