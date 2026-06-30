@@ -61,7 +61,7 @@ export const StatsExplorer: React.FC<StatsExplorerProps> = ({ data, lang, transl
                         >
                             <div className="absolute top-0 right-0 p-6 opacity-10 text-accent-green group-hover:scale-110 transition-transform">{item.icon}</div>
                             <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium uppercase tracking-widest mb-2">{item.label}</h3>
-                            <div className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                            <div className="text-5xl  text-gray-900 dark:text-white mb-4">
                                 {item.value}
                                 <span className="text-accent-green">+</span>
                             </div>
@@ -79,7 +79,7 @@ export const StatsExplorer: React.FC<StatsExplorerProps> = ({ data, lang, transl
                         animate={{ opacity: 1, x: 0 }}
                         className="bg-white dark:bg-[#121b28] p-8 md:p-12 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm"
                     >
-                        <h4 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+                        <h4 className="text-3xl  mb-6 text-gray-900 dark:text-white">
                             {chartTranslations.classes_title}
                         </h4>
                         <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed mb-8 max-w-2xl">
@@ -127,7 +127,7 @@ export const StatsExplorer: React.FC<StatsExplorerProps> = ({ data, lang, transl
                         animate={{ opacity: 1, x: 0 }}
                         className="bg-white dark:bg-[#121b28] p-8 md:p-12 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm"
                     >
-                        <h4 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+                        <h4 className="text-3xl  mb-6 text-gray-900 dark:text-white">
                             {chartTranslations.growth_title}
                         </h4>
                         <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed mb-8 max-w-2xl">
@@ -182,7 +182,7 @@ export const StatsExplorer: React.FC<StatsExplorerProps> = ({ data, lang, transl
                 <div className="mt-12 bg-white dark:bg-[#121b28] p-12 rounded-[3rem] border border-gray-100 dark:border-gray-800 shadow-sm">
                     <div className="flex flex-col md:flex-row gap-12 items-center">
                         <div className="w-full md:w-1/2">
-                            <h4 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+                            <h4 className="text-3xl  mb-6 text-gray-900 dark:text-white">
                                 {chartTranslations.composition_title}
                             </h4>
                             <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed mb-8">

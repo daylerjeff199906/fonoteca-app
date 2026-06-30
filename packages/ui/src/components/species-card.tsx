@@ -21,7 +21,7 @@ const MediaViewer: React.FC<{
     fallback?: string;
 }> = ({ src, alt, className, onLoaded, isLoaded, fallback = 'https://www.iiap.gob.pe/img/logo-iiap.png' }) => {
     const [hasError, setHasError] = React.useState(false);
-    
+
     const processedSrc = React.useMemo(() => {
         if (!src) return '';
         if (src.includes('drive.google.com') || src.includes('docs.google.com')) {
@@ -36,7 +36,7 @@ const MediaViewer: React.FC<{
     if (!processedSrc || hasError) {
         return (
             <div className={`${className} bg-slate-100 dark:bg-slate-800 flex items-center justify-center`}>
-                 <img src={fallback} className="w-12 h-12 opacity-20 filter grayscale" alt="Fallback" onLoad={onLoaded} />
+                <img src={fallback} className="w-12 h-12 opacity-20 filter grayscale" alt="Fallback" onLoad={onLoaded} />
             </div>
         );
     }
@@ -102,7 +102,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">{categoryTitles[species.category] || species.category}</span>
+                    <span className="text-[10px]  text-accent-green uppercase tracking-widest">{categoryTitles[species.category] || species.category}</span>
                     <p className=" italic truncate">{species.scientificName}</p>
                 </div>
                 <div className="flex items-center gap-2 pr-2">
@@ -141,7 +141,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     {species.audios.length > 0 && (
                         <button
                             onClick={onPlay}
-                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-2xl hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2 font-bold text-xs"
+                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-2xl hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2  text-xs"
                         >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             {lang === 'es' ? 'Escuchar' : lang === 'pt' ? 'Ouvir' : 'Listen'}
@@ -152,7 +152,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
 
             <div className="p-5 flex-1 flex flex-col relative">
                 <div className="mb-4">
-                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-[0.2em] mb-2 block">
+                    <span className="text-[10px]  text-accent-green uppercase tracking-[0.2em] mb-2 block">
                         {categoryTitles[species.category] || species.category}
                     </span>
                     <h4 className="text-gray-900 italic font-serif dark:text-white group-hover:text-accent-green transition-colors leading-tight mb-1 text-lg">
@@ -163,9 +163,9 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                 <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
                     <div className="flex items-center gap-1.5 text-gray-500 overflow-hidden">
                         <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="text-[10px] font-bold tracking-tight truncate uppercase">{species.location}</span>
+                        <span className="text-[10px]  tracking-tight truncate uppercase">{species.location}</span>
                     </div>
-                    <a href={detailLink} className="text-[10px] font-black uppercase tracking-widest text-accent-green hover:text-accent-green/80 flex items-center gap-1.5 transition-colors">
+                    <a href={detailLink} className="text-[10px]  uppercase tracking-widest text-accent-green hover:text-accent-green/80 flex items-center gap-1.5 transition-colors">
                         {lang === 'es' ? 'Detalles' : lang === 'pt' ? 'Detalhes' : 'Details'}
                         <ArrowRight className="w-3.5 h-3.5" />
                     </a>

@@ -236,7 +236,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     // Handle container resize when layout mode transitions (isExpanded or showBottomDetails toggle)
     useEffect(() => {
         if (!wsSpectrogramRef.current || !spectrogramRef.current) return;
-        
+
         // Wait for CSS transitions (300ms) to settle before measuring clientHeight
         const timer = setTimeout(() => {
             if (!spectrogramRef.current || !wsSpectrogramRef.current) return;
@@ -308,7 +308,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             const specCanvas = getCanvasFromRef(spectrogramRef.current);
             const waveCanvas = getCanvasFromRef(waveformRef.current);
             const timeCanvas = getCanvasFromRef(timelineRef.current);
-            
+
             if (!specCanvas || !waveCanvas) {
                 console.error("Canvas elements not found");
                 return;
@@ -329,7 +329,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             const headerHeight = 90; // Space for professional header at the top
             const footerHeight = 45; // Space for logo/footer at the bottom
             const spacing = 15; // Vertical spacing between components
-            
+
             // Base width matches the spectrogram's canvas width
             const width = specDisplayWidth + marginX + legendWidth;
             const height = headerHeight + specDisplayHeight + waveDisplayHeight + timeDisplayHeight + (spacing * 3) + footerHeight;
@@ -382,18 +382,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             ctx.font = '9px monospace';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            
+
             const tickCount = 6;
             const maxFreq = sampleRate / 2;
-            
+
             for (let i = 0; i < tickCount; i++) {
                 const ratio = i / (tickCount - 1);
                 const freq = maxFreq - ratio * maxFreq; // Max at the top, 0 at the bottom
                 const y = specY + ratio * specDisplayHeight;
-                
+
                 const textVal = frequencyUnit === 'kHz' ? (freq / 1000).toFixed(1) : Math.round(freq).toString();
                 ctx.fillText(textVal, marginX - 10, y);
-                
+
                 // Draw small tick mark
                 ctx.strokeStyle = '#374151';
                 ctx.beginPath();
@@ -409,8 +409,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             ctx.fillStyle = '#4b5563';
             ctx.font = 'bold 9px monospace';
             ctx.textAlign = 'center';
-            const freqAxisLabel = frequencyUnit === 'kHz' 
-                ? (lang === 'es' ? 'FRECUENCIA (kHz)' : 'FREQUENCY (kHz)') 
+            const freqAxisLabel = frequencyUnit === 'kHz'
+                ? (lang === 'es' ? 'FRECUENCIA (kHz)' : 'FREQUENCY (kHz)')
                 : (lang === 'es' ? 'FRECUENCIA (Hz)' : 'FREQUENCY (Hz)');
             ctx.fillText(freqAxisLabel, 0, 0);
             ctx.restore();
@@ -431,7 +431,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 gradient.addColorStop(0, '#000000');
                 gradient.addColorStop(1, '#ffffff');
             }
-            
+
             ctx.fillStyle = gradient;
             ctx.fillRect(legendX, specY, 12, specDisplayHeight);
 
@@ -439,13 +439,13 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             ctx.fillStyle = '#9ca3af';
             ctx.font = '8px monospace';
             ctx.textAlign = 'left';
-            
+
             const dbTicks = ['0', '-5', '-10', '-15', '-20', '-25', '-30'];
             for (let i = 0; i < dbTicks.length; i++) {
                 const ratio = i / (dbTicks.length - 1);
                 const y = specY + ratio * specDisplayHeight;
                 ctx.fillText(`${dbTicks[i]} dB`, legendX + 18, y);
-                
+
                 // Draw tick mark
                 ctx.strokeStyle = '#374151';
                 ctx.beginPath();
@@ -481,21 +481,21 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 const endRatio = selectedRange.end / durationSeconds;
                 const selectX = marginX + startRatio * activeWidth;
                 const selectWidth = (endRatio - startRatio) * activeWidth;
-                
+
                 // Draw filled green rectangle with transparency
                 ctx.fillStyle = 'rgba(69, 164, 94, 0.12)';
                 ctx.fillRect(selectX, specY, selectWidth, specDisplayHeight + waveDisplayHeight + spacing + (timeCanvas ? timeDisplayHeight + spacing : 0));
-                
+
                 // Draw solid vertical borders for range limits
                 ctx.strokeStyle = 'rgba(69, 164, 94, 0.7)';
                 ctx.lineWidth = 1.5;
-                
+
                 // Left border
                 ctx.beginPath();
                 ctx.moveTo(selectX, specY);
                 ctx.lineTo(selectX, timeY + (timeCanvas ? timeDisplayHeight : 0));
                 ctx.stroke();
-                
+
                 // Right border
                 ctx.beginPath();
                 ctx.moveTo(selectX + selectWidth, specY);
@@ -620,7 +620,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                         <div className="flex flex-row relative flex-1 min-h-[220px] bg-black">
                             {/* LEFT: Custom vertical Y-Axis ticks */}
                             <div className="w-16 flex-shrink-0 flex flex-col justify-between py-0.5 border-r border-gray-900 font-mono text-[9px] text-gray-500 pr-2 select-none relative z-10 bg-black">
-                                <div className="absolute left-1.5 top-1/2 -translate-y-1/2 -rotate-90 origin-left whitespace-nowrap text-[8px] tracking-widest uppercase font-black text-gray-600">
+                                <div className="absolute left-1.5 top-1/2 -translate-y-1/2 -rotate-90 origin-left whitespace-nowrap text-[8px] tracking-widest uppercase font-bold text-gray-600">
                                     {frequencyUnit === 'kHz' ? (lang === 'es' ? 'Frecuencia (kHz)' : 'Frequency (kHz)') : (lang === 'es' ? 'Frecuencia (Hz)' : 'Frequency (Hz)')}
                                 </div>
                                 {ticks.map((freq, idx) => (
@@ -652,7 +652,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                         </div>
                                     ))}
                                 </div>
-                                <div className="absolute -right-1 top-1/2 -translate-y-1/2 rotate-90 origin-right whitespace-nowrap text-[8px] tracking-widest uppercase font-black text-gray-600">
+                                <div className="absolute -right-1 top-1/2 -translate-y-1/2 rotate-90 origin-right whitespace-nowrap text-[8px] tracking-widest uppercase font-bold text-gray-600">
                                     Amplitud (dB)
                                 </div>
                             </div>
@@ -844,7 +844,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                                 </svg>
-                                <span className="text-[9px] font-black uppercase tracking-wider hidden md:inline">
+                                <span className="text-[9px] font-bold uppercase tracking-wider hidden md:inline">
                                     {showBottomDetails ? (lang === 'es' ? 'Ocultar Ficha' : 'Hide Details') : (lang === 'es' ? 'Mostrar Ficha' : 'Show Details')}
                                 </span>
                             </button>
@@ -862,7 +862,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
                                 </svg>
-                                <span className="text-[9px] font-black uppercase tracking-wider hidden md:inline">Capturar</span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider hidden md:inline">Capturar</span>
                             </button>
                         </div>
                     </div>
@@ -882,7 +882,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                         >
                             {/* Panel Header */}
                             <div className="px-6 py-2 bg-[#070707] border-b border-gray-800 flex items-center justify-between flex-shrink-0 select-none">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-accent-green">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-green">
                                     {lang === 'es' ? 'Ficha Técnica' : 'Technical Profile'}
                                 </span>
 
