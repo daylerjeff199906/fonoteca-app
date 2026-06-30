@@ -110,7 +110,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                 {/* Content Area - Left Aligned */}
                                 <div className="relative z-30 flex flex-col items-start text-left space-y-4">
                                     <div className="space-y-1 w-full">
-                                        <h3 className="text-4xl font-black text-white tracking-tighter leading-none group-hover:text-primary transition-colors">
+                                        <h3 className="text-4xl font-bold text-white tracking-tighter leading-none group-hover:text-primary transition-colors">
                                             {name}
                                         </h3>
                                         <div className="h-1.5 w-0 bg-primary group-hover:w-16 transition-all duration-500 rounded-full"></div>
@@ -119,7 +119,7 @@ export const ClassExplorer: React.FC<ClassExplorerProps> = ({ lang, classes }) =
                                     <div className="flex items-center gap-3 w-full">
                                         <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-2 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-500">
                                             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                                            <span className="text-[10px] font-black text-gray-400 group-hover:text-primary uppercase tracking-[0.2em] transition-colors">
+                                            <span className="text-[10px] font-bold text-gray-400 group-hover:text-primary uppercase tracking-[0.2em] transition-colors">
                                                 {cls.count} {lang === 'es' ? 'Especies' : 'Species'}
                                             </span>
                                         </div>

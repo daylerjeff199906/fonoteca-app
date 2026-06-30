@@ -71,7 +71,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                     >
                         <h1 className="text-4xl md:text-7xl text-white tracking-tighter leading-[0.9]">
                             {content.titles_animate[0].split('|')[0].trim()}
-                            <span className="block text-accent-green opacity-90 font-bold">
+                            <span className="block text-accent-green opacity-90 ">
                                 {content.titles_animate[0].split('|')[1]?.trim() || 'Portal'}
                             </span>
                         </h1>
@@ -102,7 +102,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                                 placeholder={lang === 'es' ? "Explorar la biblioteca..." : "Explore the library..."}
                                 className="w-full h-14 pl-14 pr-32 bg-transparent text-white outline-none placeholder:text-gray-500 font-medium"
                             />
-                            <button className="absolute right-2 bg-accent-green hover:bg-accent-green/90 text-white px-6 py-2 rounded-full font-bold transition-colors">
+                            <button className="absolute right-2 bg-accent-green hover:bg-accent-green/90 text-white px-6 py-2 rounded-full  transition-colors">
                                 {lang === 'es' ? 'Buscar' : 'Search'}
                             </button>
                         </div>
@@ -115,10 +115,10 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                 <div className="max-w-[1600px] mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-green">VITAL SIGNS</span>
+                            <span className="text-[10px]  uppercase tracking-[0.4em] text-accent-green">VITAL SIGNS</span>
                             <div className="h-px w-20 bg-accent-green/30"></div>
                         </div>
-                        <a href={`/${lang}/stats`} className="text-[10px] font-bold uppercase tracking-widest text-white hover:text-accent-green flex items-center gap-2 transition-colors">
+                        <a href={`/${lang}/stats`} className="text-[10px]  uppercase tracking-widest text-white hover:text-accent-green flex items-center gap-2 transition-colors">
                             Show All <ArrowUpRight className="w-3 h-3" />
                         </a>
                     </div>
@@ -130,11 +130,11 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                                 <div key={i} className="flex-[0_0_100%] min-w-0 pr-4">
                                     <div className="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/10">
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                                            <h4 className="text-sm  text-white uppercase tracking-wider">
                                                 {metric.label}
                                             </h4>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                                <span className="text-[10px]  text-gray-500 uppercase tracking-widest">
                                                     {metric.unit}
                                                 </span>
                                             </div>
@@ -176,7 +176,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                                 className="space-y-2 md:space-y-4"
                             >
                                 <div className="space-y-1">
-                                    <h4 className="text-sm font-bold text-white border-b border-white/10 pb-2 inline-block min-w-full">
+                                    <h4 className="text-sm  text-white border-b border-white/10 pb-2 inline-block min-w-full">
                                         {metric.label}
                                     </h4>
                                     <div className="flex items-baseline gap-3 pt-2">
@@ -188,7 +188,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                                         <span className="text-3xl md:text-5xl font-light text-white tracking-tighter">
                                             {metric.value.toLocaleString()}
                                         </span>
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                        <span className="text-[10px]  text-gray-500 uppercase tracking-widest">
                                             {metric.unit}
                                         </span>
                                     </div>

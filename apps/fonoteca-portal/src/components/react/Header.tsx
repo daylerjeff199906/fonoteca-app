@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                         >
                             <FileAudio size={20} />
                             {cartItems.length > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-accent-green text-[#0a0f18] text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center animate-pulse border border-[#0a0f18]">
+                                <span className="absolute -top-1 -right-1 bg-accent-green text-[#0a0f18] text-[9px]  w-4.5 h-4.5 rounded-full flex items-center justify-center animate-pulse border border-[#0a0f18]">
                                     {cartItems.length}
                                 </span>
                             )}

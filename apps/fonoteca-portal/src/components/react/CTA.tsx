@@ -19,7 +19,7 @@ export const CTA: React.FC<CTAProps> = ({ content }) => {
                         <div className="md:w-1/2">
                             <h2 className="text-4xl md:text-5xl text-white font-light mb-6">
                                 {content.title_start} <br />
-                                <strong className="text-accent-green font-bold">
+                                <strong className="text-accent-green ">
                                     {content.title_strong}
                                 </strong>
                             </h2>
@@ -33,7 +33,7 @@ export const CTA: React.FC<CTAProps> = ({ content }) => {
                                     placeholder={content.placeholder}
                                     className="px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-accent-green focus:bg-white/20 transition-all flex-grow"
                                 />
-                                <button className="px-8 py-4 rounded-full bg-accent-green text-primary-dark font-bold hover:bg-white transition-colors cursor-pointer">
+                                <button className="px-8 py-4 rounded-full bg-accent-green text-primary-dark  hover:bg-white transition-colors cursor-pointer">
                                     {content.button}
                                 </button>
                             </form>

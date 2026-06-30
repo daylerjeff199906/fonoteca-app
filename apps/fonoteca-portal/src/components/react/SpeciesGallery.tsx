@@ -64,7 +64,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                 closeLightbox();
             }
             if (items.length <= 1) return;
-            
+
             if (e.key === 'ArrowRight') {
                 if (lightboxIndex !== null) {
                     handleNextLightbox();
@@ -128,7 +128,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
         setLightboxIndex(null);
         setZoomScale(1);
         if (document.fullscreenElement) {
-            document.exitFullscreen().catch(() => {});
+            document.exitFullscreen().catch(() => { });
         }
     };
 
@@ -164,7 +164,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
         <div className="w-full flex flex-col gap-4">
             {/* Main Image Viewport (Gray background, centered image, faithfully matched to design, shadowless) */}
             <div className="relative w-full h-[320px] sm:h-[400px] md:h-[500px] bg-[#f3f4f6] dark:bg-[#111827] rounded-xl overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-800">
-                
+
                 {/* Image tag overlay */}
                 {currentItem.tag && (
                     <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[9px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded border border-white/10 z-10 select-none">
@@ -213,11 +213,10 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                 <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
                     <button
                         onClick={() => setIsInfoOpen(!isInfoOpen)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm ${
-                            isInfoOpen
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm ${isInfoOpen
                                 ? 'bg-accent-green text-white'
                                 : 'bg-black/20 hover:bg-black/40 text-white/90 hover:text-white'
-                        }`}
+                            }`}
                         title={lang === 'es' ? 'Mostrar información' : 'Show information'}
                     >
                         <Info className="w-5 h-5" />
@@ -243,7 +242,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                 </div>
 
                 {/* Counter Badge (Bottom Right) */}
-                <div className="absolute bottom-4 right-4 z-10 bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded border border-white/10 select-none tracking-wider">
+                <div className="absolute bottom-4 right-4 z-10 bg-black/60 text-white text-xs  px-3 py-1.5 rounded border border-white/10 select-none tracking-wider">
                     {activeIndex + 1} / {items.length}
                 </div>
             </div>
@@ -260,11 +259,10 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                                     setActiveIndex(idx);
                                     setZoomScale(1);
                                 }}
-                                className={`w-16 h-16 rounded-md overflow-hidden bg-black border-2 transition-all flex-shrink-0 cursor-pointer ${
-                                    isActive
+                                className={`w-16 h-16 rounded-md overflow-hidden bg-black border-2 transition-all flex-shrink-0 cursor-pointer ${isActive
                                         ? 'border-blue-500 scale-105'
                                         : 'border-transparent hover:border-gray-400 opacity-70 hover:opacity-100'
-                                }`}
+                                    }`}
                             >
                                 <img
                                     src={item.url}
@@ -329,7 +327,7 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
 
                         {/* Middle Viewport (Contains navigation chevrons and active image) */}
                         <div ref={viewportRef} className="relative flex-grow w-full h-full flex items-center justify-center overflow-hidden">
-                            
+
                             {/* Left Navigation Chevron */}
                             {items.length > 1 && (
                                 <button
@@ -360,9 +358,8 @@ export const SpeciesGallery: React.FC<SpeciesGalleryProps> = ({
                                 }}
                                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                 src={items[lightboxIndex].url}
-                                className={`h-full w-auto max-w-none object-contain pointer-events-auto ${
-                                    zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
-                                }`}
+                                className={`h-full w-auto max-w-none object-contain pointer-events-auto ${zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+                                    }`}
                                 alt={`Facebook view ${lightboxIndex + 1}`}
                                 onClick={(e) => e.stopPropagation()}
                             />

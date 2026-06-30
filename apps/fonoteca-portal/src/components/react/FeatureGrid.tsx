@@ -57,7 +57,7 @@ export const FeatureGrid: React.FC<FeatureGridProps> = ({ data }) => {
                             </div>
                         </motion.div>
                     ))}
-                    
+
                     {/* Featured / Accent Card */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -66,17 +66,17 @@ export const FeatureGrid: React.FC<FeatureGridProps> = ({ data }) => {
                         transition={{ duration: 0.5, delay: 0.5 }}
                         className="bg-gradient-to-br from-indigo-600 to-purple-800 border border-indigo-400/30 rounded-2xl p-8 flex flex-col justify-between min-h-[300px] relative overflow-hidden"
                     >
-                         {/* Abstract glowing shapes */}
+                        {/* Abstract glowing shapes */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/20 rounded-full blur-xl transform -translate-x-1/2 translate-y-1/2"></div>
-                        
+
                         <div className="relative z-10 h-full flex flex-col">
                             <h3 className="text-2xl font-semibold text-white mb-4">Start your discovery</h3>
                             <p className="text-indigo-100/80 text-sm leading-relaxed mb-auto">
                                 Access our full database of Amazonian soundscapes and integrate our API into your research.
                             </p>
                             <div className="mt-8">
-                                <button className="px-6 py-2.5 bg-white text-indigo-900 rounded-full text-sm font-bold shadow-lg hover:shadow-white/20 hover:scale-105 transition-all">
+                                <button className="px-6 py-2.5 bg-white text-indigo-900 rounded-full text-sm  shadow-lg hover:shadow-white/20 hover:scale-105 transition-all">
                                     Get Started
                                 </button>
                             </div>

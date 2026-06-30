@@ -123,7 +123,7 @@ const FilterCombobox: React.FC<{
                                         className={cn(
                                             "w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all",
                                             value === item
-                                                ? "bg-accent-green/10 text-accent-green font-bold"
+                                                ? "bg-accent-green/10 text-accent-green "
                                                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                                         )}
                                     >
@@ -349,7 +349,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
             <div className="flex items-center justify-between p-4 lg:p-5 border-b border-gray-100 dark:border-gray-800 shrink-0">
                 <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-accent-green" />
-                    <h2 className="font-bold text-xs uppercase tracking-wider">{lang === 'es' ? 'Filtros' : 'Filters'}</h2>
+                    <h2 className=" text-xs uppercase tracking-wider">{lang === 'es' ? 'Filtros' : 'Filters'}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {/* Desktop Close Button */}
@@ -372,7 +372,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                 {(selectedLocation !== 'All' || selectedClass !== 'All' || selectedOrder !== 'All' || selectedFamily !== 'All' || selectedGenus !== 'All' || onlyWithAudio || searchTerm) && (
                     <div className="mb-4 p-4 rounded-2xl bg-accent-green/5 border border-accent-green/10">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">Activos</span>
+                            <span className="text-[10px]  text-accent-green uppercase tracking-widest">Activos</span>
                             <button onClick={clearFilters} className="text-[10px] text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1">
                                 <X className="w-2.5 h-2.5" />
                                 {lang === 'es' ? 'Limpiar' : 'Clear'}
@@ -481,7 +481,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                     <SidebarSection title={lang === 'es' ? 'Recursos' : 'Resources'}>
                         <button
                             onClick={() => setOnlyWithAudio(!onlyWithAudio)}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green font-bold' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] transition-all border ${onlyWithAudio ? 'bg-accent-green/10 border-accent-green/30 text-accent-green ' : 'bg-transparent border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}
                         >
                             <div className="flex items-center gap-2">
                                 <Music className="w-3.5 h-3.5" />
@@ -597,7 +597,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                 <List className="w-4 h-4" />
                             </button>
                         </div>
-                        <span className="text-xs font-bold text-gray-400 whitespace-nowrap px-2">
+                        <span className="text-xs  text-gray-400 whitespace-nowrap px-2">
                             {totalCount} {lang === 'es' ? 'especies' : 'species'}
                         </span>
                     </div>
@@ -637,12 +637,12 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                                 <table className="w-full text-left border-collapse">
                                                     <thead>
                                                         <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest w-16">Img</th>
-                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Científico' : 'Scientific Name'}</th>
-                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Común' : 'Common Name'}</th>
-                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Familia</th>
-                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Localidad</th>
-                                                            <th className="p-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
+                                                            <th className="p-3 text-[10px]  text-gray-400 uppercase tracking-widest w-16">Img</th>
+                                                            <th className="p-3 text-[10px]  text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Científico' : 'Scientific Name'}</th>
+                                                            <th className="p-3 text-[10px]  text-gray-400 uppercase tracking-widest">{lang === 'es' ? 'Nombre Común' : 'Common Name'}</th>
+                                                            <th className="p-3 text-[10px]  text-gray-400 uppercase tracking-widest">Familia</th>
+                                                            <th className="p-3 text-[10px]  text-gray-400 uppercase tracking-widest">Localidad</th>
+                                                            <th className="p-3 text-[10px]  text-gray-400 uppercase tracking-widest text-right">Acciones</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -672,10 +672,10 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                                                 <Search className="w-8 h-8 text-gray-300" />
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-xl">{lang === 'es' ? 'No se encontraron especies' : 'No species found'}</h3>
+                                                <h3 className=" text-xl">{lang === 'es' ? 'No se encontraron especies' : 'No species found'}</h3>
                                                 <p className="text-gray-500 max-w-xs">{lang === 'es' ? 'Intenta con otros filtros o términos de búsqueda.' : 'Try adjusting your filters or search terms.'}</p>
                                             </div>
-                                            <button onClick={clearFilters} className="text-accent-green font-bold hover:underline">
+                                            <button onClick={clearFilters} className="text-accent-green  hover:underline">
                                                 {lang === 'es' ? 'Limpiar filtros' : 'Clear filters'}
                                             </button>
                                         </div>

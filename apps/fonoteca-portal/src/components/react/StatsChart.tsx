@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { type translations } from '../../i18n/data';
 import { motion, animate } from 'framer-motion';
-import { 
-  RadialBarChart, 
-  RadialBar, 
-  Tooltip, 
-  ResponsiveContainer,
-  Cell,
-  Legend,
-  PolarAngleAxis
+import {
+    RadialBarChart,
+    RadialBar,
+    Tooltip,
+    ResponsiveContainer,
+    Cell,
+    Legend,
+    PolarAngleAxis
 } from 'recharts';
 import { Activity, BarChart3, Microscope, Database, Globe2, ArrowRight } from 'lucide-react';
 
@@ -36,31 +36,31 @@ const CountUp: React.FC<{ value: number }> = ({ value }) => {
 
 const COLORS = [
     '#8DC63F', // accent-green
-    '#4ADE80', 
-    '#22C55E', 
-    '#16A34A', 
-    '#15803D', 
-    '#166534', 
+    '#4ADE80',
+    '#22C55E',
+    '#16A34A',
+    '#15803D',
+    '#166534',
     '#14532D'
 ];
 
 const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-[#0c141d]/95 backdrop-blur-xl border border-accent-green/30 p-4 rounded-2xl shadow-2xl z-50">
-        <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: data.fill }}></div>
-            <p className="text-[10px] font-black text-accent-green uppercase tracking-[0.2em]">{data.name}</p>
-        </div>
-        <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">{data.value}</span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Species</span>
-        </div>
-      </div>
-    );
-  }
-  return null;
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+            <div className="bg-[#0c141d]/95 backdrop-blur-xl border border-accent-green/30 p-4 rounded-2xl shadow-2xl z-50">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: data.fill }}></div>
+                    <p className="text-[10px]  text-accent-green uppercase tracking-[0.2em]">{data.name}</p>
+                </div>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-3xl  text-white">{data.value}</span>
+                    <span className="text-[10px] text-gray-500 uppercase  tracking-widest">Species</span>
+                </div>
+            </div>
+        );
+    }
+    return null;
 };
 
 export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartContent, lang, classData = [] }) => {
@@ -111,7 +111,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                     {/* Background Visual Elements */}
                     <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-accent-green/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
                     <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
-                    
+
                     {/* Grid Pattern */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
@@ -126,11 +126,11 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="h-px w-8 bg-accent-green"></div>
-                                    <span className="text-accent-green font-black text-[10px] uppercase tracking-[0.4em]">
+                                    <span className="text-accent-green  text-[10px] uppercase tracking-[0.4em]">
                                         {chartContent.title_sm}
                                     </span>
                                 </div>
-                                <h2 className="text-4xl md:text-5xl lg:text-6xl text-white font-bold tracking-tighter leading-[1.1]">
+                                <h2 className="text-4xl md:text-5xl lg:text-6xl text-white  tracking-tighter leading-[1.1]">
                                     {chartContent.title.split(' ').map((word, i) => (
                                         <span key={i} className={i > 2 ? 'text-accent-green/90' : ''}>{word} </span>
                                     ))}
@@ -153,10 +153,10 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                     >
                                         <metric.icon className="w-5 h-5 text-accent-green/50 mb-4 group-hover:text-accent-green transition-colors" />
                                         <div className="space-y-1">
-                                            <div className="text-3xl font-bold text-white tracking-tighter">
+                                            <div className="text-3xl  text-white tracking-tighter">
                                                 <CountUp value={metric.value} />
                                             </div>
-                                            <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                            <div className="text-[10px]  text-gray-500 uppercase tracking-widest">
                                                 {metric.label}
                                             </div>
                                         </div>
@@ -164,7 +164,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 ))}
                             </div>
 
-                            <motion.a 
+                            <motion.a
                                 href={`/${lang}/species`}
                                 initial={{ opacity: 0 }}
                                 whileInView={{ opacity: 1 }}
@@ -172,7 +172,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 transition={{ delay: 0.5 }}
                                 className="inline-flex items-center gap-4 group"
                             >
-                                <span className="h-12 px-8 rounded-full bg-accent-green text-black font-bold text-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <span className="h-12 px-8 rounded-full bg-accent-green text-black  text-sm flex items-center justify-center group-hover:scale-105 transition-transform">
                                     {chartContent.button}
                                 </span>
                                 <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white group-hover:bg-white/10 transition-all">
@@ -191,14 +191,14 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 className="w-full h-full"
                             >
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <RadialBarChart 
-                                        cx="50%" 
-                                        cy="50%" 
-                                        innerRadius="20%" 
-                                        outerRadius="100%" 
-                                        barSize={20} 
+                                    <RadialBarChart
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius="20%"
+                                        outerRadius="100%"
+                                        barSize={20}
                                         data={chartData}
-                                        startAngle={180} 
+                                        startAngle={180}
                                         endAngle={-180}
                                     >
                                         <RadialBar
@@ -208,10 +208,10 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                             cornerRadius={10}
                                         />
                                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                                        <Legend 
-                                            iconSize={10} 
-                                            layout="vertical" 
-                                            verticalAlign="middle" 
+                                        <Legend
+                                            iconSize={10}
+                                            layout="vertical"
+                                            verticalAlign="middle"
                                             align="right"
                                             wrapperStyle={{
                                                 paddingLeft: '20px',
@@ -228,7 +228,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 flex flex-col items-center justify-center">
                                     <div className="absolute inset-0 bg-accent-green/20 rounded-full blur-2xl animate-pulse"></div>
                                     <Activity className="w-8 h-8 text-accent-green mb-2 relative z-10" />
-                                    <span className="text-[8px] font-black text-accent-green uppercase tracking-[0.3em] relative z-10">Live Data</span>
+                                    <span className="text-[8px]  text-accent-green uppercase tracking-[0.3em] relative z-10">Live Data</span>
                                 </div>
                             </motion.div>
 
@@ -238,8 +238,8 @@ export const StatsChart: React.FC<StatsChartProps> = ({ statsContent, chartConte
                                     <motion.div
                                         key={i}
                                         animate={{ height: [10, 40, 15, 30, 10] }}
-                                        transition={{ 
-                                            repeat: Infinity, 
+                                        transition={{
+                                            repeat: Infinity,
                                             duration: 1 + Math.random(),
                                             ease: "easeInOut"
                                         }}
