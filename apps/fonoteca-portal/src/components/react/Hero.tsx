@@ -70,10 +70,10 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <h1 className="text-4xl md:text-7xl text-white tracking-tighter leading-[0.9]">
+                        <h1 className="text-4xl md:text-6xl text-white tracking-tighter max-w-4xl">
                             {content.titles_animate[0].split('|')[0].trim()}
-                            <span className="block text-accent-green opacity-90 ">
-                                {content.titles_animate[0].split('|')[1]?.trim() || 'Portal'}
+                            <span className="text-accent-green opacity-90 ">
+                                {' '} {content.titles_animate[0].split('|')[1]?.trim() || 'Portal'}
                             </span>
                         </h1>
                     </motion.div>
@@ -120,7 +120,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
                             <div className="h-px w-20 bg-accent-green/30"></div>
                         </div>
                         <a href={`/${lang}/stats`} className="text-[10px]  uppercase tracking-widest text-white hover:text-accent-green flex items-center gap-2 transition-colors">
-                            Show All <ArrowUpRight className="w-3 h-3" />
+                            Ver todo <ArrowUpRight className="w-3 h-3" />
                         </a>
                     </div>
 
