@@ -114,7 +114,7 @@ export const SpeciesTableRow: React.FC<SpeciesCardProps> = ({ species, lang }) =
             <td className="p-3">
                 <div className="flex flex-col">
                     <span className="text-sm font-serif italic text-gray-900 dark:text-white group-hover:text-accent-green transition-colors">{species.scientificName}</span>
-                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">{species.class_name}</span>
+                    <span className="text-[10px]  text-accent-green uppercase tracking-widest">{species.class_name}</span>
                 </div>
             </td>
             <td className="p-3 text-sm text-gray-600 dark:text-gray-400">{commonName || '-'}</td>
@@ -204,7 +204,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-accent-green uppercase tracking-widest">{categoryTitles[species.category] || species.category}</span>
+                    <span className="text-[10px]  text-accent-green uppercase tracking-widest">{categoryTitles[species.category] || species.category}</span>
                     <p className=" italic truncate">{species.scientificName}</p>
                 </div>
                 <div className="flex items-center gap-2 pr-2">
@@ -238,7 +238,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     {species.audios.length > 0 && (
                         <button
                             onClick={onPlay}
-                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-xl hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2 font-bold text-xs"
+                            className="bg-white/20 cursor-pointer backdrop-blur-md border border-white/30 text-white px-5 py-2 rounded-xl hover:bg-accent-green hover:border-accent-green transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 flex items-center gap-2  text-xs"
                         >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             {lang === 'es' ? 'Escuchar' : lang === 'pt' ? 'Ouvir' : 'Listen'}
@@ -263,7 +263,7 @@ export const SpeciesCard: React.FC<SpeciesCardProps> = ({ species, viewMode = 'g
                     <div className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center group-hover:bg-[#0c141d] group-hover:border-[#0c141d] transition-colors">
                         <ArrowRight className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-white transition-colors" />
                     </div>
-                    <span className="text-sm font-bold text-[#0c141d] dark:text-white group-hover:text-accent-green transition-colors">
+                    <span className="text-sm  text-[#0c141d] dark:text-white group-hover:text-accent-green transition-colors">
                         {lang === 'es' ? 'Leer más' : lang === 'pt' ? 'Leia mais' : 'Read more'}
                     </span>
                 </div>

@@ -13,12 +13,12 @@ export const Intro: React.FC<IntroProps> = ({ content }) => {
                 <div className="flex flex-col md:flex-row items-center gap-16">
                     {/* Text Content */}
                     <div className="w-full md:w-1/2 order-2 md:order-1 reveal-on-scroll">
-                        <span className="text-accent-green font-bold tracking-widest uppercase text-sm mb-4 block">
+                        <span className="text-accent-green  tracking-widest uppercase text-sm mb-4 block">
                             {content.label}
                         </span>
                         <h2 className="text-4xl md:text-5xl text-primary-dark dark:text-white mb-8 font-light leading-tight">
                             {content.title_start} <br />
-                            <strong className="font-bold">{content.title_strong}</strong>
+                            <strong className="">{content.title_strong}</strong>
                         </h2>
                         <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg leading-relaxed">
                             {content.p1}

@@ -114,8 +114,8 @@ export function BulkClient() {
             showToast.error("Error de Lectura", "No se pudo encontrar la hoja especificada en el archivo.");
             return;
           }
-          const jsonData = XLSX.utils.sheet_to_json(worksheet as XLSX.WorkSheet, { 
-            header: 0, 
+          const jsonData = XLSX.utils.sheet_to_json(worksheet as XLSX.WorkSheet, {
+            header: 0,
             defval: null
           });
           setPreviewData(jsonData);
@@ -183,7 +183,7 @@ export function BulkClient() {
           };
 
           const rows = parseRobustCSV(text, separator);
-          
+
           if (rows.length === 0) {
             showToast.error("Archivo Vacío", "El archivo CSV no contiene registros válidos.");
             return;
@@ -397,7 +397,7 @@ export function BulkClient() {
                     <TableHeader className="sticky top-0 bg-background shadow-sm z-10 font-bold uppercase tracking-wider">
                       <TableRow className="hover:bg-transparent">
                         {Object.keys(previewData[0]).map(k => (
-                          <TableHead key={k} className="text-[10px] font-black text-foreground py-4 min-w-[120px] whitespace-nowrap">
+                          <TableHead key={k} className="text-[10px] font-bold text-foreground py-4 min-w-[120px] whitespace-nowrap">
                             <span className="flex items-center gap-1.5">
                               {currentTable.headers.includes(k as any) ? (
                                 <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -498,11 +498,11 @@ export function BulkClient() {
               <AlertDescription>
                 <div className="flex gap-6 mt-3 mb-4">
                   <div className="flex flex-col">
-                    <span className="text-2xl font-black text-green-700">{results.successCount}</span>
+                    <span className="text-2xl font-bold text-green-700">{results.successCount}</span>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground">Registros Exitosos</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-2xl font-black text-red-500">{results.errorCount}</span>
+                    <span className="text-2xl font-bold text-red-500">{results.errorCount}</span>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground">Errores Encontrados</span>
                   </div>
                 </div>
