@@ -208,6 +208,22 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
             if (itemsError) throw itemsError;
 
+            // Notify admin app to trigger confirmation & alert emails
+            try {
+                const adminBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+                    ? 'http://localhost:3006'
+                    : '';
+                await fetch(`${adminBaseUrl}/api/audio-requests/created`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ requestId: requestData.id }),
+                });
+            } catch (notifyErr) {
+                console.error('Failed to trigger notification emails:', notifyErr);
+            }
+
             // Success Transition
             setStep('success');
         } catch (err: any) {
