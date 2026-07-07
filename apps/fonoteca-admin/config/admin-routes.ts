@@ -95,6 +95,10 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
           title: "Archivos Multimedia",
           url: `/dashboard/multimedia`,
         },
+        {
+          title: "Solicitudes de Audios",
+          url: `/dashboard/audio-requests`,
+        },
       ],
     },
     {
