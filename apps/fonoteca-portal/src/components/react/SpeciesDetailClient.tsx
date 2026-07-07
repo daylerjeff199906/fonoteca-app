@@ -4,6 +4,7 @@ import { type Language } from '../../i18n/data';
 import { SpeciesGallery } from './SpeciesGallery';
 import { AudioPlayer } from './AudioPlayer';
 import { SpeciesDistributionMap } from './SpeciesDistributionMap';
+import { generateSpeciesPDF } from '../../lib/pdfGenerator';
 import {
     FileText,
     Share2,
@@ -13,7 +14,8 @@ import {
     FolderCheck,
     DatabaseZap,
     X,
-    Check
+    Check,
+    Download
 } from 'lucide-react';
 import { useAudioRequestStore } from '../../store/useAudioRequestStore';
 
@@ -565,6 +567,13 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     <FileText size={14} />
                                     <span>CITATIONS</span>
                                 </button>
+                                <button
+                                    onClick={() => generateSpeciesPDF(species, lang)}
+                                    className="flex items-center gap-2 text-xs  text-gray-400 dark:text-gray-555 hover:text-accent-green transition-colors group"
+                                >
+                                    <Download size={14} />
+                                    <span>{lang === 'es' ? 'DESCARGAR PDF' : lang === 'pt' ? 'DESCARREGAR PDF' : 'DOWNLOAD PDF'}</span>
+                                </button>
 
                                 <hr className="border-gray-100 dark:border-gray-800" />
 
@@ -912,6 +921,24 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             </div>
                         </section>
 
+                        <style>{`
+                            @media print {
+                                header, footer, nav, aside, button, .bg-primary-dark.h-24,
+                                [class*="AudioPlayer"], [class*="audio-player"], iframe, .no-print {
+                                    display: none !important;
+                                }
+                                .container {
+                                    max-width: 100% !important;
+                                    width: 100% !important;
+                                    padding: 0 !important;
+                                    margin: 0 !important;
+                                }
+                                body, .min-h-screen, .bg-white, [class*="bg-"] {
+                                    background: transparent !important;
+                                    color: black !important;
+                                }
+                            }
+                        `}</style>
                     </div>
                 </div>
             </div>
