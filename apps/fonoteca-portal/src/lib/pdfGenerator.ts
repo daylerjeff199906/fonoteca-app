@@ -172,7 +172,7 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
             currentY += rowHeight;
         });
         
-        currentY += 6; // Margin after table
+        currentY += 24; // Margin after table (4 rows separation)
     };
 
     // Section 1: Taxonomy
@@ -227,6 +227,92 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
         );
     }
 
+    // Section 3: Distribution & Location
+    const getLocalizedContinent = (cont: string | null | undefined, l: string) => {
+        if (!cont) return '';
+        const clean = cont.trim().toLowerCase();
+        if (clean === 'south america' || clean === 'southamerica') {
+            return l === 'es' ? 'Sudamérica' : l === 'pt' ? 'América do Sul' : 'South America';
+        }
+        return cont;
+    };
+
+    const higherGeography = [
+        getLocalizedContinent(species.databaseDetails?.continent, lang),
+        species.databaseDetails?.country,
+        species.databaseDetails?.stateProvince
+    ].filter(Boolean).join("; ");
+
+    const geoHeaders = lang === 'es'
+        ? { title: 'Distribución y Lugar', col1: 'Concepto / Propiedad', col2: 'Detalle de Ubicación' }
+        : lang === 'pt'
+        ? { title: 'Distribuição e Local', col1: 'Categoria / Propriedade', col2: 'Detalhe de Localização' }
+        : { title: 'Distribution & Location', col1: 'Category / Property', col2: 'Detailed Value' };
+
+    const geoLabels = {
+        es: {
+            higherGeography: "Geografía superior",
+            continent: "Continente",
+            country: "País o área",
+            stateProvince: "Departamento/Estado/Provincia",
+            province: "Provincia",
+            district: "Distrito",
+            locality: "Localidad",
+            latitude: "Latitud decimal",
+            longitude: "Longitud decimal",
+        },
+        en: {
+            higherGeography: "Higher geography",
+            continent: "Continent",
+            country: "Country or area",
+            stateProvince: "State/Province",
+            province: "Province",
+            district: "District",
+            locality: "Locality",
+            latitude: "Decimal latitude",
+            longitude: "Decimal longitude",
+        },
+        pt: {
+            higherGeography: "Geografia superior",
+            continent: "Continente",
+            country: "País ou área",
+            stateProvince: "Estado/Província",
+            province: "Província",
+            district: "Distrito",
+            locality: "Localidade",
+            latitude: "Latitude decimal",
+            longitude: "Longitude decimal",
+        }
+    };
+
+    const activeLang = (lang === 'es' || lang === 'en' || lang === 'pt') ? lang : 'es';
+
+    const geoData = [
+        { label: geoLabels[activeLang].higherGeography, value: higherGeography },
+        { label: geoLabels[activeLang].continent, value: getLocalizedContinent(species.databaseDetails?.continent, activeLang) },
+        { label: geoLabels[activeLang].country, value: species.databaseDetails?.country },
+        { label: geoLabels[activeLang].stateProvince, value: species.databaseDetails?.stateProvince },
+        { label: geoLabels[activeLang].province, value: species.databaseDetails?.province },
+        { label: geoLabels[activeLang].district, value: species.databaseDetails?.district },
+        { label: geoLabels[activeLang].locality, value: species.databaseDetails?.locality || species.location },
+        { label: geoLabels[activeLang].latitude, value: species.databaseDetails?.decimalLatitude?.toString() },
+        { label: geoLabels[activeLang].longitude, value: species.databaseDetails?.decimalLongitude?.toString() },
+        { label: lang === 'es' ? 'Datum Geodésico' : 'Geodetic Datum', value: species.databaseDetails?.geodeticDatum },
+        { label: lang === 'es' ? 'Protocolo de Georreferenciación' : 'Georeference Protocol', value: species.databaseDetails?.georeferenceProtocol },
+        { label: lang === 'es' ? 'Fuentes de Georreferenciación' : 'Georeference Sources', value: species.databaseDetails?.georeferenceSources },
+        { label: lang === 'es' ? 'Fecha de Georreferenciación' : 'Georeferenced Date', value: species.databaseDetails?.georeferencedDate },
+    ].filter(row => row.value);
+
+    if (geoData.length > 0) {
+        drawKeyValueTable(
+            geoHeaders.title,
+            geoData,
+            geoHeaders.col1,
+            geoHeaders.col2,
+            60
+        );
+    }
+
     // Section 3: Ecology & Description
     const descText = species.description[lang as keyof typeof species.description] || species.description.es;
     if (descText) {
@@ -243,7 +329,7 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
             doc.text(line, margin, currentY);
             currentY += 5;
         });
-        currentY += 5;
+        currentY += 30; // Spacing after description (4 rows separation)
     }
 
     const characteristics = species.characteristics ? species.characteristics[lang as keyof typeof species.characteristics] : undefined;
@@ -266,7 +352,7 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
                 currentY += 5;
             });
         });
-        currentY += 5;
+        currentY += 30; // Spacing after characteristics (4 rows separation)
     }
 
     // Section 4: Citation
