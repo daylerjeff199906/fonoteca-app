@@ -24,7 +24,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang }) => {
                 <img
                     src={landingImages.hero.src}
                     alt={landingImages.hero.alt}
-                    className="w-full h-full object-cover opacity-60 scale-105 animate-slow-zoom"
+                    className="w-full h-full object-cover opacity-60 scale-115 animate-slow-zoom"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20"></div>
@@ -81,8 +81,8 @@ export const Hero: React.FC<HeroProps> = ({ content, lang }) => {
 
             <style>{`
                 @keyframes slow-zoom {
-                    from { transform: scale(1); }
-                    to { transform: scale(1.1); }
+                    from { transform: scale(1.15); }
+                    to { transform: scale(1); }
                 }
                 .animate-slow-zoom {
                     animation: slow-zoom 20s ease-in-out infinite alternate;
