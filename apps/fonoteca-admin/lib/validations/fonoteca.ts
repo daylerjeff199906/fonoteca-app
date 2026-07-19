@@ -73,6 +73,12 @@ export const locationSchema = z.object({
   decimalLongitude: numberOrNull,
   coordinateUncertaintyInMeters: numberOrNull,
   ubigeo_district_id: z.string().length(6, "Invalid District ID").optional().nullable(),
+  country: z.string().optional().nullable(),
+  stateProvince: z.string().optional().nullable(),
+  geodeticDatum: z.string().default("WGS84").optional().nullable(),
+  georeferenceProtocol: z.string().optional().nullable(),
+  georeferenceSources: z.string().optional().nullable(),
+  georeferencedDate: z.string().optional().nullable(),
 });
 
 export type LocationInput = z.infer<typeof locationSchema>;
@@ -129,6 +135,16 @@ export const occurrenceSchema = z.object({
   
   // Physical Voucher
   has_cloud_voucher: z.boolean().default(false),
+
+  // New fields
+  preparations: z.string().optional().nullable(),
+  disposition: z.string().optional().nullable(),
+  individualCount: numberOrNull.default(1),
+  dynamicProperties: z.any().optional().nullable(),
+  dateIdentified: z.string().optional().nullable(),
+  identificationRemarks: z.string().optional().nullable(),
+  license: z.string().optional().nullable(),
+  rightsHolder: z.string().optional().nullable(),
 });
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;

@@ -25,7 +25,7 @@ export async function getOrdersPaginated({
 
   let query = supabase
     .from("orders")
-    .select("*, class:classes(*)", { count: "exact" });
+    .select("*, class_obj:classes(*)", { count: "exact" });
 
   if (search) {
     query = query.ilike("name", `%${search}%`);
@@ -56,7 +56,7 @@ export async function getAllOrders() {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("*, class:classes(*)")
+    .select("*, class_obj:classes(*)")
     .order("name");
 
   if (error) {
@@ -72,7 +72,7 @@ export async function getOrder(id: string) {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("*, class:classes(*)")
+    .select("*, class_obj:classes(*)")
     .eq("id", id)
     .single();
 

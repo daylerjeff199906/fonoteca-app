@@ -60,7 +60,7 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
       try {
         const response = await fetch(`https://api.gbif.org/v1/species/match?name=${encodeURIComponent(scientificName)}`);
         const data = await response.json();
-        
+
         if (data.usageKey) {
           setUsageKey(data.usageKey);
         } else {
@@ -109,10 +109,16 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
   return (
     <div className="flex flex-col gap-2">
       <div className="w-full h-[500px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm relative z-0">
-        <MapContainer 
-          center={mapCenter} 
-          zoom={mapZoom} 
+        <MapContainer
+          center={mapCenter}
+          zoom={mapZoom}
           style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom={false}
+          doubleClickZoom={false}
+          zoomControl={false}
+          touchZoom={false}
+          boxZoom={false}
+          keyboard={false}
         >
           {/* Component to update view when coordinates change */}
           <ChangeView center={mapCenter} zoom={mapZoom} />
@@ -122,7 +128,7 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
-          
+
           {/* GBIF Density TileLayer (Hexagons) - Only if usageKey exists */}
           {usageKey && (
             <TileLayer
@@ -135,7 +141,7 @@ export const SpeciesDistributionMap: React.FC<SpeciesDistributionMapProps> = ({ 
           {latitude && longitude && (
             <Marker position={[latitude, longitude]} icon={occurrenceIcon}>
               <Tooltip permanent direction="top" offset={[0, -10]} className="custom-map-tooltip">
-                <div className="px-2 py-1 font-bold text-[10px] uppercase tracking-wider">
+                <div className="px-2 py-1  text-[10px] uppercase tracking-wider">
                   Ubicación del Registro
                 </div>
               </Tooltip>

@@ -1,23 +1,23 @@
-import React, { useEffect, useState, useRef } from 'react';
-import WaveSurfer from 'wavesurfer.js';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 import { getSpeciesById, type Species } from '../../data/species';
-import { translations, type Language } from '../../i18n/data';
+import { type Language } from '../../i18n/data';
 import { SpeciesGallery } from './SpeciesGallery';
 import { AudioPlayer } from './AudioPlayer';
 import { SpeciesDistributionMap } from './SpeciesDistributionMap';
+import { generateSpeciesPDF } from '../../lib/pdfGenerator';
 import {
-    Bird,
-    TrendingDown,
-    MapPin,
     FileText,
     Share2,
     ChevronRight,
-    Lock,
     Music,
-    Activity,
-    Database
+    FolderPlus,
+    FolderCheck,
+    DatabaseZap,
+    X,
+    Check,
+    Download
 } from 'lucide-react';
+import { useAudioRequestStore } from '../../store/useAudioRequestStore';
 
 interface Props {
     id: string;
@@ -32,13 +32,13 @@ const SectionHeader: React.FC<{
 }> = ({ title, description, badges, className = "" }) => (
     <div className={`flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-gray-100 dark:border-gray-800 pb-6 mb-8 ${className}`}>
         <div className="space-y-1">
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">{title}</h3>
+            <h3 className="text-2xl  text-gray-900 dark:text-white leading-tight">{title}</h3>
             {description && <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">{description}</p>}
         </div>
         {badges && badges.length > 0 && (
             <div className="flex gap-2">
                 {badges.map(badge => (
-                    <span key={badge} className={`px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded ${badge === 'VERIFIED' ? 'bg-accent-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                    <span key={badge} className={`px-3 py-1 text-[10px]  tracking-widest uppercase rounded ${badge === 'VERIFIED' ? 'bg-accent-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
                         }`}>
                         {badge}
                     </span>
@@ -54,48 +54,205 @@ const AudioListTable: React.FC<{
     lang: string;
     onSelect: (idx: number) => void;
 }> = ({ audios, species, lang, onSelect }) => {
+    const { addToCart, removeFromCart, isInCart } = useAudioRequestStore();
+
     return (
         <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl">
             <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                     <tr>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Autor' : 'Author'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fecha' : 'Date'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Duración' : 'Duration'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fondo' : 'Background'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Vocalización' : 'Vocalization'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Localidad' : 'Locality'}</th>
-                        <th className="px-4 py-3 font-bold text-gray-500 uppercase tracking-wider text-[10px] text-center">{lang === 'es' ? 'Acciones' : 'Actions'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Autor' : 'Author'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fecha' : 'Date'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Duración' : 'Duration'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Fondo' : 'Background'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Vocalización' : 'Vocalization'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px]">{lang === 'es' ? 'Localidad' : 'Locality'}</th>
+                        <th className="px-4 py-3  text-gray-500 uppercase tracking-wider text-[10px] text-center">{lang === 'es' ? 'Acciones' : 'Actions'}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {audios.map((audio, idx) => (
-                        <tr key={audio.id || idx} onClick={() => onSelect(idx)} className="hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors group cursor-pointer">
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-medium">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.occurrence_date || '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{audio.duration_seconds ? `${Number(audio.duration_seconds).toFixed(2)}s` : '-'}</td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[120px] truncate text-xs" title={audio.background_species}>{audio.background_species || '-'}</td>
-                            <td className="px-4 py-3">
-                                <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-bold text-gray-500 uppercase tracking-tight">
-                                    {audio.vocalization_type || audio.title || (lang === 'es' ? 'Canto' : 'Call')}
-                                </span>
-                            </td>
-                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={species.location}>{species.location || '-'}</td>
-                            <td className="px-4 py-3 text-center">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onSelect(idx); }}
-                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10 text-accent-green group-hover:bg-accent-green group-hover:text-white transition-colors"
-                                    title={lang === 'es' ? 'Reproducir audio' : 'Play audio'}
-                                >
-                                    <Music size={14} />
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
+                    {audios.map((audio, idx) => {
+                        const audioId = audio.id || audio.url;
+                        const isAdded = isInCart(audioId);
+
+                        return (
+                            <tr key={audio.id || idx} onClick={() => onSelect(idx)} className="hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors group cursor-pointer">
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-medium">{species.databaseDetails?.identifiedBy || (lang === 'es' ? 'Desconocido' : 'Unknown')}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{species.databaseDetails?.occurrence_date || '-'}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{audio.duration_seconds ? `${Number(audio.duration_seconds).toFixed(2)}s` : '-'}</td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[120px] truncate text-xs" title={audio.background_species}>{audio.background_species || '-'}</td>
+                                <td className="px-4 py-3">
+                                    <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px]  text-gray-500 uppercase tracking-tight">
+                                        {audio.vocalization_type || audio.title || (lang === 'es' ? 'Canto' : 'Call')}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-[150px] truncate" title={species.location}>{species.location || '-'}</td>
+                                <td className="px-4 py-3 text-center">
+                                    <div className="inline-flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onSelect(idx); }}
+                                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10 text-accent-green hover:bg-accent-green hover:text-white transition-colors"
+                                            title={lang === 'es' ? 'Reproducir audio' : 'Play audio'}
+                                        >
+                                            <Music size={14} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (isAdded) {
+                                                    removeFromCart(audioId);
+                                                } else {
+                                                    addToCart({
+                                                        multimediaId: audioId,
+                                                        title: audio.title || (lang === 'es' ? 'Canto' : 'Call'),
+                                                        scientificName: species.scientificName,
+                                                        vocalizationType: audio.vocalization_type,
+                                                        duration: audio.duration_seconds
+                                                    });
+                                                }
+                                            }}
+                                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all border ${isAdded
+                                                ? 'bg-accent-green text-white border-accent-green'
+                                                : 'bg-white hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 dark:border-gray-800 text-gray-400 hover:text-accent-green'
+                                                }`}
+                                            title={isAdded ? (lang === 'es' ? 'En la Solicitud' : 'In Request') : (lang === 'es' ? 'Añadir a Solicitud' : 'Add to Request')}
+                                        >
+                                            {isAdded ? <FolderCheck size={14} /> : <FolderPlus size={14} />}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
     );
+};
+
+const localizedStrings = {
+    es: {
+        occurrence: "Ocurrencia",
+        inLang: "En español",
+        observedIn: "Observado en",
+        synced: "Sincronizado hace 4 días",
+        modified: "Modificado",
+        months: [
+            'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+            'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+        ]
+    },
+    en: {
+        occurrence: "Occurrence",
+        inLang: "In English",
+        observedIn: "Observed in",
+        synced: "Synced 4 days ago",
+        modified: "Modified",
+        months: [
+            'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+            'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+        ]
+    },
+    pt: {
+        occurrence: "Ocorrência",
+        inLang: "Em português",
+        observedIn: "Observado em",
+        synced: "Sincronizado há 4 dias",
+        modified: "Modificado",
+        months: [
+            'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+            'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'
+        ]
+    }
+};
+
+const geoLabels = {
+    es: {
+        higherGeography: "Geografía superior",
+        continent: "Continente",
+        country: "País o área",
+        stateProvince: "Departamento/Estado/Provincia",
+        province: "Provincia",
+        district: "Distrito",
+        locality: "Localidad",
+        latitude: "Latitud decimal",
+        longitude: "Longitud decimal",
+        categoryProperty: "Categoría / Propiedad",
+        detailedValue: "Valor Detallado"
+    },
+    en: {
+        higherGeography: "Higher geography",
+        continent: "Continent",
+        country: "Country or area",
+        stateProvince: "State/Province",
+        province: "Province",
+        district: "District",
+        locality: "Locality",
+        latitude: "Decimal latitude",
+        longitude: "Decimal longitude",
+        categoryProperty: "Category / Property",
+        detailedValue: "Detailed Value"
+    },
+    pt: {
+        higherGeography: "Geografia superior",
+        continent: "Continente",
+        country: "País ou área",
+        stateProvince: "Estado/Província",
+        province: "Província",
+        district: "Distrito",
+        locality: "Localidade",
+        latitude: "Latitude decimal",
+        longitude: "Longitude decimal",
+        categoryProperty: "Categoria / Propriedade",
+        detailedValue: "Valor Detalhado"
+    }
+};
+
+const getLocalizedContinent = (cont: string | null | undefined, lang: string) => {
+    if (!cont) return '';
+    const clean = cont.trim().toLowerCase();
+    if (clean === 'south america' || clean === 'southamerica') {
+        return lang === 'es' ? 'Sudamérica' : lang === 'pt' ? 'América do Sul' : 'South America';
+    }
+    return cont;
+};
+
+const formatOccurrenceDate = (dateStr?: string | null, lang: string = 'es') => {
+    if (!dateStr) return '';
+    const clean = dateStr.trim();
+    const activeLang = (lang === 'es' || lang === 'en' || lang === 'pt') ? lang : 'es';
+    const months = localizedStrings[activeLang].months;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(clean) || /^\d{4}-\d{2}-\d{2}/.test(clean)) {
+        const parts = clean.split('T')[0].split('-');
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        return `${day} ${months[monthIdx]} ${year}`;
+    }
+    try {
+        const date = new Date(clean);
+        if (isNaN(date.getTime())) return clean.toUpperCase();
+        return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch (e) {
+        return clean.toUpperCase();
+    }
+};
+
+const parseScientificName = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return { italicName: name, authorName: '' };
+
+    let italicWords = 2;
+    if (parts.length > 2) {
+        const thirdWord = parts[2];
+        if (/^[a-z]/.test(thirdWord)) {
+            italicWords = 3;
+        }
+    }
+
+    const italicName = parts.slice(0, italicWords).join(' ');
+    const authorName = parts.slice(italicWords).join(' ');
+    return { italicName, authorName };
 };
 
 export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
@@ -103,7 +260,23 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState('at-a-glance');
+    const [isCitationOpen, setIsCitationOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [selectedAudioIndex, setSelectedAudioIndex] = useState<number | null>(null);
+
+    const generateCitationText = () => {
+        if (!species) return "";
+        const author = species.databaseDetails?.identifiedBy || species.databaseDetails?.rightsHolder || "Biblioteca Acústica de Fauna Amazónica";
+        const year = species.databaseDetails?.occurrence_date ? new Date(species.databaseDetails.occurrence_date).getFullYear() : new Date().getFullYear();
+        const scientificName = species.scientificName;
+        const catalogNum = species.databaseDetails?.catalogNumber ? ` (Catálogo: ${species.databaseDetails.catalogNumber})` : "";
+        const url = typeof window !== 'undefined' ? window.location.href : `https://fonoteca.iiap.gob.pe/${lang}/species/${species.id}`;
+        const accessDate = new Date().toLocaleDateString(lang === 'es' ? 'es-PE' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        return `${author} (${year}). Registro de espécimen de ${scientificName}${catalogNum}. Biblioteca Acústica de Fauna Amazónica. Recuperado el ${accessDate} de ${url}`;
+    };
+
+    const { addToCartBulk, setIsCartOpen } = useAudioRequestStore();
 
     const currentLang = lang as Language;
 
@@ -195,7 +368,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
                 <p className="text-xl text-gray-500">{error}</p>
-                <a href={`/${lang}/species`} className="text-accent-green font-bold hover:underline">
+                <a href={`/${lang}/species`} className="text-accent-green  hover:underline">
                     {lang === 'es' ? "Volver a la lista" : lang === 'pt' ? "Voltar para lista" : "Back to list"}
                 </a>
             </div>
@@ -217,11 +390,47 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
     ].filter(Boolean);
     const taxonomy = taxonomyParts.length > 0 ? taxonomyParts.join(" - ") : undefined;
 
+    const scientificNameParsed = parseScientificName(species.scientificName);
+
+    const breadcrumbs = [
+        { name: species.kingdom || "Animalia", italic: false },
+        { name: species.phylum, italic: false },
+        { name: species.class_name, italic: false },
+        { name: species.order, italic: false },
+        { name: species.family, italic: false },
+        { name: species.genus, italic: true },
+    ].filter(item => item.name);
+
+    const activeLang = (lang === 'es' || lang === 'en' || lang === 'pt') ? lang : 'es';
+
+    const higherGeography = [
+        getLocalizedContinent(species.databaseDetails?.continent, activeLang),
+        species.databaseDetails?.country,
+        species.databaseDetails?.stateProvince
+    ].filter(Boolean).join("; ");
+
+    const geoRows = [
+        { label: geoLabels[activeLang].higherGeography, value: higherGeography },
+        { label: geoLabels[activeLang].continent, value: getLocalizedContinent(species.databaseDetails?.continent, activeLang) },
+        { label: geoLabels[activeLang].country, value: species.databaseDetails?.country },
+        { label: geoLabels[activeLang].stateProvince, value: species.databaseDetails?.stateProvince },
+        { label: geoLabels[activeLang].province, value: species.databaseDetails?.province },
+        { label: geoLabels[activeLang].district, value: species.databaseDetails?.district },
+        { label: geoLabels[activeLang].locality, value: species.databaseDetails?.locality || species.location },
+        { label: geoLabels[activeLang].latitude, value: species.databaseDetails?.decimalLatitude?.toString() },
+        { label: geoLabels[activeLang].longitude, value: species.databaseDetails?.decimalLongitude?.toString() },
+        { label: lang === 'es' ? 'Datum Geodésico' : 'Geodetic Datum', value: species.databaseDetails?.geodeticDatum },
+        { label: lang === 'es' ? 'Protocolo de Georreferenciación' : 'Georeference Protocol', value: species.databaseDetails?.georeferenceProtocol },
+        { label: lang === 'es' ? 'Fuentes de Georreferenciación' : 'Georeference Sources', value: species.databaseDetails?.georeferenceSources },
+        { label: lang === 'es' ? 'Fecha de Georreferenciación' : 'Georeferenced Date', value: species.databaseDetails?.georeferencedDate },
+    ].filter(row => row.value);
+
     const sections = [
         { id: 'at-a-glance', label: lang === 'es' ? 'En un vistazo' : 'At a glance' },
         { id: 'distribution', label: lang === 'es' ? 'Distribución' : 'Distribution' },
         { id: 'audios', label: lang === 'es' ? 'Audios' : 'Audios' },
-        { id: 'characteristics', label: lang === 'es' ? 'Características' : 'Ecology' },
+        { id: 'characteristics', label: lang === 'es' ? 'Ecología y Descripción' : 'Ecology & Description' },
+        { id: 'citation', label: lang === 'es' ? 'Citación' : 'Citation' },
     ];
 
     const getDriveIframe = (url: string) => {
@@ -243,55 +452,61 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
             {/* Top Spacer for Navigation */}
             <div className="bg-primary-dark h-24 w-full"></div>
 
-            {/* Header Section (Mockup Inspired) */}
-            <header className="bg-[#f4f1ea] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                <div className="container mx-auto px-6 py-12 max-w-8xl">
-                    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16">
-                        {/* Species Circle Image */}
-                        {species.mainImage && species.mainImage !== '/images/logo-mini.webp' ? (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden rounded-2xl border-4 border-white dark:border-gray-800 animate-fade-in flex items-center justify-center">
-                                <img
-                                    src={species.mainImage}
-                                    alt={commonName}
-                                    className="max-w-full max-h-full object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="relative w-48 h-48 lg:w-56 lg:h-56 shrink-0 overflow-hidden border border-gray-100 dark:border-gray-800 rounded-none bg-gray-50/50 dark:bg-gray-800/50 flex flex-col items-center justify-center p-4">
-                                <span className="text-gray-400 dark:text-gray-500 text-sm font-medium text-center uppercase tracking-widest">{lang === 'es' ? 'Sin imagen profesional disponible' : 'No professional image available'}</span>
-                            </div>
-                        )}
+            {/* Header Section (GBIF Inspired / Faithful to Image) */}
+            <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+                <div className="container mx-auto px-6 pt-10 pb-8 max-w-8xl relative">
+                    {/* Top right metadata (Synced / Modified) */}
+                    <div className="absolute top-10 right-6 hidden md:block text-right text-[11px] text-gray-400 dark:text-gray-500 font-medium leading-relaxed">
+                        <div>{localizedStrings[activeLang].synced}</div>
+                        <div>{localizedStrings[activeLang].modified} {species.databaseDetails?.occurrence_date ? formatOccurrenceDate(species.databaseDetails.occurrence_date, activeLang) : '2 February 2026'}</div>
+                    </div>
 
-                        {/* Title & Scientific Information */}
-                        <div className="flex-1 text-center md:text-left space-y-4">
-                            <h1 className="text-4xl lg:text-5xl xl:text-6xl font-serif italic text-gray-900 dark:text-white leading-tight">
-                                {species.scientificName}
-                            </h1>
-                            <div className="space-y-1">
-                                <p className="text-sm font-bold text-accent-green uppercase tracking-widest">
-                                    {species.family} ({species.order})
-                                </p>
-                            </div>
+                    <div className="flex flex-col items-center text-center space-y-4 max-w-4xl mx-auto">
+                        {/* Occurrence Badge */}
+                        <div className="text-[10px] md:text-xs  tracking-widest text-gray-500 uppercase flex items-center justify-center gap-2">
+                            <span>{species.databaseDetails?.basisOfRecord ? species.databaseDetails.basisOfRecord.toUpperCase() : localizedStrings[activeLang].occurrence.toUpperCase()}</span>
+                            <span className="text-gray-300 dark:text-gray-700">|</span>
+                            <span>{formatOccurrenceDate(species.databaseDetails?.occurrence_date || '2026-01-08', activeLang)}</span>
                         </div>
 
-                        {/* Status Indicators Area */}
-                        <div className="grid grid-cols-2 gap-8 md:gap-12 xl:gap-16 shrink-0 items-center justify-center">
-                            <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:text-primary-dark transition-colors mb-2">
-                                    <Bird size={32} />
-                                </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Categoría' : 'Category'}</p>
-                                <p className="text-sm font-black text-gray-800 dark:text-gray-200">{species.category}</p>
-                            </div>
+                        {/* Scientific Name & Authorship */}
+                        <h1 className="text-2xl md:text-4xl lg:text-5xl text-gray-800 dark:text-white">
+                            <span className="italic">
+                                {scientificNameParsed.italicName}
+                            </span>
+                            {scientificNameParsed.authorName && (
+                                <span className="ml-2 text-gray-600 dark:text-gray-400 font-light text-xl md:text-2xl">
+                                    {scientificNameParsed.authorName}
+                                </span>
+                            )}
+                        </h1>
 
-                            <div className="text-center group">
-                                <div className="mx-auto w-10 h-10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform mb-2">
-                                    <Database size={32} />
-                                </div>
-                                <p className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-tighter leading-none mb-1">{lang === 'es' ? 'Tipo de Registro' : 'Basis of Record'}</p>
-                                <p className="text-sm font-black text-gray-800 dark:text-gray-200 tracking-tight whitespace-nowrap">{species.databaseDetails?.basisOfRecord || 'Observation'}</p>
-                            </div>
+                        {/* Location Subtitle */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs md:text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            <span className=" text-gray-800 dark:text-gray-200">
+                                {localizedStrings[activeLang].observedIn} {species.databaseDetails?.country || '---'}
+                            </span>
                         </div>
+
+                        {/* Taxonomic Breadcrumbs */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[11px] md:text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                            {breadcrumbs.map((crumb, idx) => (
+                                <React.Fragment key={idx}>
+                                    <span className={`${crumb.italic ? 'italic text-accent-green font-semibold' : 'font-medium'}`}>
+                                        {crumb.name}
+                                    </span>
+                                    {idx < breadcrumbs.length - 1 && (
+                                        <span className="text-gray-300 dark:text-gray-700 font-light text-[10px]">›</span>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Metadata fallback for mobile */}
+                    <div className="md:hidden border-t border-gray-100 dark:border-gray-900 mt-6 py-3 flex justify-between text-[10px] text-gray-400 dark:text-gray-500">
+                        <div>{localizedStrings[activeLang].synced}</div>
+                        <div>{localizedStrings[activeLang].modified} {species.databaseDetails?.occurrence_date ? formatOccurrenceDate(species.databaseDetails.occurrence_date, activeLang) : '2 February 2026'}</div>
                     </div>
                 </div>
             </header>
@@ -305,14 +520,14 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             {/* Back to list Link */}
                             <a
                                 href={`/${lang}/species`}
-                                className="inline-flex items-center gap-2 text-[10px] font-black tracking-widest text-accent-green hover:text-accent-green-dark transition-colors mb-4 group px-2"
+                                className="inline-flex items-center gap-2 text-[10px]  tracking-widest text-accent-green hover:text-accent-green-dark transition-colors mb-4 group px-2"
                             >
                                 <ChevronRight size={14} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
                                 {lang === 'es' ? 'VOLVER A LA BIBLIOTECA' : lang === 'pt' ? 'VOLTAR PARA LISTA' : 'BACK TO LIBRARY'}
                             </a>
 
                             <div>
-                                <h4 className="text-[10px] font-black tracking-widest uppercase text-gray-400 dark:text-gray-500 mb-4 px-2">Contents</h4>
+                                <h4 className="text-[10px]  tracking-widest uppercase text-gray-400 dark:text-gray-500 mb-4 px-2">Contents</h4>
                                 <nav className="space-y-1">
                                     {sections.map(section => (
                                         <a
@@ -338,13 +553,48 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                             <hr className="border-gray-100 dark:border-gray-800" />
 
                             <div className="space-y-4 px-2">
-                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
+                                <button className="flex items-center gap-2 text-xs  text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
                                     <Share2 size={14} />
                                     <span>SHARE FACTSHEET</span>
                                 </button>
-                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-accent-green transition-colors group">
+                                <button
+                                    onClick={() => {
+                                        document.getElementById('citation')?.scrollIntoView({ behavior: 'smooth' });
+                                        setActiveSection('citation');
+                                    }}
+                                    className="flex items-center gap-2 text-xs  text-gray-400 dark:text-gray-550 hover:text-accent-green transition-colors group"
+                                >
                                     <FileText size={14} />
                                     <span>CITATIONS</span>
+                                </button>
+                                <button
+                                    onClick={() => generateSpeciesPDF(species, lang)}
+                                    className="flex items-center gap-2 text-xs  text-gray-400 dark:text-gray-555 hover:text-accent-green transition-colors group"
+                                >
+                                    <Download size={14} />
+                                    <span>{lang === 'es' ? 'DESCARGAR PDF' : lang === 'pt' ? 'DESCARREGAR PDF' : 'DOWNLOAD PDF'}</span>
+                                </button>
+
+                                <hr className="border-gray-100 dark:border-gray-800" />
+
+                                <button
+                                    onClick={() => {
+                                        if (species.audios && species.audios.length > 0) {
+                                            const itemsToRequest = species.audios.map((audio: any) => ({
+                                                multimediaId: audio.id || audio.url,
+                                                title: audio.title || (lang === 'es' ? 'Canto' : 'Call'),
+                                                scientificName: species.scientificName,
+                                                vocalizationType: audio.vocalization_type,
+                                                duration: audio.duration_seconds
+                                            }));
+                                            addToCartBulk(itemsToRequest);
+                                            setIsCartOpen(true);
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs  tracking-widest uppercase transition-all group duration-300 mt-2"
+                                >
+                                    <DatabaseZap size={14} className="group-hover:scale-110 transition-transform" />
+                                    <span>{lang === 'es' ? 'Solicitar paquete WAV' : lang === 'pt' ? 'Solicitar pacote WAV' : 'Request WAV Package'}</span>
                                 </button>
                             </div>
                         </div>
@@ -359,9 +609,9 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 description={lang === 'es' ? 'Resumen general y galería de identificación visual.' : 'Quick summary and visual identification gallery.'}
                             />
                             {/* Gallery Inside Sections */}
-                            {species.galleryImages && species.galleryImages.length > 0 && (
+                            {((species.galleryImages && species.galleryImages.length > 0) || (species.spectrograms && species.spectrograms.length > 0)) && (
                                 <div className="pt-4 mb-16">
-                                    <SpeciesGallery images={species.galleryImages.map(img => img.url)} />
+                                    <SpeciesGallery mediaItems={[...species.galleryImages, ...species.spectrograms]} lang={lang} />
                                 </div>
                             )}
 
@@ -372,21 +622,21 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                         <table className="w-full text-left border-collapse">
                                             <thead>
                                                 <tr className="bg-gray-100 dark:bg-gray-800">
-                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">{lang === 'es' ? 'Categoría / Propiedad' : 'Category / Property'}</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">{lang === 'es' ? 'Valor Detallado' : 'Detailed Value'}</th>
+                                                    <th className="px-6 py-4 text-[10px]  text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">{lang === 'es' ? 'Categoría / Propiedad' : 'Category / Property'}</th>
+                                                    <th className="px-6 py-4 text-[10px]  text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">{lang === 'es' ? 'Valor Detallado' : 'Detailed Value'}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="text-sm">
                                                 {/* Taxonomía */}
                                                 <tr className="bg-white dark:bg-gray-900 hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors">
-                                                    <td className="px-6 py-4 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">
+                                                    <td className="px-6 py-4  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">
                                                         {lang === 'es' ? 'Taxonomía Científica' : 'Scientific Taxonomy'}
                                                     </td>
                                                     <td className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
                                                         <div className="flex flex-wrap items-center gap-y-1 gap-x-1.5 text-[11px] md:text-xs">
                                                             {taxonomyParts.map((part, idx) => (
                                                                 <React.Fragment key={idx}>
-                                                                    <span className={`${idx === taxonomyParts.length - 1 ? 'text-accent-green font-bold italic' : 'text-gray-500'}`}>
+                                                                    <span className={`${idx === taxonomyParts.length - 1 ? 'text-accent-green  italic' : 'text-gray-500'}`}>
                                                                         {part}
                                                                     </span>
                                                                     {idx < taxonomyParts.length - 1 && (
@@ -400,35 +650,95 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
 
                                                 {/* Identification Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">1. {lang === 'es' ? 'Identificación y Registro' : 'Identification and Record'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px]  text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">1. {lang === 'es' ? 'Identificación y Registro' : 'Identification and Record'}</td>
                                                 </tr>
                                                 {[
                                                     { label: lang === 'es' ? 'ID de Ocurrencia' : 'Occurrence ID', value: species.databaseDetails.occurrenceID },
+                                                    { label: lang === 'es' ? 'Número de Catálogo' : 'Catalog Number', value: species.databaseDetails.catalogNumber },
                                                     { label: lang === 'es' ? 'Fecha de Ocurrencia' : 'Occurrence Date', value: species.databaseDetails.occurrence_date },
                                                     { label: lang === 'es' ? 'Método de Identificación' : 'Identification Method', value: species.databaseDetails.identificationMethod },
                                                     { label: lang === 'es' ? 'Etapa de Vida' : 'Life Stage', value: species.databaseDetails.lifeStage },
                                                     { label: lang === 'es' ? 'Sexo' : 'Sex', value: species.databaseDetails.sex },
+                                                    { label: lang === 'es' ? 'Identificado Por' : 'Identified By', value: species.databaseDetails.identifiedBy },
+                                                    { label: lang === 'es' ? 'Fecha Identificado' : 'Date Identified', value: species.databaseDetails.dateIdentified },
+                                                    { label: lang === 'es' ? 'Comentarios de Identificación' : 'Identification Remarks', value: species.databaseDetails.identificationRemarks },
+                                                    { label: lang === 'es' ? 'Licencia' : 'License', value: species.databaseDetails.license },
+                                                    { label: lang === 'es' ? 'Titular de Derechos' : 'Rights Holder', value: species.databaseDetails.rightsHolder },
                                                 ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`id-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
-                                                        <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                        <td className="px-6 py-3  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
                                                         <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
                                                     </tr>
                                                 ))}
 
                                                 {/* Specimen Group */}
                                                 <tr className="bg-accent-green/10 dark:bg-accent-green/20">
-                                                    <td colSpan={2} className="px-6 py-3 text-[10px] font-black text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen' : 'Specimen and Collection'}</td>
+                                                    <td colSpan={2} className="px-6 py-3 text-[10px]  text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">2. {lang === 'es' ? 'Especimen y Colección' : 'Specimen and Collection'}</td>
                                                 </tr>
                                                 {[
-                                                    { label: lang === 'es' ? 'Institución' : 'Institution', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
-                                                    { label: lang === 'es' ? 'Colección' : 'Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
+                                                    { label: lang === 'es' ? 'Institución / Museo' : 'Institution / Museum', value: species.databaseDetails.institutionName ? `${species.databaseDetails.institutionName} (${species.databaseDetails.institutionCode})` : species.databaseDetails.institutionCode },
+                                                    { label: lang === 'es' ? 'Colección Biológica' : 'Biological Collection', value: species.databaseDetails.collectionName ? `${species.databaseDetails.collectionName} (${species.databaseDetails.collectionCode})` : species.databaseDetails.collectionCode },
                                                     { label: lang === 'es' ? 'Base del Registro' : 'Basis of Record', value: species.databaseDetails.basisOfRecord },
+                                                    { label: lang === 'es' ? 'Preparaciones' : 'Preparations', value: species.databaseDetails.preparations },
+                                                    { label: lang === 'es' ? 'Disposición' : 'Disposition', value: species.databaseDetails.disposition },
+                                                    { label: lang === 'es' ? 'Conteo de Individuos' : 'Individual Count', value: species.databaseDetails.individualCount?.toString() },
+                                                    { label: lang === 'es' ? 'Testigo Físico (Voucher)' : 'Witness Voucher', value: species.databaseDetails.has_cloud_voucher ? (lang === 'es' ? 'Sí' : 'Yes') : null },
+                                                    { label: lang === 'es' ? 'Hábitat / Ecosistema' : 'Habitat / Ecosystem', value: species.databaseDetails.ecosystem_name },
+                                                    {
+                                                        label: lang === 'es' ? 'Propiedades Dinámicas (Medidas)' : 'Dynamic Properties',
+                                                        value: species.databaseDetails.dynamicProperties ? (
+                                                            typeof species.databaseDetails.dynamicProperties === 'object'
+                                                                ? Object.entries(species.databaseDetails.dynamicProperties).map(([k, v]) => `${k}: ${v}`).join('; ')
+                                                                : species.databaseDetails.dynamicProperties.toString()
+                                                        ) : null
+                                                    },
                                                 ].filter(item => item.value).map((item, idx) => (
                                                     <tr key={`spec-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
-                                                        <td className="px-6 py-3 font-bold text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value || '-'}</td>
+                                                        <td className="px-6 py-3  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                        <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
                                                     </tr>
                                                 ))}
+
+                                                {/* Ambient Group */}
+                                                {((species.databaseDetails.temperature_c !== null && species.databaseDetails.temperature_c !== undefined) ||
+                                                    (species.databaseDetails.relative_humidity_percent !== null && species.databaseDetails.relative_humidity_percent !== undefined) ||
+                                                    (species.databaseDetails.elevation_masl !== null && species.databaseDetails.elevation_masl !== undefined)) && (
+                                                        <>
+                                                            <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                                <td colSpan={2} className="px-6 py-3 text-[10px]  text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">3. {lang === 'es' ? 'Condiciones Ambientales' : 'Environmental Conditions'}</td>
+                                                            </tr>
+                                                            {[
+                                                                { label: lang === 'es' ? 'Temperatura' : 'Temperature', value: species.databaseDetails.temperature_c !== null && species.databaseDetails.temperature_c !== undefined ? `${species.databaseDetails.temperature_c} °C` : null },
+                                                                { label: lang === 'es' ? 'Humedad Relativa' : 'Relative Humidity', value: species.databaseDetails.relative_humidity_percent !== null && species.databaseDetails.relative_humidity_percent !== undefined ? `${species.databaseDetails.relative_humidity_percent} %` : null },
+                                                                { label: lang === 'es' ? 'Elevación' : 'Elevation', value: species.databaseDetails.elevation_masl !== null && species.databaseDetails.elevation_masl !== undefined ? `${species.databaseDetails.elevation_masl} m s.n.m.` : null },
+                                                            ].filter(item => item.value).map((item, idx) => (
+                                                                <tr key={`amb-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                                    <td className="px-6 py-3  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                                    <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </>
+                                                    )}
+
+                                                {/* Event Group */}
+                                                {(species.databaseDetails.eventID || species.databaseDetails.eventDate || species.databaseDetails.samplingProtocol) && (
+                                                    <>
+                                                        <tr className="bg-accent-green/10 dark:bg-accent-green/20">
+                                                            <td colSpan={2} className="px-6 py-3 text-[10px]  text-accent-green uppercase tracking-[0.2em] border-b border-gray-200 dark:border-gray-800">4. {lang === 'es' ? 'Evento' : 'Event'}</td>
+                                                        </tr>
+                                                        {[
+                                                            { label: lang === 'es' ? 'ID de Evento' : 'Event ID', value: species.databaseDetails.eventID },
+                                                            { label: lang === 'es' ? 'Fecha de Evento' : 'Event Date', value: species.databaseDetails.eventDate },
+                                                            { label: lang === 'es' ? 'Hora de Evento' : 'Event Time', value: species.databaseDetails.eventTime },
+                                                            { label: lang === 'es' ? 'Protocolo de Muestreo' : 'Sampling Protocol', value: species.databaseDetails.samplingProtocol },
+                                                        ].filter(item => item.value).map((item, idx) => (
+                                                            <tr key={`evt-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                                <td className="px-6 py-3  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">{item.label}</td>
+                                                                <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">{item.value}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -442,7 +752,7 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Distribución y Lugar' : 'Distribution & Location'}
                                 description={lang === 'es' ? 'Áreas geográficas y contexto de observación.' : 'Geographic ranges and observation context.'}
                             />
-                            <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group">
+                            <div className="bg-gray-50 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 min-h-[400px] flex flex-col items-center justify-center relative p-2 group mb-6">
                                 <div className="w-full relative z-10">
                                     <SpeciesDistributionMap
                                         scientificName={species.scientificName}
@@ -450,34 +760,36 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                         longitude={species.databaseDetails?.decimalLongitude ?? undefined}
                                     />
                                 </div>
-                                <div className="w-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 mt-2 rounded-xl flex flex-wrap justify-between items-center gap-4">
-                                    <div className="flex-1 min-w-[200px]">
-                                        <h4 className="text-sm font-black text-gray-900 dark:text-white">{species.location}</h4>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{species.databaseDetails?.country || 'Perú'}</span>
-                                            <span className="text-[10px] text-gray-300">•</span>
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails?.stateProvince || 'Loreto'}</span>
-                                            {species.databaseDetails?.province && (
-                                                <>
-                                                    <span className="text-[10px] text-gray-300">•</span>
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails.province}</span>
-                                                </>
-                                            )}
-                                            {species.databaseDetails?.district && (
-                                                <>
-                                                    <span className="text-[10px] text-gray-300">•</span>
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{species.databaseDetails.district}</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {species.databaseDetails?.ecosystem_name && (
-                                        <span className="px-3 py-1 bg-accent-green/10 border border-accent-green/20 rounded-full text-[10px] font-bold text-accent-green whitespace-nowrap">
-                                            {species.databaseDetails.ecosystem_name}
-                                        </span>
-                                    )}
-                                </div>
                             </div>
+
+                            {geoRows.length > 0 && (
+                                <div className="w-full mt-6 overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm bg-white dark:bg-gray-900">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-100 dark:bg-gray-800">
+                                                <th className="px-6 py-4 text-[10px]  text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">
+                                                    {geoLabels[activeLang].categoryProperty}
+                                                </th>
+                                                <th className="px-6 py-4 text-[10px]  text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">
+                                                    {geoLabels[activeLang].detailedValue}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-sm">
+                                            {geoRows.map((row, idx) => (
+                                                <tr key={`geo-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                    <td className="px-6 py-3  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800">
+                                                        {row.label}
+                                                    </td>
+                                                    <td className="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
+                                                        {row.value}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </section>
 
                         {/* Section: Audios & Analysis */}
@@ -508,21 +820,19 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                     autoplay={true}
                                     species={species}
                                     lang={lang}
+                                    onNext={() => {
+                                        if (selectedAudioIndex < species.audios.length - 1) {
+                                            setSelectedAudioIndex(selectedAudioIndex + 1);
+                                        }
+                                    }}
+                                    onPrev={() => {
+                                        if (selectedAudioIndex > 0) {
+                                            setSelectedAudioIndex(selectedAudioIndex - 1);
+                                        }
+                                    }}
+                                    hasNext={selectedAudioIndex < species.audios.length - 1}
+                                    hasPrev={selectedAudioIndex > 0}
                                 />
-                            )}
-
-                            {/* Spectrograms Gallery */}
-                            {species.spectrograms && species.spectrograms.length > 0 && (
-                                <div className="pt-12 space-y-8">
-                                    <div className="flex items-center gap-4">
-                                        <hr className="flex-1 border-gray-100 dark:border-gray-800" />
-                                        <h4 className="text-[10px] uppercase font-black tracking-widest text-gray-400 dark:text-gray-500">Visual Analysis Gallery</h4>
-                                        <hr className="flex-1 border-gray-100 dark:border-gray-800" />
-                                    </div>
-                                    <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800">
-                                        <SpeciesGallery images={species.spectrograms.map(img => img.url)} contain />
-                                    </div>
-                                </div>
                             )}
                         </section>
 
@@ -532,67 +842,103 @@ export const SpeciesDetailClient: React.FC<Props> = ({ id, lang }) => {
                                 title={lang === 'es' ? 'Ecología y Descripción' : 'Ecology & Description'}
                                 description={lang === 'es' ? 'Comportamiento y características físicas detalladas.' : 'Detailed behavior and physical characteristics.'}
                             />
-                            <div className="prose prose-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-none">
-                                <p className="mb-8 p-8 bg-gray-50 dark:bg-gray-900 rounded-sm italic border-l-8 border-accent-green font-medium">
-                                    {description}
-                                </p>
-                                {species.databaseDetails?.occurrenceRemarks && (
-                                    <div className="mb-4 p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl">
-                                        <h5 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Observaciones de campo</h5>
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm italic">
-                                            "{species.databaseDetails.occurrenceRemarks}"
-                                        </p>
-                                    </div>
-                                )}
-                                {species.databaseDetails?.microhabitat_remarks && (
-                                    <div className="mb-8 p-6 bg-accent-green/5 border border-accent-green/10 rounded-xl">
-                                        <h5 className="text-[10px] font-black text-accent-green uppercase tracking-widest mb-2">Microhábitat</h5>
-                                        <p className="text-gray-700 dark:text-gray-300 text-sm">
-                                            {species.databaseDetails.microhabitat_remarks}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
 
-                            {characteristics && characteristics.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {characteristics.map((char, idx) => (
-                                        <div key={idx} className="flex gap-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 items-start group hover:border-accent-green/20 transition-colors">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-accent-green mt-2 group-hover:scale-150 transition-transform" />
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed">{char}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-sm bg-white dark:bg-gray-900 mb-8">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-100 dark:bg-gray-800">
+                                            <th className="px-6 py-4 text-[10px]  text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800 w-1/3">
+                                                {lang === 'es' ? 'Categoría / Propiedad' : 'Category / Property'}
+                                            </th>
+                                            <th className="px-6 py-4 text-[10px]  text-gray-500 dark:text-gray-400 uppercase tracking-widest border-b border-gray-200 dark:border-gray-800">
+                                                {lang === 'es' ? 'Valor Detallado' : 'Detailed Value'}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { label: lang === 'es' ? 'Descripción del Registro' : 'Record Description', value: description },
+                                            { label: lang === 'es' ? 'Observaciones de Campo' : 'Field Observations', value: species.databaseDetails?.occurrenceRemarks },
+                                            { label: lang === 'es' ? 'Microhábitat' : 'Microhabitat', value: species.databaseDetails?.microhabitat_remarks },
+                                            {
+                                                label: lang === 'es' ? 'Características Ecológicas' : 'Ecological Characteristics',
+                                                value: characteristics && characteristics.length > 0 ? (
+                                                    <ul className="list-disc list-inside space-y-1.5 py-2">
+                                                        {characteristics.map((char, idx) => (
+                                                            <li key={idx} className="text-gray-700 dark:text-gray-300 font-medium">{char}</li>
+                                                        ))}
+                                                    </ul>
+                                                ) : null
+                                            },
+                                        ].filter(row => row.value).map((row, idx) => (
+                                            <tr key={`eco-${idx}`} className={`${idx % 2 !== 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/80 dark:bg-gray-800/40'} hover:bg-accent-green/5 dark:hover:bg-accent-green/10 transition-colors`}>
+                                                <td className="px-6 py-4  text-gray-400 dark:text-gray-500 uppercase text-[10px] border-b border-gray-100 dark:border-gray-800 align-top">
+                                                    {row.label}
+                                                </td>
+                                                <td className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
+                                                    {row.value}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </section>
 
-                        {/* Removed Taxonomy and Details Sections */}
+                        {/* Section: Citation */}
+                        <section id="citation" className="scroll-mt-24 border-t border-gray-100 dark:border-gray-800 pt-16">
+                            <SectionHeader
+                                title={lang === 'es' ? 'Citación' : 'Citation'}
+                                description={lang === 'es' ? 'Utilice la siguiente referencia para citar esta ocurrencia y sus registros acústicos asociados.' : 'Use the following reference to cite this occurrence and its associated acoustic records.'}
+                            />
 
-                        {/* CTA / Support Section */}
-                        <div className="pt-24 pb-12">
-                            <div className="relative overflow-hidden bg-gradient-to-br from-primary-dark to-[#0c141d] rounded-lg p-10 md:p-16 text-white border border-white/5 group">
-                                {/* Decorative elements */}
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-accent-green/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-accent-green/20 transition-all duration-700"></div>
-                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-green/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
-
-                                <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
-                                    <div className="flex-1 space-y-8">
-                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 backdrop-blur-md rounded-full text-[10px] font-black tracking-[0.2em] uppercase text-accent-green border border-accent-green/20">
-                                            <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse"></span>
-                                            INVESTIGACIÓN Y CONSERVACIÓN
-                                        </div>
-                                        <h3 className="text-4xl md:text-5xl font-black leading-[1.1] tracking-tight">
-                                            Ayúdanos a proteger la biodiversidad amazónica
-                                        </h3>
-                                    </div>
-                                    <div className="w-56 h-56 md:w-72 md:h-72 shrink-0 relative animate-float transition-transform duration-700 group-hover:scale-110">
-                                        <div className="absolute inset-0 bg-accent-green/20 blur-[60px] rounded-full"></div>
-                                        <img src="/images/logo-mini.webp" alt="Support" className="relative z-10 w-full h-full object-contain filter brightness-90 contrast-125" />
-                                    </div>
+                            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                                <div className="bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl p-4 mb-6 font-mono text-xs text-gray-700 dark:text-gray-300 leading-relaxed select-all">
+                                    {generateCitationText()}
+                                </div>
+                                <div className="flex justify-start">
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(generateCitationText());
+                                            setCopied(true);
+                                            setTimeout(() => setCopied(false), 2000);
+                                        }}
+                                        className="px-5 py-2.5 bg-accent-green hover:bg-accent-green-dark text-white rounded-lg text-xs  transition-all flex items-center gap-2"
+                                    >
+                                        {copied ? (
+                                            <>
+                                                <Check size={14} />
+                                                {lang === 'es' ? '¡Copiado!' : 'Copied!'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Share2 size={14} />
+                                                {lang === 'es' ? 'Copiar Cita' : 'Copy Citation'}
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
+                        <style>{`
+                            @media print {
+                                header, footer, nav, aside, button, .bg-primary-dark.h-24,
+                                [class*="AudioPlayer"], [class*="audio-player"], iframe, .no-print {
+                                    display: none !important;
+                                }
+                                .container {
+                                    max-width: 100% !important;
+                                    width: 100% !important;
+                                    padding: 0 !important;
+                                    margin: 0 !important;
+                                }
+                                body, .min-h-screen, .bg-white, [class*="bg-"] {
+                                    background: transparent !important;
+                                    color: black !important;
+                                }
+                            }
+                        `}</style>
                     </div>
                 </div>
             </div>

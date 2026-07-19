@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { FileAudio } from 'lucide-react';
 import { type translations } from '../../i18n/data';
 import { LanguageSelector } from './LanguageSelector';
 import { ThemeToggle } from './ThemeToggle';
+import { useAudioRequestStore } from '../../store/useAudioRequestStore';
+import { AudioRequestCart } from './AudioRequestCart';
 
 interface HeaderProps {
     content: typeof translations.es.nav;
@@ -12,6 +15,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" }) => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const { cartItems, isCartOpen, setIsCartOpen } = useAudioRequestStore();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -48,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                 className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-[#0a0f18]/95 backdrop-blur-md shadow-sm py-4 border-b border-gray-900" : "bg-transparent py-6"
                     }`}
             >
-                <div className="container mx-auto px-6 flex justify-between items-center h-full">
+                <div className="container mx-auto flex justify-between items-center h-full w-full">
                     <a
                         href={`/${lang}/`}
                         className="group flex gap-3 items-center transition-colors duration-300 text-white"
@@ -66,6 +71,21 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                     <div className="flex items-center gap-4">
                         <LanguageSelector currentLang={lang} />
                         <ThemeToggle />
+
+                        {/* Audio Request Cart Toggle Button */}
+                        <button
+                            onClick={() => setIsCartOpen(!isCartOpen)}
+                            className="relative text-white hover:text-accent-green p-1.5 rounded-full hover:bg-white/5 transition-all flex items-center justify-center cursor-pointer animate-fade-in"
+                            title={lang === 'es' ? 'Solicitud de WAVs' : 'Request WAVs'}
+                        >
+                            <FileAudio size={20} />
+                            {cartItems.length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-accent-green text-[#0a0f18] text-[9px]  w-4.5 h-4.5 rounded-full flex items-center justify-center animate-pulse border border-[#0a0f18]">
+                                    {cartItems.length}
+                                </span>
+                            )}
+                        </button>
+
                         <button
                             onClick={toggleMenu}
                             className="group flex flex-col gap-1.5 w-8 cursor-pointer z-50"
@@ -150,6 +170,9 @@ export const Header: React.FC<HeaderProps> = ({ content, logoSrc, lang = "es" })
                     </div>
                 </div>
             </div>
+
+            {/* Audio Request Drawer */}
+            <AudioRequestCart lang={lang} />
         </>
     );
 };

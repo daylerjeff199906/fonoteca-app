@@ -1,6 +1,6 @@
 export const landingImages = {
     hero: {
-        src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2560&auto=format&fit=crop",
+        src: "/bg_landing.webp",
         alt: "Forest Background",
     },
     intro: {
@@ -8,7 +8,7 @@ export const landingImages = {
         alt: "Scientist recording nature sounds",
     },
     pageBanner: {
-        default: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2560&auto=format&fit=crop",
+        default: "/bg_landing.webp",
         species_es: "/data/anfibios/adenomera_hylaedactyla/IMG_0081.JPG",
         species_en: "/data/anfibios/adenomera_hylaedactyla/IMG_0081.JPG"
     }

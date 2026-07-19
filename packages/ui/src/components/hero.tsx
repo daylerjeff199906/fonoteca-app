@@ -56,7 +56,7 @@ export const Hero: React.FC<HeroProps> = ({ content, lang, stats }) => {
 
             {/* Content centered */}
             <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center flex flex-col items-center mt-[-40px]">
-                <span className="text-accent-green font-bold text-xs md:text-sm uppercase tracking-[0.4em] mb-4 animate-fade-in relative shadow-sm">
+                <span className="text-accent-green  text-xs md:text-sm uppercase tracking-[0.4em] mb-4 animate-fade-in relative shadow-sm">
                     {lang === 'es' ? 'Bienvenido a la' : lang === 'pt' ? 'Bem-vindo à' : 'Welcome to'}
                 </span>
 
