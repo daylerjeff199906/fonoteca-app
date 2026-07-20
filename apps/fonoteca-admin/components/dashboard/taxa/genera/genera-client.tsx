@@ -70,25 +70,42 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((genus) => (
-                <TableRow key={genus.id}>
-                  <TableCell className="font-semibold">{genus.name}</TableCell>
-                  <TableCell>{genus.parent?.name || genus.family?.name || "Sin Familia"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(genus)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <DeleteButtonWithConfirm 
-                        id={genus.id}
-                        onConfirm={deleteGenus} 
-                        itemName={`género ${genus.name}`} 
-                        requiredText="eliminar"
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              data.map((genus) => {
+                const familyName =
+                  genus.parent?.name ||
+                  genus.family?.name ||
+                  (genus as any).family_obj?.name ||
+                  families.find(
+                    (f) =>
+                      f.id ===
+                      (genus.family_id ||
+                        (genus as any).familyId ||
+                        genus.parent?.id ||
+                        genus.family?.id ||
+                        (genus as any).family_obj?.id)
+                  )?.name ||
+                  "Sin Familia";
+
+                return (
+                  <TableRow key={genus.id}>
+                    <TableCell className="font-semibold">{genus.name}</TableCell>
+                    <TableCell>{familyName}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(genus)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <DeleteButtonWithConfirm
+                          id={genus.id}
+                          onConfirm={deleteGenus}
+                          itemName={`género ${genus.name}`}
+                          requiredText="eliminar"
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -101,10 +118,23 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
           <SheetHeader className="pb-4">
             <SheetTitle>{currentGenus ? "Editar Género" : "Registrar Género"}</SheetTitle>
           </SheetHeader>
-          <GenusForm 
-            id={currentGenus?.id || null} 
-            defaultValues={currentGenus || undefined} 
-            onSuccess={() => setIsFormOpen(false)} 
+          <GenusForm
+            id={currentGenus?.id || null}
+            defaultValues={
+              currentGenus
+                ? {
+                    ...currentGenus,
+                    family_id:
+                      currentGenus.family_id ||
+                      (currentGenus as any)?.familyId ||
+                      currentGenus.family?.id ||
+                      currentGenus.parent?.id ||
+                      (currentGenus as any)?.family_obj?.id ||
+                      "",
+                  }
+                : undefined
+            }
+            onSuccess={() => setIsFormOpen(false)}
           />
         </SheetContent>
       </Sheet>

@@ -41,7 +41,16 @@ export function FamilyForm({
 
   useEffect(() => {
     if (defaultValues) {
-      reset(defaultValues);
+      reset({
+        ...defaultValues,
+        order_id:
+          defaultValues.order_id ||
+          (defaultValues as any)?.orderId ||
+          (defaultValues as any)?.order_obj?.id ||
+          (defaultValues as any)?.parent?.id ||
+          (defaultValues as any)?.order?.id ||
+          "",
+      });
     }
   }, [defaultValues, reset, orders]);
 

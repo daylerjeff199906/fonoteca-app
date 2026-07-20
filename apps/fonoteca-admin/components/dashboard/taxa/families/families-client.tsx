@@ -70,25 +70,42 @@ export function FamiliesClient({ data, count, orders }: { data: Family[]; count:
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((family) => (
-                <TableRow key={family.id}>
-                  <TableCell className="font-semibold">{family.name}</TableCell>
-                  <TableCell>{family.parent?.name || family.order_obj?.name || "Sin Orden"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(family)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <DeleteButtonWithConfirm
-                        id={family.id}
-                        onConfirm={deleteFamily}
-                        itemName={`familia ${family.name}`}
-                        requiredText="eliminar"
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              data.map((family) => {
+                const orderName =
+                  family.parent?.name ||
+                  family.order_obj?.name ||
+                  (family as any).order?.name ||
+                  orders.find(
+                    (o) =>
+                      o.id ===
+                      (family.order_id ||
+                        (family as any).orderId ||
+                        family.parent?.id ||
+                        family.order_obj?.id ||
+                        (family as any).order?.id)
+                  )?.name ||
+                  "Sin Orden";
+
+                return (
+                  <TableRow key={family.id}>
+                    <TableCell className="font-semibold">{family.name}</TableCell>
+                    <TableCell>{orderName}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(family)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <DeleteButtonWithConfirm
+                          id={family.id}
+                          onConfirm={deleteFamily}
+                          itemName={`familia ${family.name}`}
+                          requiredText="eliminar"
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -103,10 +120,20 @@ export function FamiliesClient({ data, count, orders }: { data: Family[]; count:
           </SheetHeader>
           <FamilyForm
             id={currentFamily?.id || null}
-            defaultValues={currentFamily ? {
-              ...currentFamily,
-              order_id: currentFamily.order_id ?? ""
-            } : undefined}
+            defaultValues={
+              currentFamily
+                ? {
+                    ...currentFamily,
+                    order_id:
+                      currentFamily.order_id ||
+                      (currentFamily as any)?.orderId ||
+                      currentFamily.order_obj?.id ||
+                      currentFamily.parent?.id ||
+                      (currentFamily as any)?.order?.id ||
+                      "",
+                  }
+                : undefined
+            }
             onSuccess={() => setIsFormOpen(false)}
           />
         </SheetContent>

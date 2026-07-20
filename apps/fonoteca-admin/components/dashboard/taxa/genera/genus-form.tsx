@@ -20,7 +20,7 @@ export function GenusForm({
   defaultValues?: Partial<GenusInput>;
   onSuccess?: (id?: string) => void;
 }) {
-  const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
+  const [families, setFamilies] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingFamilies, setIsLoadingFamilies] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<GenusInput>({
     resolver: zodResolver(genusSchema) as any,
@@ -41,7 +41,16 @@ export function GenusForm({
 
   useEffect(() => {
     if (defaultValues) {
-      reset(defaultValues);
+      reset({
+        ...defaultValues,
+        family_id:
+          defaultValues.family_id ||
+          (defaultValues as any)?.familyId ||
+          (defaultValues as any)?.family?.id ||
+          (defaultValues as any)?.parent?.id ||
+          (defaultValues as any)?.family_obj?.id ||
+          "",
+      });
     }
   }, [defaultValues, reset, families]);
 
