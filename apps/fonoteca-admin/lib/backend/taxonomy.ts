@@ -66,8 +66,13 @@ function normalizeTaxonomyItem<T>(entity: TaxonomyEntity, item: T): T {
 
 async function taxonomyRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetchWithSession(path, { ...init, headers: { Accept: "application/json", ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers } });
-  const payload = await response.json().catch(() => null) as T | { message?: string } | null;
-  if (!response.ok || !payload) throw new Error(payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string" ? payload.message : "La operación de taxonomía no se pudo completar.");
+  const payload = await response.json().catch(() => null) as T | { message?: unknown; error?: unknown; detail?: unknown } | null;
+  if (!response.ok || !payload) {
+    const body = payload && typeof payload === "object" ? payload as { message?: unknown; error?: unknown; detail?: unknown } : {};
+    const candidate = body.message ?? body.detail ?? body.error;
+    const message = typeof candidate === "string" ? candidate : Array.isArray(candidate) ? candidate.filter((item): item is string => typeof item === "string").join(" ") : "";
+    throw new Error(message || `El backend respondió HTTP ${response.status} al consultar taxonomía.`);
+  }
   return payload as T;
 }
 

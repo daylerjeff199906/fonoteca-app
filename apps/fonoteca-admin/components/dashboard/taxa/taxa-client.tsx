@@ -528,39 +528,52 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
           </TableHeader>
           <TableBody>
             {data.length > 0 ? (
-              data.map((taxon) => (
-                <TableRow key={taxon.id} className={cn(selectedIds.includes(taxon.id) && "bg-primary/5")}>
-                  <TableCell className="px-4">
-                    <Checkbox
-                      checked={selectedIds.includes(taxon.id)}
-                      onCheckedChange={() => toggleItem(taxon.id)}
-                      aria-label={`Seleccionar ${taxon.scientificName}`}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
-                  <TableCell>{taxon.genus?.family?.order_obj?.class_obj?.kingdom || "-"}</TableCell>
-                  <TableCell>{taxon.genus?.family?.name || "-"}</TableCell>
-                  <TableCell>{taxon.parent?.name || taxon.genus?.name || "-"}</TableCell>
-                  <TableCell>{taxon.taxonRank}</TableCell>
-                  <TableCell>
+              data.map((taxon) => {
+                const genusObj = genera.find((g) => g.id === (taxon.genus_id || taxon.parent?.id || (taxon.genus as any)?.id));
+                const genusName = taxon.parent?.name || taxon.genus?.name || genusObj?.name || "-";
+                const familyName =
+                  taxon.genus?.family?.name ||
+                  genusObj?.parent?.name ||
+                  genusObj?.family?.name ||
+                  families.find((f) => f.id === (genusObj?.family_id || (genusObj as any)?.familyId))?.name ||
+                  "-";
+                const kingdomName =
+                  taxon.genus?.family?.order_obj?.class_obj?.kingdom ||
+                  (genusObj as any)?.kingdom ||
+                  "Animalia";
 
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(taxon.id)} title="Editar">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-
-                      <DeleteButtonWithConfirm
-                        id={taxon.id}
-                        onConfirm={deleteTaxon}
-                        itemName="taxón"
+                return (
+                  <TableRow key={taxon.id} className={cn(selectedIds.includes(taxon.id) && "bg-primary/5")}>
+                    <TableCell className="px-4">
+                      <Checkbox
+                        checked={selectedIds.includes(taxon.id)}
+                        onCheckedChange={() => toggleItem(taxon.id)}
+                        aria-label={`Seleccionar ${taxon.scientificName}`}
                       />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                    <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
+                    <TableCell>{kingdomName}</TableCell>
+                    <TableCell>{familyName}</TableCell>
+                    <TableCell>{genusName}</TableCell>
+                    <TableCell>{taxon.taxonRank}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(taxon.id)} title="Editar">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <DeleteButtonWithConfirm
+                          id={taxon.id}
+                          onConfirm={deleteTaxon}
+                          itemName="taxón"
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>

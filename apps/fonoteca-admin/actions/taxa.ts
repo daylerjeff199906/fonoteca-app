@@ -66,6 +66,15 @@ export async function getFamilies() {
   catch (error) { return { data: [], error: error instanceof Error ? error.message : "No se pudieron cargar las familias." }; }
 }
 
+export async function getTaxonomyHierarchy() {
+  try {
+    const [classes, orders, families, genera] = await Promise.all([
+      getAllTaxonomy<any>("classes"), getAllTaxonomy<any>("orders"), getAllTaxonomy<any>("families"), getAllTaxonomy<any>("genera"),
+    ]);
+    return { data: { classes, orders, families, genera } };
+  } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo cargar la jerarquía taxonómica." }; }
+}
+
 export async function createTaxon(input: TaxonInput) {
   const parsed = taxonSchema.safeParse(input);
   if (!parsed.success) {
