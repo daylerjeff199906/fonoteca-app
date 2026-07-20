@@ -210,7 +210,7 @@ export function TaxonForm({
                                   ? (() => {
                                     const g = genera.find((g) => g.id === field.value);
                                     if (!g) return "Seleccionar Género";
-                                    const family = g.family;
+                                    const family = g.family ?? g.parent;
                                     const order = family?.order_obj;
                                     const classObj = order?.class_obj;
 
@@ -263,13 +263,9 @@ export function TaxonForm({
                                         <Check className={cn("mr-2 h-3.5 w-3.5", g.id === field.value ? "opacity-100" : "opacity-0")} />
                                         <div className="flex flex-col gap-0.5">
                                           <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-medium tracking-tight">
-                                            <span>{g.family?.order_obj?.class_obj?.kingdom}</span>
+                                            <span>Familia</span>
                                             <ChevronRight className="h-2 w-2 opacity-30" />
-                                            <span>{g.family?.order_obj?.class_obj?.name}</span>
-                                            <ChevronRight className="h-2 w-2 opacity-30" />
-                                            <span>{g.family?.order_obj?.name}</span>
-                                            <ChevronRight className="h-2 w-2 opacity-30" />
-                                            <span>{g.family?.name}</span>
+                                            <span>{g.parent?.name || g.family?.name || "Sin familia"}</span>
                                           </div>
                                           <span className="font-semibold text-sm italic text-foreground leading-none">{g.name}</span>
                                         </div>

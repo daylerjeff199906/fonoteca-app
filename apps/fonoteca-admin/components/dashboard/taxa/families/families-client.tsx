@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Family } from "@/types/fonoteca";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -20,7 +21,9 @@ import { deleteFamily } from "@/actions/families";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
 import { PageHeader } from "@/components/panel-admin/page-header";
 
-export function FamiliesClient({ data, count }: { data: Family[]; count: number }) {
+export function FamiliesClient({ data, count, orders }: { data: Family[]; count: number; orders: { id: string; name: string }[] }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentFamily, setCurrentFamily] = useState<Family | null>(null);
 
@@ -33,6 +36,7 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
     setCurrentFamily(null);
     setIsFormOpen(true);
   };
+  const filterByOrder = (orderId: string) => { const params = new URLSearchParams(searchParams.toString()); orderId ? params.set("order_id", orderId) : params.delete("order_id"); params.delete("page"); router.push(`?${params}`); };
 
   return (
     <div className="space-y-6">
@@ -41,8 +45,8 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
         description="Gestiona las familias registradas en el catálogo"
       />
 
-      <div className="flex items-center justify-between">
-        <SearchInput placeholder="Buscar por nombre, orden, clase..." />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row"><SearchInput placeholder="Buscar por nombre..." /><select value={searchParams.get("order_id") || ""} onChange={(event) => filterByOrder(event.target.value)} className="h-9 rounded-md border bg-background px-3 text-sm"><option value="">Todos los órdenes</option>{orders.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
         <Button onClick={handleAdd} className="gap-2">
           <Plus className="h-4 w-4" />
           Nueva Familia
@@ -69,7 +73,7 @@ export function FamiliesClient({ data, count }: { data: Family[]; count: number 
               data.map((family) => (
                 <TableRow key={family.id}>
                   <TableCell className="font-semibold">{family.name}</TableCell>
-                  <TableCell>{family.order_obj?.name || "Sin Orden"}</TableCell>
+                  <TableCell>{family.parent?.name || family.order_obj?.name || "Sin Orden"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(family)}>

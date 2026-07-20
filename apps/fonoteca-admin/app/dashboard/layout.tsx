@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { TeamsProvider } from "@/components/providers/teams-provider";
 import { PageHeaderProvider } from "@/components/providers/page-header-provider";
 import { getAuthorizedTeams } from "@/actions/auth-teams";
+import { SessionRefresher } from "@/components/auth/session-refresher";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -18,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <TeamsProvider teams={teams}>
       <PageHeaderProvider>
         <SidebarProvider>
+          <SessionRefresher />
           <AppSidebar userData={{ name: user.name, email: user.email, avatar: user.avatar, role: user.role.toUpperCase() }} />
           <SidebarInset className="max-h-svh overflow-auto">
             <SiteHeader />

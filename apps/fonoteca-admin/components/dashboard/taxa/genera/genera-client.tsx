@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Genus } from "@/types/fonoteca";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -20,7 +21,9 @@ import { deleteGenus } from "@/actions/genera";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
 import { PageHeader } from "@/components/panel-admin/page-header";
 
-export function GeneraClient({ data, count }: { data: Genus[]; count: number }) {
+export function GeneraClient({ data, count, families }: { data: Genus[]; count: number; families: { id: string; name: string }[] }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentGenus, setCurrentGenus] = useState<Genus | null>(null);
 
@@ -33,6 +36,7 @@ export function GeneraClient({ data, count }: { data: Genus[]; count: number }) 
     setCurrentGenus(null);
     setIsFormOpen(true);
   };
+  const filterByFamily = (familyId: string) => { const params = new URLSearchParams(searchParams.toString()); familyId ? params.set("family_id", familyId) : params.delete("family_id"); params.delete("page"); router.push(`?${params}`); };
 
   return (
     <div className="space-y-6">
@@ -41,8 +45,8 @@ export function GeneraClient({ data, count }: { data: Genus[]; count: number }) 
         description="Gestiona los géneros registrados en el catálogo"
       />
 
-      <div className="flex items-center justify-between">
-        <SearchInput placeholder="Buscar por nombre..." />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row"><SearchInput placeholder="Buscar por nombre..." /><select value={searchParams.get("family_id") || ""} onChange={(event) => filterByFamily(event.target.value)} className="h-9 rounded-md border bg-background px-3 text-sm"><option value="">Todas las familias</option>{families.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
         <Button onClick={handleAdd} className="gap-2">
           <Plus className="h-4 w-4" />
           Nuevo Género
@@ -69,7 +73,7 @@ export function GeneraClient({ data, count }: { data: Genus[]; count: number }) 
               data.map((genus) => (
                 <TableRow key={genus.id}>
                   <TableCell className="font-semibold">{genus.name}</TableCell>
-                  <TableCell>{genus.family?.name || "Sin Familia"}</TableCell>
+                  <TableCell>{genus.parent?.name || genus.family?.name || "Sin Familia"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(genus)}>

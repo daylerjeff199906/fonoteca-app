@@ -1,10 +1,9 @@
 "use server"
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { GenusInput, genusSchema } from "@/lib/validations/fonoteca";
 import { Genus } from "@/types/fonoteca";
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
+import { getTaxonomyItem, getTaxonomyPage, mutateTaxonomy } from "@/lib/backend/taxonomy";
 
 export async function getGeneraPaginated({
   page = 1,
@@ -17,117 +16,36 @@ export async function getGeneraPaginated({
   search?: string;
   family_id?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from("genera")
-    .select("*, family:families(*)", { count: "exact" });
-
-  if (search) {
-    query = query.or(`name.ilike.%${search}%`);
-  }
-
-  if (family_id) {
-    query = query.eq("family_id", family_id);
-  }
-
-  const { data, count, error } = await query
-    .order("name", { ascending: true })
-    .range(from, to);
-
-  if (error) {
-    console.error("error fetching genera:", error);
-    return { data: [] as Genus[], count: 0, error: error.message };
-  }
-
-  return {
-    data: (data as any) as Genus[],
-    count: count || 0,
-  };
+  try { const result = await getTaxonomyPage<Genus>("genera", { page, limit, search, parentId: family_id }); return { data: result.data, count: result.meta.totalItems }; }
+  catch (error) { return { data: [] as Genus[], count: 0, error: error instanceof Error ? error.message : "No se pudieron cargar los géneros." }; }
 }
 
 export async function getGenus(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("genera")
-    .select("*, family:families(*)")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { data: (data as any) as Genus };
+  try { return { data: await getTaxonomyItem<Genus>("genera", id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo cargar el género." }; }
 }
 
 export async function createGenus(input: GenusInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = genusSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
-  }
-
-  const { data, error } = await supabase
-    .from("genera")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
   }
 
   revalidatePath("/dashboard/taxa/genera");
-  return { success: true, data: (data as any) as Genus };
+  try { return { success: true, data: await mutateTaxonomy<Genus>("genera", "POST", parsed.data) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo crear el género." }; }
 }
 
 export async function updateGenus(id: string, input: GenusInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = genusSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
-  }
-
-  const { data, error } = await supabase
-    .from("genera")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
   }
 
   revalidatePath("/dashboard/taxa/genera");
   revalidatePath(`/dashboard/taxa/genera/${id}`);
-  return { success: true, data: (data as any) as Genus };
+  try { return { success: true, data: await mutateTaxonomy<Genus>("genera", "PATCH", parsed.data, id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo actualizar el género." }; }
 }
 
 export async function deleteGenus(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("genera")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
   revalidatePath("/dashboard/taxa/genera");
-  return { success: true };
+  try { await mutateTaxonomy("genera", "DELETE", undefined, id); return { success: true }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo eliminar el género." }; }
 }

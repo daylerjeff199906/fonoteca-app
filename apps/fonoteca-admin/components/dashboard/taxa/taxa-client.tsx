@@ -36,7 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { Trash2, Copy } from "lucide-react";
 
 export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
@@ -138,7 +138,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
       }
 
       if (dataToExport.length === 0) {
-        toast.info("No hay datos para exportar");
+        showToast.info("Sin datos para exportar", "No hay registros que coincidan con los filtros actuales.");
         return;
       }
 
@@ -156,10 +156,10 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
         downloadFile(content, `${name}.csv`, "text/csv");
       }
 
-      if (mode !== "single") toast.success("Exportación completada");
+      if (mode !== "single") showToast.success("Exportación completada", `${dataToExport.length} registro(s) fueron exportados.`);
     } catch (error) {
       console.error(error);
-      toast.error("Error al exportar");
+      showToast.error("No se pudo exportar", error instanceof Error ? error.message : "No se pudieron preparar los datos para la exportación.");
     } finally {
       setIsExporting(false);
     }
@@ -184,17 +184,16 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
   const handleBulkDelete = async () => {
     if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} taxones?`)) return;
 
-    toast.loading(`Eliminando ${selectedIds.length} taxones...`);
+    showToast.info("Eliminando registros", `Se eliminarán ${selectedIds.length} taxones.`);
     try {
-      const deletePromises = selectedIds.map(id => deleteTaxon(id));
-      await Promise.all(deletePromises);
-      toast.dismiss();
-      toast.success("Eliminados correctamente");
+      const results = await Promise.all(selectedIds.map(id => deleteTaxon(id)));
+      const failed = results.find(result => !result.success);
+      if (failed) return showToast.error("No se pudieron eliminar todos los taxa", failed.error || "El backend rechazó una o más eliminaciones.");
+      showToast.success("Taxa eliminados", `${selectedIds.length} registro(s) fueron eliminados correctamente.`);
       setSelectedIds([]);
       router.refresh();
     } catch (err) {
-      toast.dismiss();
-      toast.error("Error en la eliminación por lotes");
+      showToast.error("No se pudo completar la eliminación", err instanceof Error ? err.message : "Ocurrió un error inesperado.");
     }
   };
 
@@ -539,9 +538,9 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
                     />
                   </TableCell>
                   <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
-                  <TableCell>{taxon.genus?.family?.order_obj?.class_obj?.kingdom || "Animalia"}</TableCell>
+                  <TableCell>{taxon.genus?.family?.order_obj?.class_obj?.kingdom || "-"}</TableCell>
                   <TableCell>{taxon.genus?.family?.name || "-"}</TableCell>
-                  <TableCell>{taxon.genus?.name || "-"}</TableCell>
+                  <TableCell>{taxon.parent?.name || taxon.genus?.name || "-"}</TableCell>
                   <TableCell>{taxon.taxonRank}</TableCell>
                   <TableCell>
 

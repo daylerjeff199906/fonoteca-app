@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ message: "Correo y contraseña son obligatorios." }, { status: 400 });
   try {
     const result = await login(parsed.data.email, parsed.data.password);
-    await createSession(result.token, parsed.data.remember === true);
+    await createSession(result.token, result.refreshToken, parsed.data.remember === true);
     return NextResponse.json({ user: result.user });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : "No se pudo iniciar sesión." }, { status: 401 });

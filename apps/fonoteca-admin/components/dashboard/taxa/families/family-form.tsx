@@ -8,7 +8,7 @@ import { createFamily, updateFamily } from "@/actions/families";
 import { getAllOrders } from "@/actions/orders";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 
 export function FamilyForm({
@@ -34,8 +34,9 @@ export function FamilyForm({
     setIsLoadingOrders(true);
     getAllOrders().then(res => {
       if (res.data) setOrders(res.data);
+      if (res.error) showToast.error("No se pudieron cargar los órdenes", res.error);
       setIsLoadingOrders(false);
-    });
+    }).catch(() => { showToast.error("No se pudieron cargar los órdenes", "Verifica tu conexión e inténtalo nuevamente."); setIsLoadingOrders(false); });
   }, []);
 
   useEffect(() => {
@@ -53,11 +54,11 @@ export function FamilyForm({
     }
 
     if (resp.success) {
-      toast.success(id ? "Familia actualizada" : "Familia registrada");
+      showToast.response(resp, id ? "Familia actualizada" : "Familia registrada", id ? "Los cambios se guardaron correctamente." : "La familia fue registrada correctamente.");
       reset();
       if (onSuccess) onSuccess();
     } else {
-      toast.error("Error al guardar la familia");
+      showToast.response(resp, "", "");
     }
   };
 

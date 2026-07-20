@@ -49,6 +49,11 @@ export interface Class {
   created_at: string;
 }
 
+export interface TaxonomyParent {
+  id: string;
+  name: string;
+}
+
 export interface Order {
   id: string;
   class_id: string;
@@ -57,6 +62,7 @@ export interface Order {
   
   // Joined
   class_obj?: Class;
+  parent?: TaxonomyParent;
 }
 
 export interface Family {
@@ -68,6 +74,7 @@ export interface Family {
 
   // Joined
   order_obj?: Order;
+  parent?: TaxonomyParent;
 }
 
 export interface Genus {
@@ -79,6 +86,7 @@ export interface Genus {
 
   // Joined (optional)
   family?: Family;
+  parent?: TaxonomyParent;
 }
 
 export interface Taxon {
@@ -98,6 +106,7 @@ export interface Taxon {
 
   // Joined (optional)
   genus?: Genus;
+  parent?: TaxonomyParent;
 }
 
 export interface Event {

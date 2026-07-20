@@ -3,6 +3,11 @@ import "server-only";
 import { cookies } from "next/headers";
 
 const SESSION_COOKIE = "fonoteca_admin_session";
+const REFRESH_COOKIE = "fonoteca_admin_refresh";
+
+export async function getAccessToken() {
+  return (await cookies()).get(SESSION_COOKIE)?.value ?? null;
+}
 
 export interface BackendUser {
   id: string;
@@ -15,10 +20,10 @@ export interface BackendUser {
   isAdmin: boolean;
 }
 
-type LoginResult = { token: string; user: BackendUser | null };
+type LoginResult = { token: string; refreshToken: string; user: BackendUser | null };
 
 function apiUrl(path: string) {
-  const baseUrl = process.env.BACKEND_API_URL ?? "http://localhost:3000/api/v1";
+  const baseUrl = process.env.BACKEND_API_URL ?? "http://127.0.0.1:3000/api/v1";
   return new URL(path.replace(/^\//, ""), `${baseUrl.replace(/\/$/, "")}/`).toString();
 }
 
@@ -100,19 +105,63 @@ export async function login(email: string, password: string): Promise<LoginResul
 
   const data = unwrap(payload);
   const token = data.access_token ?? data.accessToken ?? data.token;
+  const refreshToken = data.refresh_token ?? data.refreshToken;
   if (typeof token !== "string" || !token) throw new Error("El backend no devolvió un token de sesión válido.");
-  return { token, user: normalizeUser(payload) };
+  if (typeof refreshToken !== "string" || !refreshToken) throw new Error("El backend no devolvió un refresh token válido.");
+  return { token, refreshToken, user: normalizeUser(payload) };
+}
+
+export async function refreshSession() {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value;
+  if (!refreshToken) return null;
+  try {
+    const response = await fetch(apiUrl("/auth/refresh"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      cookieStore.delete(SESSION_COOKIE);
+      cookieStore.delete(REFRESH_COOKIE);
+      return null;
+    }
+    const data = unwrap(await response.json().catch(() => null));
+    const accessToken = data.access_token ?? data.accessToken;
+    const nextRefreshToken = data.refresh_token ?? data.refreshToken ?? refreshToken;
+    if (typeof accessToken !== "string" || typeof nextRefreshToken !== "string") return null;
+    cookieStore.set(SESSION_COOKIE, accessToken, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 8 });
+    cookieStore.set(REFRESH_COOKIE, nextRefreshToken, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 14 });
+    return accessToken;
+  } catch {
+    // Un fallo transitorio de red no debe destruir una sesión aún válida.
+    return null;
+  }
+}
+
+export async function fetchWithSession(input: RequestInfo | URL, init: RequestInit = {}) {
+  const request = async (token: string) => fetch(input, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}`, Accept: "application/json" }, cache: "no-store" });
+  const token = await getAccessToken();
+  if (!token) throw new Error("Sesión no disponible.");
+  const response = await request(token);
+  if (response.status !== 401) return response;
+  const refreshedToken = await refreshSession();
+  return refreshedToken ? request(refreshedToken) : response;
 }
 
 export async function getCurrentUser(): Promise<BackendUser | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  const token = await getAccessToken();
   if (!token) return null;
-  const response = await fetch(apiUrl(authPath("ME", "/auth/me")), {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!response.ok) return null;
-  return normalizeUser(await response.json().catch(() => null));
+  try {
+    const response = await fetchWithSession(apiUrl(authPath("ME", "/auth/me")));
+    if (!response.ok) return null;
+    return normalizeUser(await response.json().catch(() => null));
+  } catch (error) {
+    // La API puede reiniciarse mientras Next.js renderiza; nunca debe derribar el dashboard.
+    console.error("No fue posible verificar la sesión con el backend.", error);
+    return null;
+  }
 }
 
 export async function clearSession(notifyBackend = true) {
@@ -126,16 +175,20 @@ export async function clearSession(notifyBackend = true) {
     }).catch(() => undefined);
   }
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(REFRESH_COOKIE);
 }
 
-export async function createSession(token: string, remember = false) {
-  (await cookies()).set(SESSION_COOKIE, token, {
+export async function createSession(token: string, refreshToken: string, remember = false) {
+  const cookieStore = await cookies();
+  const maxAge = remember ? 60 * 60 * 24 * 14 : 60 * 60 * 8;
+  cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    ...(remember ? { maxAge: 60 * 60 * 24 * 14 } : {}),
+    maxAge,
   });
+  cookieStore.set(REFRESH_COOKIE, refreshToken, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge });
 }
 
 export async function requestPasswordReset(email: string, resetUrl: string) {
