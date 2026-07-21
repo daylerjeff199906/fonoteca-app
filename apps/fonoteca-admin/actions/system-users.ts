@@ -19,7 +19,7 @@ export async function getSystemUsers(params?: { page?: number; limit?: number; s
 
     const query = searchParams.toString() ? `?${searchParams.toString()}` : "";
     const res = await fetchWithSession(apiUrl(`/users${query}`))
-    if (!res.ok) throw new Error("Error al obtener usuarios.")
+    if (!res.ok) throw new Error("Error al obtener usuarios. No cuentas con los permisos necesarios. o el endpoint no esta implementado ")
     const data = await res.json()
     // Si la respuesta es un paginador pero nosotros esperamos array o viceversa, lo adaptamos.
     // Como el error era "El backend devolvió una respuesta de paginación inválida", significa que devolvió un array.
@@ -27,7 +27,7 @@ export async function getSystemUsers(params?: { page?: number; limit?: number; s
     const meta = data.meta || { totalItems: records.length };
     return { success: true, data: records, meta }
   } catch (error: any) {
-    return { success: false, error: error.message || "Error al obtener usuarios." }
+    return { success: false, error: error.message || "Error al obtener usuarios. No cuentas con los permisos necesarios. o el endpoint no esta implementado" }
   }
 }
 
@@ -51,7 +51,7 @@ export async function createSystemUser(data: { email: string; name: string; role
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al crear usuario.")
-    
+
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
   } catch (error: any) {
@@ -68,7 +68,7 @@ export async function updateSystemUser(id: string, data: { email?: string; name?
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al actualizar usuario.")
-    
+
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
   } catch (error: any) {
@@ -85,7 +85,7 @@ export async function deleteSystemUser(id: string) {
       const payload = await res.json().catch(() => ({}))
       throw new Error(payload.message || "Error al eliminar usuario.")
     }
-    
+
     revalidatePath("/dashboard/users")
     return { success: true }
   } catch (error: any) {
@@ -102,7 +102,7 @@ export async function assignSystemRoles(id: string, roles: string[]) {
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al asignar roles.")
-    
+
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
   } catch (error: any) {
@@ -119,7 +119,7 @@ export async function revokeSystemRoles(id: string, roles: string[]) {
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al revocar roles.")
-    
+
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
   } catch (error: any) {
@@ -134,7 +134,7 @@ export async function resetSystemPassword(id: string) {
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al resetear contraseña.")
-    
+
     return { success: true, data: payload }
   } catch (error: any) {
     return { success: false, error: error.message }
@@ -150,7 +150,7 @@ export async function changeOwnPassword(data: { oldPassword: string; newPassword
     })
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al cambiar contraseña.")
-    
+
     return { success: true, message: payload.message }
   } catch (error: any) {
     return { success: false, error: error.message }

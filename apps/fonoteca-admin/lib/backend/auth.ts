@@ -401,7 +401,7 @@ export async function setupMfa(): Promise<{ secret: string; qrCodeUrl: string }>
   }
   const data = unwrap(payload);
   const secret = (data.secret ?? data.totp_secret ?? data.totpSecret) as string;
-  const qrCodeUrl = (data.qr_code ?? data.qrCode ?? data.totp_url ?? data.totpUrl ?? data.url) as string;
+  const qrCodeUrl = (data.otpauthUrl ?? data.otpauth_url ?? data.qr_code ?? data.qrCode ?? data.totp_url ?? data.totpUrl ?? data.url) as string;
   return { secret, qrCodeUrl };
 }
 

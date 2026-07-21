@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sheet"
 import {
   KeyRound,
-  Pencil,
+  Edit,
   Plus,
   Loader2,
   Trash2,
@@ -101,8 +101,8 @@ export function SystemUsersClient({
   const router = useRouter()
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null)
   const activeUser = selectedUser ? initialUsers.find(u => u.id === selectedUser.id) || selectedUser : null
-  const [generatedPassword, setGeneratedPassword] = useState<{email: string, password: string} | null>(null)
-  
+  const [generatedPassword, setGeneratedPassword] = useState<{ email: string, password: string } | null>(null)
+
   // Dialogs state
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -218,11 +218,11 @@ export function SystemUsersClient({
         if (res.success) showToast.success("Rol asignado", "El rol ha sido agregado exitosamente.")
         else showToast.error("Error", res.error)
       }
-      
+
       // Since we mutated roles, we might need a full reload if the API doesn't return the nested relations properly
       // We will let router.refresh() do its job.
       router.refresh()
-      
+
       // Optimistic update logic could go here but router.refresh is enough for now.
     } catch (error) {
       showToast.error("Error", "Ocurrió un error inesperado al actualizar el rol.")
@@ -330,7 +330,7 @@ export function SystemUsersClient({
                           onClick={() => openEdit(user)}
                           title="Editar Usuario"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -378,8 +378,8 @@ export function SystemUsersClient({
           <DialogHeader>
             <DialogTitle>{isEditDialogOpen ? "Editar Usuario" : "Crear Nuevo Usuario"}</DialogTitle>
             <DialogDescription>
-              {isEditDialogOpen 
-                ? "Modifica los datos básicos del usuario." 
+              {isEditDialogOpen
+                ? "Modifica los datos básicos del usuario."
                 : "Se generará una contraseña temporal que será enviada al correo proporcionado."}
             </DialogDescription>
           </DialogHeader>
@@ -488,7 +488,7 @@ export function SystemUsersClient({
                   const userRoles = activeUser?.user_roles || []
                   const isAssigned = userRoles.some(ur => ur.roles?.code === role.code)
                   const isLoading = loadingRoles[role.code] || false
-                  
+
                   return (
                     <label
                       key={role.code}
@@ -515,7 +515,7 @@ export function SystemUsersClient({
                           Código: {role.code}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                         {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                         <Checkbox
