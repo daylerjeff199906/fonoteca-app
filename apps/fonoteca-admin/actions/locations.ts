@@ -86,7 +86,8 @@ export async function getUbigeoDistricts(provinceId?: string) {
 export async function createLocation(input: LocationInput) {
   const parsed = locationSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const errorMsg = Object.values(parsed.error.flatten().fieldErrors).flat().join(", ");
+    return { error: errorMsg || "Datos de ubicación inválidos" };
   }
 
   try {
@@ -101,7 +102,8 @@ export async function createLocation(input: LocationInput) {
 export async function updateLocation(id: string, input: LocationInput) {
   const parsed = locationSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const errorMsg = Object.values(parsed.error.flatten().fieldErrors).flat().join(", ");
+    return { error: errorMsg || "Datos de ubicación inválidos" };
   }
 
   try {

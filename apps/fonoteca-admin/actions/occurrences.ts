@@ -51,6 +51,12 @@ function formatOccurrence(item: any): Occurrence {
     event: item.events || item.event,
     ecosystem: item.ecosystems || item.ecosystem,
     multimedia: item.multimedia || [],
+    dateIdentified: item.dateIdentified ?? (item.dateidentified ? new Date(item.dateidentified).toISOString().split('T')[0] : null),
+    occurrence_date: item.occurrence_date ? new Date(item.occurrence_date).toISOString().split('T')[0] : null,
+    individualCount: item.individualCount ?? item.individualcount ?? 1,
+    dynamicProperties: item.dynamicProperties ?? item.dynamicproperties ?? {},
+    identificationRemarks: item.identificationRemarks ?? item.identificationremarks ?? null,
+    rightsHolder: item.rightsHolder ?? item.rightsholder ?? null,
   } as Occurrence;
 }
 
@@ -100,7 +106,8 @@ export async function getOccurrence(id: string) {
 export async function createOccurrence(input: OccurrenceInput) {
   const parsed = occurrenceSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const errorMsg = Object.values(parsed.error.flatten().fieldErrors).flat().join(", ");
+    return { error: errorMsg || "Datos de ocurrencia inválidos" };
   }
 
   try {
@@ -115,7 +122,8 @@ export async function createOccurrence(input: OccurrenceInput) {
 export async function updateOccurrence(id: string, input: OccurrenceInput) {
   const parsed = occurrenceSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const errorMsg = Object.values(parsed.error.flatten().fieldErrors).flat().join(", ");
+    return { error: errorMsg || "Datos de ocurrencia inválidos" };
   }
 
   try {

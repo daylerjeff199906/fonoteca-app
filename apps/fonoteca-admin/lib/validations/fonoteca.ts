@@ -66,19 +66,19 @@ export type TaxonInput = z.infer<typeof taxonSchema>;
 
 // --- Locations ---
 export const locationSchema = z.object({
-  id: z.string().uuid().optional(),
-  locationID: z.string().optional().nullable(),
+  id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
+  locationID: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
   locality: z.string().min(1, "Locality is required"),
   decimalLatitude: numberOrNull,
   decimalLongitude: numberOrNull,
   coordinateUncertaintyInMeters: numberOrNull,
-  ubigeo_district_id: z.string().length(6, "Invalid District ID").optional().nullable(),
-  country: z.string().optional().nullable(),
-  stateProvince: z.string().optional().nullable(),
-  geodeticDatum: z.string().default("WGS84").optional().nullable(),
-  georeferenceProtocol: z.string().optional().nullable(),
-  georeferenceSources: z.string().optional().nullable(),
-  georeferencedDate: z.string().optional().nullable(),
+  ubigeo_district_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().length(6, "Invalid District ID").nullable().optional()),
+  country: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  stateProvince: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  geodeticDatum: z.preprocess((v) => (v === "" || v === undefined ? "WGS84" : v), z.string().nullable().optional()),
+  georeferenceProtocol: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  georeferenceSources: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  georeferencedDate: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
 });
 
 export type LocationInput = z.infer<typeof locationSchema>;
@@ -102,31 +102,31 @@ export type EventInput = z.infer<typeof eventSchema>;
 
 // --- Occurrences ---
 export const occurrenceSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   occurrenceID: z.string().min(1, "Occurrence ID is required"),
-  event_id: z.string().uuid().optional().nullable(),
-  location_id: z.string().uuid().optional().nullable(),
+  event_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
+  location_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   taxon_id: z.string().uuid("Invalid Taxon ID"),
   basisOfRecord: z.string().default("MachineObservation"),
-  collection_id: z.string().uuid("Colección inválida").optional().nullable(),
-  institution_id: z.string().uuid("Institución inválida").optional().nullable(),
-  catalogNumber: z.string().optional().nullable(),
+  collection_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid("Colección inválida").nullable().optional()),
+  institution_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid("Institución inválida").nullable().optional()),
+  catalogNumber: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
 
   recordedBy: z.string().min(1, "Recorded By is required"),
-  recorded_by_id: z.string().uuid().optional().nullable(),
-  identifiedBy: z.string().optional().nullable(),
-  identified_by_id: z.string().uuid().optional().nullable(),
+  recorded_by_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
+  identifiedBy: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  identified_by_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   identificationMethod: z.string().default("Manual"),
   identificationConfidence: numberOrNull,
-  lifeStage: z.string().optional().nullable(),
-  sex: z.string().optional().nullable(),
-  reproductiveCondition: z.string().optional().nullable(),
-  occurrenceRemarks: z.string().optional().nullable(),
+  lifeStage: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  sex: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  reproductiveCondition: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  occurrenceRemarks: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
   verification_status: z.enum(["pending", "verified", "rejected"]).default("pending"),
-  verified_by: z.string().uuid().optional().nullable(),
+  verified_by: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   record_status: z.enum(["draft", "published", "deleted"]).default("draft"),
-  occurrence_date: z.string().optional().nullable(),
-  ecosystem_id: z.string().uuid().optional().nullable(),
+  occurrence_date: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  ecosystem_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   
   // Environmental variables
   temperature_c: numberOrNull,
@@ -137,14 +137,14 @@ export const occurrenceSchema = z.object({
   has_cloud_voucher: z.boolean().default(false),
 
   // New fields
-  preparations: z.string().optional().nullable(),
-  disposition: z.string().optional().nullable(),
+  preparations: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  disposition: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
   individualCount: numberOrNull.default(1),
   dynamicProperties: z.any().optional().nullable(),
-  dateIdentified: z.string().optional().nullable(),
-  identificationRemarks: z.string().optional().nullable(),
-  license: z.string().optional().nullable(),
-  rightsHolder: z.string().optional().nullable(),
+  dateIdentified: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  identificationRemarks: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  license: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
+  rightsHolder: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
 });
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;
