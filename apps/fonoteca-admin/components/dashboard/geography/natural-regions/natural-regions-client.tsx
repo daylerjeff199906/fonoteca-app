@@ -65,7 +65,7 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
 
   const handleMultipleDelete = async () => {
     if (selectedIds.length === 0) return;
-    
+
     setIsDeleting(true);
     await multipleDeleteNaturalRegions(selectedIds);
     setSelectedIds([]);
@@ -94,11 +94,11 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
         {selectedIds.length > 0 && (
           <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md border border-muted">
             <span className="text-sm font-medium">{selectedIds.length} seleccionados</span>
-            <MultipleDeleteConfirmDialog 
-              onConfirm={handleMultipleDelete} 
-              selectedCount={selectedIds.length} 
-              itemNamePlural="regiones naturales" 
-              isDeleting={isDeleting} 
+            <MultipleDeleteConfirmDialog
+              onConfirm={handleMultipleDelete}
+              selectedCount={selectedIds.length}
+              itemNamePlural="regiones naturales"
+              isDeleting={isDeleting}
             />
             <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>Cancelar</Button>
           </div>
@@ -109,7 +109,7 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px]">
-                  <Checkbox 
+                  <Checkbox
                     checked={data.length > 0 && selectedIds.length === data.length}
                     onCheckedChange={toggleSelectAll}
                     aria-label="Seleccionar todos"
@@ -127,7 +127,7 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
                 data.map((region) => (
                   <TableRow key={region.id} data-state={selectedIds.includes(region.id!) ? "selected" : undefined}>
                     <TableCell>
-                      <Checkbox 
+                      <Checkbox
                         checked={selectedIds.includes(region.id!)}
                         onCheckedChange={() => toggleSelect(region.id!)}
                         aria-label={`Seleccionar ${region.name}`}
@@ -156,10 +156,10 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-100" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
                           title="Desactivar/Activar"
                           disabled={isDeactivating === region.id}
                           onClick={() => handleDeactivate(region.id!, true)}
@@ -167,18 +167,18 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
                           {(region as any).record_status !== 'inactive' ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                         </Button>
                         <Button
-                          variant="ghost" 
-                          size="icon" 
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8"
                           title="Editar"
                           onClick={() => handleOpenEdit(region.id!)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <DeleteButtonWithConfirm 
-                          id={region.id!} 
-                          onConfirm={deleteNaturalRegion} 
-                          itemName="región natural" 
+                        <DeleteButtonWithConfirm
+                          id={region.id!}
+                          onConfirm={deleteNaturalRegion}
+                          itemName="región natural"
                         />
                       </div>
                     </TableCell>
@@ -198,20 +198,18 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="mb-6">
+          <SheetHeader>
             <SheetTitle>{editId ? "Editar Región Natural" : "Registrar Región Natural"}</SheetTitle>
             <SheetDescription>
               {editId ? "Actualiza los datos de la región seleccionada." : "Define una nueva región o ecosistema macro."}
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-4">
-            <NaturalRegionForm 
-              id={editId} 
-              onSuccess={() => setSheetOpen(false)} 
-              onCancel={() => setSheetOpen(false)}
-              footerVariant="sticky"
-            />
-          </div>
+          <NaturalRegionForm
+            id={editId}
+            onSuccess={() => setSheetOpen(false)}
+            onCancel={() => setSheetOpen(false)}
+            footerVariant="sticky"
+          />
         </SheetContent>
       </Sheet>
     </>
