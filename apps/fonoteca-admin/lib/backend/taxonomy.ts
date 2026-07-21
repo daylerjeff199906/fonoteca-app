@@ -69,7 +69,10 @@ async function taxonomyRequest<T>(path: string, init: RequestInit = {}): Promise
   const payload = await response.json().catch(() => null) as T | { message?: unknown; error?: unknown; detail?: unknown } | null;
   if (!response.ok || !payload) {
     const body = payload && typeof payload === "object" ? payload as { message?: unknown; error?: unknown; detail?: unknown } : {};
-    const candidate = body.message ?? body.detail ?? body.error;
+    const nestedError = body.error && typeof body.error === "object" && "message" in body.error
+      ? (body.error as { message?: unknown }).message
+      : undefined;
+    const candidate = body.message ?? body.detail ?? nestedError ?? body.error;
     const message = typeof candidate === "string" ? candidate : Array.isArray(candidate) ? candidate.filter((item): item is string => typeof item === "string").join(" ") : "";
     throw new Error(message || `El backend respondió HTTP ${response.status} al consultar taxonomía.`);
   }

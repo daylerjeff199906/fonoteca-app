@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/auth/password-input";
+import { showToast } from "@/lib/toast";
 
 export function LoginForm() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function LoginForm() {
     const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), password: form.get("password"), remember }) });
     const body = await response.json().catch(() => ({})); setLoading(false);
     if (!response.ok) return setError(body.message ?? "No se pudo iniciar sesión.");
+    showToast.success("Inicio de sesión exitoso", "Has accedido correctamente a tu cuenta.");
     router.replace("/dashboard"); router.refresh();
   }
 
