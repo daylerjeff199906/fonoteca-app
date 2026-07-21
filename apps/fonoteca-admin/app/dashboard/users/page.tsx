@@ -1,16 +1,15 @@
 import { Metadata } from "next"
-import { UsersClient } from "./users-client"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { InfoIcon } from "lucide-react"
-import { getAvailableRoles, getModulePermissions, getUsers } from "@/actions/users"
+import { getSystemUsers } from "@/actions/system-users"
 import { PageHeader } from "@/components/panel-admin/page-header"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { SystemUsersClient } from "./users-client"
 
 export const metadata: Metadata = {
-  title: "Gestión de Usuarios | Fonoteca Admin",
-  description: "Administra los usuarios y roles con acceso al módulo de Fonoteca.",
+  title: "Usuarios | Fonoteca Admin",
+  description: "Administra los usuarios globales del sistema y sus roles.",
 }
 
-export default async function UsersPage({
+export default async function SystemUsersPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -20,59 +19,31 @@ export default async function UsersPage({
   const search = typeof params.search === "string" ? params.search : "";
   const limit = 10;
 
-  const [usersRes, rolesRes] = await Promise.all([
-    getUsers({ page, limit, search }),
-    getAvailableRoles()
-  ])
+  const usersRes = await getSystemUsers({ page, limit, search })
 
-  if (!usersRes.success || !rolesRes.success) {
+  if (!usersRes.success) {
     return (
       <div className="p-4">
         <Alert variant="destructive">
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            {usersRes.error || rolesRes.error || "No se pudieron cargar los datos de usuarios y roles."}
+            {usersRes.error || "No se pudieron cargar los datos de usuarios."}
           </AlertDescription>
         </Alert>
       </div>
     )
   }
 
-  const permissionsRes = await getModulePermissions(usersRes.moduleId!)
-
-  // Pre-fetch roles for the users in this page to avoid many client requests
-  // However, we can also just fetch them in the client since we have the data already in user_roles join
-  // Let's transform the data to match the expected initialUserRoles format
-  const initialUserRoles = usersRes.data.flatMap((u: any) =>
-    u.user_roles.map((ur: any) => ({
-      profile_id: u.id,
-      role_id: ur.role_id,
-      roles: rolesRes.data.find((r: any) => r.id === ur.role_id) || null
-    }))
-  )
-
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Gestión de Usuarios" 
-        description="Administra los permisos y roles de los usuarios con acceso al módulo de Fonoteca."
+      <PageHeader
+        title="Usuarios"
+        description="Administra las cuentas de usuario a nivel de sistema, así como sus roles principales."
       />
-      
-      <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 rounded-none">
-        <InfoIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <AlertTitle className="text-blue-800 dark:text-blue-300">Nota importante</AlertTitle>
-        <AlertDescription className="text-blue-700 dark:text-blue-400">
-          Esta sección gestiona únicamente los permisos y roles de los usuarios con acceso específico a este módulo de <strong>Fonoteca</strong>.
-        </AlertDescription>
-      </Alert>
 
-      <UsersClient 
-        initialProfiles={usersRes.data} 
-        initialRoles={rolesRes.data} 
-        initialUserRoles={initialUserRoles}
-        moduleId={usersRes.moduleId!}
-        totalCount={usersRes.count}
-        initialPermissions={permissionsRes.data || []}
+      <SystemUsersClient
+        initialUsers={usersRes.data || []}
+        totalCount={usersRes.meta?.totalItems || 0}
       />
     </div>
   )
