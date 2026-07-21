@@ -9,7 +9,7 @@ import { uploadToR2, deleteFileFromR2 } from "@/actions/multimedia";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { toast } from "react-toastify";
+import { getBackendMessage, showToast } from "@/lib/toast";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 import { ImageIcon, Upload, Link as LinkIcon, X, Loader2, Info, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -72,18 +72,18 @@ export function ClassForm({
           const currentData = watch();
           const updateResp = await updateClass(id, { ...currentData, image_url: resp.url });
           if (updateResp.success) {
-            toast.success("Imagen subida y base de datos actualizada");
+            showToast.success("Imagen actualizada", "La imagen y los datos de la clase se guardaron correctamente.");
           } else {
-            toast.warn("Imagen subida pero falló la actualización de la DB");
+            showToast.warning("Imagen subida", getBackendMessage(updateResp.error, "No se pudo actualizar los datos de la clase."));
           }
         } else {
-          toast.success("Imagen subida correctamente");
+          showToast.success("Imagen subida", "La imagen se adjuntará al guardar la clase.");
         }
       } else {
-        toast.error("Error al subir imagen: " + resp.error);
+        showToast.error("No se pudo subir la imagen", resp.error || "El servidor no pudo procesar el archivo.");
       }
     } catch (err) {
-      toast.error("Error en la subida");
+      showToast.error("No se pudo subir la imagen", "Ocurrió un error inesperado durante la subida.");
     } finally {
       setUploading(false);
     }
@@ -103,7 +103,7 @@ export function ClassForm({
       setUploading(false);
 
       if (!resp.success && resp.error) {
-        toast.error("Error al eliminar del servidor: " + resp.error);
+        showToast.error("No se pudo eliminar la imagen", resp.error);
         // We continue anyway to clear the field if the user wants
       }
     }
@@ -115,10 +115,10 @@ export function ClassForm({
       const currentData = watch();
       const { success } = await updateClass(id, { ...currentData, image_url: null });
       if (success) {
-        toast.info("Imagen eliminada y registro actualizado");
+        showToast.info("Imagen eliminada", "El registro de la clase fue actualizado.");
       }
     } else {
-      toast.info("Imagen quitada del formulario");
+      showToast.info("Imagen quitada", "El cambio se aplicará cuando guardes la clase.");
     }
   };
 
@@ -131,11 +131,11 @@ export function ClassForm({
     }
 
     if (resp.success) {
-      toast.success(id ? "Clase actualizada" : "Clase registrada");
+      showToast.response(resp, id ? "Clase actualizada" : "Clase registrada", id ? "Los cambios se guardaron correctamente." : "La clase fue registrada correctamente.");
       reset();
       if (onSuccess) onSuccess();
     } else {
-      toast.error("Error al guardar la clase");
+      showToast.response(resp, "", "");
     }
   };
 

@@ -8,7 +8,7 @@ import { createOrder, updateOrder } from "@/actions/orders";
 import { getAllClasses } from "@/actions/classes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 
 export function OrderForm({
@@ -34,13 +34,23 @@ export function OrderForm({
     setIsLoadingClasses(true);
     getAllClasses().then(res => {
       if (res.data) setClasses(res.data);
+      if (res.error) showToast.error("No se pudieron cargar las clases", res.error);
       setIsLoadingClasses(false);
-    });
+    }).catch(() => { showToast.error("No se pudieron cargar las clases", "Verifica tu conexión e inténtalo nuevamente."); setIsLoadingClasses(false); });
   }, []);
 
   useEffect(() => {
     if (defaultValues) {
-      reset(defaultValues);
+      reset({
+        ...defaultValues,
+        class_id:
+          defaultValues.class_id ||
+          (defaultValues as any)?.classId ||
+          (defaultValues as any)?.class_obj?.id ||
+          (defaultValues as any)?.parent?.id ||
+          (defaultValues as any)?.class?.id ||
+          "",
+      });
     }
   }, [defaultValues, reset, classes]);
 
@@ -53,11 +63,11 @@ export function OrderForm({
     }
 
     if (resp.success) {
-      toast.success(id ? "Orden actualizada" : "Orden registrada");
+      showToast.response(resp, id ? "Orden actualizada" : "Orden registrada", id ? "Los cambios se guardaron correctamente." : "El orden fue registrado correctamente.");
       reset();
       if (onSuccess) onSuccess();
     } else {
-      toast.error("Error al guardar la orden");
+      showToast.response(resp, "", "");
     }
   };
 

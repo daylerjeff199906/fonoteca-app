@@ -1,38 +1,47 @@
-'use server'
+"use server";
 
-import { cookies, headers } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
-import { createBioIntranetServer } from '@/utils/supabase/bio-intranet/server'
+import {
+  clearSession,
+  enableMfa,
+  logoutAll,
+  setupMfa,
+  verifyMfaLogin,
+} from "@/lib/backend/auth";
+import { redirect } from "next/navigation";
 
 export async function signout() {
-    const cookieStore = await cookies()
-    const headerList = await headers()
-    const host = headerList.get('host') || ''
-    const supabase = await createBioIntranetServer(cookieStore, host)
+  await clearSession();
+  redirect("/login");
+}
 
-    await supabase.auth.signOut()
+export async function signoutAll() {
+  await logoutAll();
+  redirect("/login");
+}
 
-    const isDev = host.includes('localhost') || host.includes('127.0.0.1')
+export async function verifyMfaAction(mfaToken: string, code: string) {
+  try {
+    const result = await verifyMfaLogin(mfaToken, code);
+    return { success: true, result };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Error al verificar MFA." };
+  }
+}
 
-    // Consultar configuración de módulos para redirección dinámica
-    const [{ data: moduleData }, { data: authModule }] = await Promise.all([
-        supabase.from('modules').select('url_prod, url_local, path').eq('code', 'fonoteca').maybeSingle(),
-        supabase.from('modules').select('url_prod, url_local').eq('code', 'auth').maybeSingle()
-    ])
+export async function setupMfaAction() {
+  try {
+    const data = await setupMfa();
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Error al iniciar MFA." };
+  }
+}
 
-    const baseUrl = isDev 
-        ? (moduleData?.url_local || 'http://localhost:3006') 
-        : (moduleData?.url_prod || 'https://fonoteca.iiap.gob.pe')
-
-    const authBaseUrl = isDev
-        ? (authModule?.url_local || 'http://localhost:3003')
-        : (authModule?.url_prod || 'https://auth.iiap.gob.pe')
-
-    const modulePath = moduleData?.path || '/dashboard'
-    const fullRedirectUrl = `${baseUrl}${modulePath}`
-    const loginUrl = `${authBaseUrl}/es/login?redirect=${encodeURIComponent(fullRedirectUrl)}`
-
-    revalidatePath('/', 'layout')
-    redirect(loginUrl)
+export async function enableMfaAction(code: string) {
+  try {
+    const data = await enableMfa(code);
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Error al habilitar MFA." };
+  }
 }

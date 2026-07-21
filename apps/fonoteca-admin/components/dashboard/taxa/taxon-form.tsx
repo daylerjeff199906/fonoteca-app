@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { taxonSchema, TaxonInput } from "@/lib/validations/fonoteca";
-import { getTaxon, createTaxon, updateTaxon, getGenera } from "@/actions/taxa";
+import { getTaxon, createTaxon, updateTaxon, getGenera, getTaxonomyHierarchy } from "@/actions/taxa";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
@@ -36,6 +36,7 @@ export function TaxonForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [genera, setGenera] = useState<any[]>([]);
+  const [hierarchy, setHierarchy] = useState<{ classes: any[]; orders: any[]; families: any[]; genera: any[] }>({ classes: [], orders: [], families: [], genera: [] });
   const [openCombobox, setOpenCombobox] = useState(false);
   const [searchGenus, setSearchGenus] = useState("");
   const debouncedSearch = useDebounce(searchGenus, 400);
@@ -54,6 +55,23 @@ export function TaxonForm({
 
   const { reset, handleSubmit, watch } = form;
   const currentScientificName = watch("scientificName");
+
+  const genusPath = (genus: any) => {
+    const familyId = genus.parent?.id || genus.family_id || genus.family?.id;
+    const family = hierarchy.families.find((item) => item.id === familyId);
+    const orderId = family?.parent?.id || family?.order_id || family?.order_obj?.id;
+    const order = hierarchy.orders.find((item) => item.id === orderId);
+    const classId = order?.parent?.id || order?.class_id || order?.class_obj?.id;
+    const classItem = hierarchy.classes.find((item) => item.id === classId);
+    return { family: family?.name || genus.parent?.name || genus.family?.name || "Sin familia", order: order?.name || "Sin orden", className: classItem?.name || "Sin clase", kingdom: classItem?.kingdom || "Sin reino" };
+  };
+
+  useEffect(() => {
+    getTaxonomyHierarchy().then((response) => {
+      if (response.data) setHierarchy(response.data);
+      if (response.error) showToast.error("No se pudo cargar la jerarquía", response.error);
+    });
+  }, []);
 
   useEffect(() => {
     setIsFetchingGenera(true);
@@ -210,17 +228,15 @@ export function TaxonForm({
                                   ? (() => {
                                     const g = genera.find((g) => g.id === field.value);
                                     if (!g) return "Seleccionar Género";
-                                    const family = g.family;
-                                    const order = family?.order_obj;
-                                    const classObj = order?.class_obj;
+                                    const path = genusPath(g);
 
                                     return (
                                       <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium overflow-hidden">
-                                        <span className="shrink-0">{classObj?.kingdom || "..."}</span>
+                                        <span className="shrink-0">{path.kingdom}</span>
                                         <ChevronRight className="h-2.5 w-2.5 opacity-30" />
-                                        <span className="shrink-0">{classObj?.name || "..."}</span>
+                                        <span className="shrink-0">{path.className}</span>
                                         <ChevronRight className="h-2.5 w-2.5 opacity-30" />
-                                        <span className="shrink-0">{order?.name || "..."}</span>
+                                        <span className="shrink-0">{path.order}</span>
                                         <ChevronRight className="h-2.5 w-2.5 opacity-30" />
                                         <span className="shrink-0 font-bold text-foreground text-xs italic">{g.name}</span>
                                       </span>
@@ -263,13 +279,13 @@ export function TaxonForm({
                                         <Check className={cn("mr-2 h-3.5 w-3.5", g.id === field.value ? "opacity-100" : "opacity-0")} />
                                         <div className="flex flex-col gap-0.5">
                                           <div className="flex items-center gap-1 text-[9px] text-muted-foreground/90 font-medium tracking-tight">
-                                            <span>{g.family?.order_obj?.class_obj?.kingdom}</span>
+                                            {(() => { const path = genusPath(g); return <><span>{path.kingdom}</span>
                                             <ChevronRight className="h-2 w-2 opacity-30" />
-                                            <span>{g.family?.order_obj?.class_obj?.name}</span>
+                                            <span>{path.className}</span>
                                             <ChevronRight className="h-2 w-2 opacity-30" />
-                                            <span>{g.family?.order_obj?.name}</span>
+                                            <span>{path.order}</span>
                                             <ChevronRight className="h-2 w-2 opacity-30" />
-                                            <span>{g.family?.name}</span>
+                                            <span>{path.family}</span></>})()}
                                           </div>
                                           <span className="font-semibold text-sm italic text-foreground leading-none">{g.name}</span>
                                         </div>

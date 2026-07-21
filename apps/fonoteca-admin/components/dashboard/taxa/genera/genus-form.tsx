@@ -8,7 +8,7 @@ import { createGenus, updateGenus } from "@/actions/genera";
 import { getFamilies } from "@/actions/taxa";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 
 export function GenusForm({
@@ -20,7 +20,7 @@ export function GenusForm({
   defaultValues?: Partial<GenusInput>;
   onSuccess?: (id?: string) => void;
 }) {
-  const [families, setFamilies] = useState<{ id: string, name: string }[]>([]);
+  const [families, setFamilies] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingFamilies, setIsLoadingFamilies] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<GenusInput>({
     resolver: zodResolver(genusSchema) as any,
@@ -34,13 +34,23 @@ export function GenusForm({
     setIsLoadingFamilies(true);
     getFamilies().then(res => {
       if (res.data) setFamilies(res.data);
+      if (res.error) showToast.error("No se pudieron cargar las familias", res.error);
       setIsLoadingFamilies(false);
-    });
+    }).catch(() => { showToast.error("No se pudieron cargar las familias", "Verifica tu conexión e inténtalo nuevamente."); setIsLoadingFamilies(false); });
   }, []);
 
   useEffect(() => {
     if (defaultValues) {
-      reset(defaultValues);
+      reset({
+        ...defaultValues,
+        family_id:
+          defaultValues.family_id ||
+          (defaultValues as any)?.familyId ||
+          (defaultValues as any)?.family?.id ||
+          (defaultValues as any)?.parent?.id ||
+          (defaultValues as any)?.family_obj?.id ||
+          "",
+      });
     }
   }, [defaultValues, reset, families]);
 
@@ -53,11 +63,11 @@ export function GenusForm({
     }
 
     if (resp.success) {
-      toast.success(id ? "Género actualizado" : "Género registrado");
+      showToast.response(resp, id ? "Género actualizado" : "Género registrado", id ? "Los cambios se guardaron correctamente." : "El género fue registrado correctamente.");
       reset();
       if (onSuccess) onSuccess(resp.data?.id);
     } else {
-      toast.error("Error al guardar el género");
+      showToast.response(resp, "", "");
     }
   };
 

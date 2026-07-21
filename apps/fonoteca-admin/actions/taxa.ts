@@ -1,10 +1,9 @@
 "use server"
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { TaxonInput, taxonSchema } from "@/lib/validations/fonoteca";
-import { Taxon } from "@/types/fonoteca";
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
+import { Family, Genus, Taxon } from "@/types/fonoteca";
+import { getAllTaxonomy, getTaxonomyItem, getTaxonomyPage, mutateTaxonomy } from "@/lib/backend/taxonomy";
 
 export async function getTaxa({
   page = 1,
@@ -25,65 +24,11 @@ export async function getTaxa({
   hasScientificName?: string;
   hasVernacularName?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let selectStr = "*, genus:genera(*, family:families(*, order_obj:orders(*, class_obj:classes(*))))";
-
-  if (kingdom || family_id) {
-    // !inner join translates to filter parent when children are verified
-    selectStr = "*, genus:genera!inner(*, family:families!inner(*, order_obj:orders!inner(*, class_obj:classes!inner(*))))";
-  }
-
-
-  let query = supabase
-    .from("taxa")
-    .select(selectStr, { count: "exact" });
-
-  if (search) {
-    query = query.or(`scientificName.ilike.%${search}%,vernacularName.ilike.%${search}%`);
-  }
-
-  if (genus_id) {
-    query = query.eq("genus_id", genus_id);
-  }
-
-  if (family_id) {
-    query = query.eq("genus.family_id", family_id);
-  }
-
-  if (kingdom) {
-    query = query.eq("genus.family.kingdom", kingdom);
-  }
-
-  if (hasScientificName === "no") {
-    query = query.or("scientificName.is.null,scientificName.eq.''");
-  } else if (hasScientificName === "yes") {
-    query = query.not("scientificName", "is", null).neq("scientificName", "");
-  }
-
-  if (hasVernacularName === "no") {
-    query = query.or("vernacularName.is.null,vernacularName.eq.''");
-  } else if (hasVernacularName === "yes") {
-    query = query.not("vernacularName", "is", null).neq("vernacularName", "");
-  }
-
-  const { data, count, error } = await query
-    .order("scientificName", { ascending: true })
-    .range(from, to);
-
-  if (error) {
-    console.error("error fetching taxa:", error);
-    return { data: [] as Taxon[], count: 0, error: error.message };
-  }
-
-  return {
-    data: (data as any) as Taxon[],
-    count: count || 0,
-  };
+  try {
+    const result = await getTaxonomyPage<Taxon>("taxa", { page, limit, search, parentId: genus_id });
+    const data = result.data.filter((item) => !family_id || item.genus?.family_id === family_id).filter((item) => !kingdom || item.genus?.family?.order_obj?.class_obj?.kingdom === kingdom);
+    return { data, count: family_id || kingdom ? data.length : result.meta.totalItems };
+  } catch (error) { return { data: [] as Taxon[], count: 0, error: error instanceof Error ? error.message : "No se pudieron cargar los taxa." }; }
 }
 
 export async function getAllTaxaForExport({
@@ -101,212 +46,57 @@ export async function getAllTaxaForExport({
   hasScientificName?: string;
   hasVernacularName?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  let selectStr = "*, genus:genera(*, family:families(*, order_obj:orders(*, class_obj:classes(*))))";
-
-  if (kingdom || family_id) {
-    selectStr = "*, genus:genera!inner(*, family:families!inner(*, order_obj:orders!inner(*, class_obj:classes!inner(*))))";
-  }
-
-
-  let query = supabase
-    .from("taxa")
-    .select(selectStr);
-
-  if (search) {
-    query = query.or(`scientificName.ilike.%${search}%,vernacularName.ilike.%${search}%`);
-  }
-
-  if (genus_id) {
-    query = query.eq("genus_id", genus_id);
-  }
-
-  if (family_id) {
-    query = query.eq("genus.family_id", family_id);
-  }
-
-  if (kingdom) {
-    query = query.eq("genus.family.kingdom", kingdom);
-  }
-
-  if (hasScientificName === "no") {
-    query = query.or("scientificName.is.null,scientificName.eq.''");
-  } else if (hasScientificName === "yes") {
-    query = query.not("scientificName", "is", null).neq("scientificName", "");
-  }
-
-  if (hasVernacularName === "no") {
-    query = query.or("vernacularName.is.null,vernacularName.eq.''");
-  } else if (hasVernacularName === "yes") {
-    query = query.not("vernacularName", "is", null).neq("vernacularName", "");
-  }
-
-  const { data, error } = await query
-    .order("scientificName", { ascending: true });
-
-  if (error) {
-    console.error("error fetching taxa for export:", error);
-    return { data: [] as Taxon[] };
-  }
-
-  return {
-    data: (data as any) as Taxon[],
-  };
+  try {
+    const result = await getAllTaxonomy<Taxon>("taxa", { search, parentId: genus_id });
+    return { data: result.filter((item) => !family_id || item.genus?.family_id === family_id).filter((item) => !kingdom || item.genus?.family?.order_obj?.class_obj?.kingdom === kingdom) };
+  } catch { return { data: [] as Taxon[] }; }
 }
 
 export async function getTaxon(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("taxa")
-    .select("*, genus:genera(*, family:families(*, order_obj:orders(*, class_obj:classes(*))))")
-    .eq("id", id)
-    .single();
-
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { data: (data as any) as Taxon };
+  try { return { data: await getTaxonomyItem<Taxon>("taxa", id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo cargar el taxón." }; }
 }
 
 export async function getGenera(search: string = "") {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  let query = supabase
-    .from("genera")
-    .select(`
-      *, 
-      family:families(
-        name, 
-        order_obj:orders(
-          name, 
-          class_obj:classes(
-            name, 
-            phylum, 
-            kingdom
-          )
-        )
-      )
-    `)
-    .order("name");
-
-
-  if (search) {
-    query = query.ilike("name", `%${search}%`);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return { data: [], error: error.message };
-  }
-
-  return { data: data || [] };
+  try { return { data: await getAllTaxonomy<Genus>("genera", { search }) }; }
+  catch (error) { return { data: [], error: error instanceof Error ? error.message : "No se pudieron cargar los géneros." }; }
 }
 
 export async function getFamilies() {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try { return { data: await getAllTaxonomy<Family>("families") }; }
+  catch (error) { return { data: [], error: error instanceof Error ? error.message : "No se pudieron cargar las familias." }; }
+}
 
-  const { data, error } = await supabase
-    .from("families")
-    .select("*")
-    .order("name");
-
-  if (error) {
-    return { data: [], error: error.message };
-  }
-
-  return { data: data || [] };
+export async function getTaxonomyHierarchy() {
+  try {
+    const [classes, orders, families, genera] = await Promise.all([
+      getAllTaxonomy<any>("classes"), getAllTaxonomy<any>("orders"), getAllTaxonomy<any>("families"), getAllTaxonomy<any>("genera"),
+    ]);
+    return { data: { classes, orders, families, genera } };
+  } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo cargar la jerarquía taxonómica." }; }
 }
 
 export async function createTaxon(input: TaxonInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = taxonSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
-  }
-
-  // Generate automatic taxonID if not provided
-  const scientificName = parsed.data.scientificName;
-  const parts = scientificName.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    const genusPart = parts[0].substring(0, 3).toUpperCase();
-    const speciesPart = parts[1].substring(0, 3).toUpperCase();
-    const prefix = `${genusPart}${speciesPart}`;
-    
-    // Check count for sequence
-    const { count } = await supabase
-      .from("taxa")
-      .select("*", { count: "exact", head: true })
-      .ilike("taxonID", `${prefix}-%`);
-    
-    const sequence = (count || 0) + 1;
-    const formattedSequence = sequence.toString().padStart(4, '0');
-    parsed.data.taxonID = `${prefix}-${formattedSequence}`;
-  }
-
-  const { data, error } = await supabase
-    .from("taxa")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-
-  if (error) {
-    return { error: error.message };
   }
 
   revalidatePath("/dashboard/taxa");
-  return { success: true, data: (data as any) as Taxon };
+  try { return { success: true, data: await mutateTaxonomy<Taxon>("taxa", "POST", parsed.data) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo crear el taxón." }; }
 }
 
 export async function updateTaxon(id: string, input: TaxonInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = taxonSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
-  }
-
-  const { data, error } = await supabase
-    .from("taxa")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
   }
 
   revalidatePath("/dashboard/taxa");
   revalidatePath(`/dashboard/taxa/${id}`);
-  return { success: true, data: (data as any) as Taxon };
+  try { return { success: true, data: await mutateTaxonomy<Taxon>("taxa", "PATCH", parsed.data, id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo actualizar el taxón." }; }
 }
 
 export async function deleteTaxon(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("taxa")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
   revalidatePath("/dashboard/taxa");
-  return { success: true };
+  try { await mutateTaxonomy("taxa", "DELETE", undefined, id); return { success: true }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo eliminar el taxón." }; }
 }

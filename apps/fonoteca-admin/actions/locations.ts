@@ -1,10 +1,9 @@
 "use server"
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { LocationInput, locationSchema } from "@/lib/validations/fonoteca";
 import { Location } from "@/types/fonoteca";
+import { getCrudPage, getCrudItem, mutateCrud, deactivateCrud, multipleDeleteCrud, getAllCrud } from "@/lib/backend/crud";
 
 export async function getLocations({
   page = 1,
@@ -15,179 +14,113 @@ export async function getLocations({
   limit?: number;
   search?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from("locations")
-    .select(`
-      *,
-      district:ubigeo_districts (
-        id,
-        name,
-        province:ubigeo_provinces (
-          id,
-          name,
-          department:ubigeo_departments (
-            id,
-            name
-          )
-        )
-      )
-    `, { count: "exact" });
-
-  if (search) {
-    query = query.or(`locality.ilike.%${search}%`);
-  }
-
-  const { data, count, error } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
+  try {
+    const result = await getCrudPage<Location>("locations", { page, limit, search });
+    return { data: result.data, count: result.meta.totalItems };
+  } catch (error) {
     console.error("error fetching locations:", error);
-    return { data: [] as Location[], count: 0, error: error.message };
+    return { data: [] as Location[], count: 0, error: error instanceof Error ? error.message : "Error al cargar ubicaciones" };
   }
-
-  return {
-    data: (data as any) as Location[],
-    count: count || 0,
-  };
 }
 
 export async function getLocation(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("locations")
-    .select(`
-      *,
-      district:ubigeo_districts (
-        id,
-        name,
-        province:ubigeo_provinces (
-          id,
-          name,
-          department:ubigeo_departments (
-            id,
-            name
-          )
-        )
-      )
-    `)
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await getCrudItem<Location>("locations", id);
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo cargar la ubicación" };
   }
-
-  return { data: (data as any) as Location };
 }
 
 export async function getUbigeoDepartments() {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("ubigeo_departments")
-    .select("*")
-    .order("name");
-
-  if (error) return { error: error.message };
-  return { data };
+  try {
+    const data = await getAllCrud<any>("ubigeo-departments");
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al cargar departamentos" };
+  }
 }
 
 export async function getUbigeoProvinces(departmentId?: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  let query = supabase.from("ubigeo_provinces").select("*").order("name");
-  if (departmentId) query = query.eq("department_id", departmentId);
-
-  const { data, error } = await query;
-  if (error) return { error: error.message };
-  return { data };
+  try {
+    const params: Record<string, string> = {};
+    if (departmentId) params.department_id = departmentId;
+    const data = await getAllCrud<any>("ubigeo-provinces", params);
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al cargar provincias" };
+  }
 }
 
 export async function getUbigeoDistricts(provinceId?: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  let query = supabase.from("ubigeo_districts").select("*").order("name");
-  if (provinceId) query = query.eq("province_id", provinceId);
-
-  const { data, error } = await query;
-  if (error) return { error: error.message };
-  return { data };
+  try {
+    const params: Record<string, string> = {};
+    if (provinceId) params.province_id = provinceId;
+    const data = await getAllCrud<any>("ubigeo-districts", params);
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al cargar distritos" };
+  }
 }
 
 export async function createLocation(input: LocationInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = locationSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("locations")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<Location>("locations", "POST", parsed.data);
+    revalidatePath("/dashboard/locations");
+    return { success: true, data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al crear la ubicación" };
   }
-
-  revalidatePath("/dashboard/locations");
-  return { success: true, data: (data as any) as Location };
 }
 
 export async function updateLocation(id: string, input: LocationInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = locationSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("locations")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<Location>("locations", "PATCH", parsed.data, id);
+    revalidatePath("/dashboard/locations");
+    revalidatePath(`/dashboard/locations/${id}`);
+    revalidatePath(`/dashboard/locations/${id}/edit`);
+    return { success: true, data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al actualizar la ubicación" };
   }
-
-  revalidatePath("/dashboard/locations");
-  revalidatePath(`/dashboard/locations/${id}`);
-  revalidatePath(`/dashboard/locations/${id}/edit`);
-  return { success: true, data: (data as any) as Location };
 }
 
 export async function deleteLocation(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("locations")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
+  try {
+    await mutateCrud("locations", "DELETE", undefined, id);
+    revalidatePath("/dashboard/locations");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar la ubicación" };
   }
+}
 
-  revalidatePath("/dashboard/locations");
-  return { success: true };
+export async function deactivateLocation(id: string) {
+  try {
+    await deactivateCrud("locations", id);
+    revalidatePath("/dashboard/locations");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al desactivar la ubicación" };
+  }
+}
+
+export async function multipleDeleteLocations(ids: string[]) {
+  try {
+    await multipleDeleteCrud("locations", ids);
+    revalidatePath("/dashboard/locations");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar las ubicaciones" };
+  }
 }
