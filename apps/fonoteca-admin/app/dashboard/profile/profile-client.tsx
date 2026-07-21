@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { changeOwnPassword } from "@/actions/system-users"
 import { showToast } from "@/lib/toast"
@@ -89,38 +89,96 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
     }
   }
 
-  return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {/* Datos del Perfil */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Datos Personales</CardTitle>
-          <CardDescription>Información básica de tu cuenta en el sistema.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <Label className="text-muted-foreground text-xs">Nombre</Label>
-            <p className="font-medium">{user?.name || "No definido"}</p>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-muted-foreground text-xs">Correo Electrónico</Label>
-            <p className="font-medium">{user?.email || "No definido"}</p>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-muted-foreground text-xs">Rol Principal</Label>
-            <p className="font-medium">{user?.role || "USER"}</p>
-          </div>
-        </CardContent>
-      </Card>
+  const [activeSection, setActiveSection] = useState("datos-personales")
 
-      {/* Cambiar Contraseña */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cambiar Contraseña</CardTitle>
-          <CardDescription>Actualiza tu contraseña. Usa una combinación segura de al menos 12 caracteres.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id)
+          }
+        })
+      },
+      { rootMargin: "-100px 0px -60% 0px" }
+    )
+    const sections = ["datos-personales", "seguridad", "mfa"]
+    sections.forEach((id) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  const scrollTo = (id: string) => {
+    const element = document.getElementById(id)
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
+  return (
+    <div className="flex flex-col md:flex-row gap-10 mt-6 relative items-start">
+      {/* Aside Menu */}
+      <aside className="w-full md:w-64 shrink-0 md:sticky md:top-24 hidden md:block">
+        <nav className="flex flex-col gap-1">
+          <button 
+            onClick={() => scrollTo('datos-personales')} 
+            className={cn("text-left px-3 py-2 text-sm font-medium rounded-md transition-colors", activeSection === 'datos-personales' ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground")}
+          >
+            Datos Personales
+          </button>
+          <button 
+            onClick={() => scrollTo('seguridad')} 
+            className={cn("text-left px-3 py-2 text-sm font-medium rounded-md transition-colors", activeSection === 'seguridad' ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground")}
+          >
+            Seguridad y Contraseña
+          </button>
+          <button 
+            onClick={() => scrollTo('mfa')} 
+            className={cn("text-left px-3 py-2 text-sm font-medium rounded-md transition-colors", activeSection === 'mfa' ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground")}
+          >
+            Autenticación de Dos Factores
+          </button>
+        </nav>
+      </aside>
+
+      {/* Content */}
+      <div className="flex-1 max-w-3xl space-y-16 pb-20">
+        
+        {/* Section: Datos Personales */}
+        <section id="datos-personales" className="space-y-6 scroll-mt-28">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Datos Personales</h2>
+            <p className="text-sm text-muted-foreground mt-1">Información básica de tu cuenta en el sistema.</p>
+          </div>
+          
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Nombre</Label>
+              <p className="font-medium">{user?.name || "No definido"}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Correo Electrónico</Label>
+              <p className="font-medium">{user?.email || "No definido"}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Rol Principal</Label>
+              <p className="font-medium">{user?.role || "USER"}</p>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-border" />
+
+        {/* Section: Seguridad y Contraseña */}
+        <section id="seguridad" className="space-y-6 scroll-mt-28">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Seguridad y Contraseña</h2>
+            <p className="text-sm text-muted-foreground mt-1">Actualiza tu contraseña usando una combinación segura de al menos 12 caracteres.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
             <div className="space-y-2">
               <Label htmlFor="oldPassword">Contraseña Actual</Label>
               <Input
@@ -132,7 +190,7 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="newPassword">Nueva Contraseña (Mínimo 12 caracteres)</Label>
+              <Label htmlFor="newPassword">Nueva Contraseña</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -158,74 +216,78 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
               Actualizar Contraseña
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </section>
 
-      {/* Autenticación de Dos Factores (MFA) */}
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>Autenticación de Dos Factores (MFA)</CardTitle>
-          <CardDescription>Añade una capa extra de seguridad a tu cuenta configurando un autenticador (TOTP).</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!mfaData && !mfaSuccess && (
-            <Button onClick={handleSetupMfa} disabled={isConfiguringMfa}>
-              {isConfiguringMfa && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Configurar Autenticador
-            </Button>
-          )}
+        <hr className="border-border" />
 
-          {mfaSuccess && (
-            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-400">
-              <p className="font-semibold text-sm">¡Autenticación de dos factores activada correctamente!</p>
-              <p className="text-xs mt-1">A partir de ahora, se te pedirá un código de tu aplicación autenticadora al iniciar sesión.</p>
-            </div>
-          )}
+        {/* Section: MFA */}
+        <section id="mfa" className="space-y-6 scroll-mt-28">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Autenticación de Dos Factores (MFA)</h2>
+            <p className="text-sm text-muted-foreground mt-1">Añade una capa extra de seguridad a tu cuenta configurando un autenticador (TOTP).</p>
+          </div>
+          
+          <div className="max-w-2xl">
+            {!mfaData && !mfaSuccess && (
+              <Button onClick={handleSetupMfa} disabled={isConfiguringMfa} variant="outline">
+                {isConfiguringMfa && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Configurar Autenticador
+              </Button>
+            )}
 
-          {mfaData && !mfaSuccess && (
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="bg-white p-4 rounded-md shadow-sm w-fit">
-                  <QRCodeSVG value={mfaData.qrCodeUrl} size={150} level="M" />
-                </div>
-                <div className="space-y-4 max-w-sm">
-                  <div>
-                    <h4 className="font-semibold text-sm">1. Escanea el código QR</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Abre tu aplicación autenticadora (ej. Google Authenticator, Authy) y escanea el código QR de la izquierda.
-                    </p>
+            {mfaSuccess && (
+              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-400">
+                <p className="font-semibold text-sm">¡Autenticación de dos factores activada correctamente!</p>
+                <p className="text-xs mt-1">A partir de ahora, se te pedirá un código de tu aplicación autenticadora al iniciar sesión.</p>
+              </div>
+            )}
+
+            {mfaData && !mfaSuccess && (
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="bg-white p-4 rounded-md shadow-sm border w-fit">
+                    <QRCodeSVG value={mfaData.qrCodeUrl} size={150} level="M" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-sm">2. Ingresa el código de 6 dígitos</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Introduce el código generado por la aplicación para verificar y activar el MFA.
-                    </p>
-                  </div>
-                  <form onSubmit={handleEnableMfa} className="flex gap-2 items-end mt-4">
-                    <div className="flex-1 space-y-2">
-                      <Label htmlFor="mfaCode" className="sr-only">Código MFA</Label>
-                      <Input
-                        id="mfaCode"
-                        type="text"
-                        placeholder="123456"
-                        value={mfaCode}
-                        onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        required
-                        minLength={6}
-                        maxLength={6}
-                        className="font-mono text-center tracking-widest text-lg h-11"
-                      />
+                  <div className="space-y-4 max-w-sm">
+                    <div>
+                      <h4 className="font-semibold text-sm">1. Escanea el código QR</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Abre tu aplicación autenticadora (ej. Google Authenticator, Authy) y escanea el código QR de la izquierda.
+                      </p>
                     </div>
-                    <Button type="submit" disabled={mfaCode.length !== 6 || isConfiguringMfa} className="h-11">
-                      {isConfiguringMfa ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
-                    </Button>
-                  </form>
+                    <div>
+                      <h4 className="font-semibold text-sm">2. Ingresa el código de 6 dígitos</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Introduce el código generado por la aplicación para verificar y activar el MFA.
+                      </p>
+                    </div>
+                    <form onSubmit={handleEnableMfa} className="flex gap-2 items-end mt-4">
+                      <div className="flex-1 space-y-2">
+                        <Label htmlFor="mfaCode" className="sr-only">Código MFA</Label>
+                        <Input
+                          id="mfaCode"
+                          type="text"
+                          placeholder="123456"
+                          value={mfaCode}
+                          onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          required
+                          minLength={6}
+                          maxLength={6}
+                          className="font-mono text-center tracking-widest text-lg h-11"
+                        />
+                      </div>
+                      <Button type="submit" disabled={mfaCode.length !== 6 || isConfiguringMfa} className="h-11">
+                        {isConfiguringMfa ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </div>
+        </section>
+
+      </div>
     </div>
   )
 }

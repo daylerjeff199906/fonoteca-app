@@ -114,6 +114,10 @@ export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
           title: "Usuarios",
           url: `/dashboard/users`,
         },
+        {
+          title: "Mi Perfil",
+          url: `/dashboard/profile`,
+        },
       ],
     },
   ]
