@@ -27,6 +27,8 @@ import {
   Loader2,
   Trash2,
   ShieldHalf,
+  Copy,
+  Download,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { SearchInput } from "@/components/dashboard/search-input"
@@ -98,6 +100,8 @@ export function SystemUsersClient({
 }: SystemUsersClientProps) {
   const router = useRouter()
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null)
+  const activeUser = selectedUser ? initialUsers.find(u => u.id === selectedUser.id) || selectedUser : null
+  const [generatedPassword, setGeneratedPassword] = useState<{email: string, password: string} | null>(null)
   
   // Dialogs state
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -151,6 +155,9 @@ export function SystemUsersClient({
         if (res.success) {
           showToast.success("Usuario creado", "Se ha enviado un correo con la contraseña temporal al usuario.")
           setIsCreateDialogOpen(false)
+          if (res.data?.tempPassword) {
+            setGeneratedPassword({ email: formData.email, password: res.data.tempPassword })
+          }
         } else {
           showToast.error("Error", res.error)
         }
@@ -186,6 +193,9 @@ export function SystemUsersClient({
       if (res.success) {
         showToast.success("Contraseña reseteada", "Se ha enviado un correo con la nueva contraseña temporal al usuario.")
         setIsResetAlertOpen(false)
+        if (res.data?.tempPassword) {
+          setGeneratedPassword({ email: selectedUser.email, password: res.data.tempPassword })
+        }
       } else {
         showToast.error("Error", res.error)
       }
@@ -466,7 +476,7 @@ export function SystemUsersClient({
           <SheetHeader className="space-y-1 mt-6">
             <SheetTitle>Roles Adicionales</SheetTitle>
             <SheetDescription>
-              Gestiona los roles adicionales de <strong>{selectedUser?.name}</strong>.
+              Gestiona los roles adicionales de <strong>{activeUser?.name}</strong>.
             </SheetDescription>
           </SheetHeader>
 
@@ -475,7 +485,7 @@ export function SystemUsersClient({
               <div className="grid gap-4">
                 {AVAILABLE_ROLES.map((role) => {
                   // user_roles has { roles: { code, ... } }
-                  const userRoles = selectedUser?.user_roles || []
+                  const userRoles = activeUser?.user_roles || []
                   const isAssigned = userRoles.some(ur => ur.roles?.code === role.code)
                   const isLoading = loadingRoles[role.code] || false
                   
@@ -533,6 +543,59 @@ export function SystemUsersClient({
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* GENERATED PASSWORD DIALOG */}
+      <Dialog open={!!generatedPassword} onOpenChange={(open) => {
+        if (!open) setGeneratedPassword(null)
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contraseña Generada</DialogTitle>
+            <DialogDescription>
+              Guarda esta contraseña temporal en un lugar seguro.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="bg-muted p-4 rounded-md text-center">
+              <span className="text-sm text-muted-foreground block mb-2">{generatedPassword?.email}</span>
+              <span className="text-2xl font-mono tracking-widest font-bold">{generatedPassword?.password}</span>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (generatedPassword) {
+                  const content = `Correo: ${generatedPassword.email}\nContraseña: ${generatedPassword.password}`
+                  const blob = new Blob([content], { type: "text/plain" })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = `credenciales-${generatedPassword.email}.txt`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }
+              }}
+              className="flex-1"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Descargar .txt
+            </Button>
+            <Button
+              onClick={() => {
+                if (generatedPassword) {
+                  navigator.clipboard.writeText(generatedPassword.password)
+                  showToast.success("Copiada", "Contraseña copiada al portapapeles")
+                }
+              }}
+              className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

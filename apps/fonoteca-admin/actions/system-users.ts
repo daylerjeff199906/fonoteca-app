@@ -135,7 +135,7 @@ export async function resetSystemPassword(id: string) {
     const payload = await res.json()
     if (!res.ok) throw new Error(payload.message || "Error al resetear contraseña.")
     
-    return { success: true, message: payload.message }
+    return { success: true, data: payload }
   } catch (error: any) {
     return { success: false, error: error.message }
   }
