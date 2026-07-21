@@ -16,55 +16,49 @@ import {
 import { Input } from "@/components/ui/input";
 import { showToast } from "@/lib/toast";
 
-export function DeleteButtonWithConfirm({
-  id,
+export function MultipleDeleteConfirmDialog({
   onConfirm,
-  itemName = "elemento",
+  selectedCount,
+  itemNamePlural = "elementos",
   requiredText = "eliminar",
+  isDeleting = false,
 }: {
-  id: string;
-  onConfirm: (id: string) => Promise<{ success?: boolean; error?: string }>;
-  itemName?: string;
+  onConfirm: () => Promise<void>;
+  selectedCount: number;
+  itemNamePlural?: string;
   requiredText?: string;
+  isDeleting?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
     if (inputValue.toLowerCase() !== requiredText.toLowerCase()) return;
-    setLoading(true);
     try {
-      const result = await onConfirm(id);
-      if (result.success) {
-        showToast.success("Eliminación Exitosa", `El ${itemName} ha sido eliminado correctamente.`);
-        setOpen(false);
-        setInputValue("");
-      } else {
-        showToast.error("Error", result.error || `No se pudo eliminar el ${itemName}.`);
-      }
+      await onConfirm();
+      setOpen(false);
+      setInputValue("");
     } catch (err) {
-      showToast.error("Error", "Ocurrió un error inesperado al intentar eliminar el registro.");
-    } finally {
-      setLoading(false);
+      showToast.error("Error", "Ocurrió un error inesperado al intentar eliminar los registros.");
     }
   };
 
   return (
     <AlertDialog open={open} onOpenChange={(o) => {
-        setOpen(o);
+        if (!isDeleting) setOpen(o);
         if (!o) setInputValue(""); // Reset on close
     }}>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" className="text-destructive hover:text-destructive" size="icon" title="Eliminar">
-          <Trash2 className="h-4 w-4" />
+        <Button variant="destructive" size="sm" disabled={isDeleting}>
+          <Trash2 className="h-4 w-4 mr-2" />
+          {isDeleting ? "Eliminando..." : "Eliminar selección"}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+          <AlertDialogTitle>¿Eliminar {selectedCount} {itemNamePlural}?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta acción no se puede deshacer. Se eliminará permanentemente este {itemName}.
+            Esta acción no se puede deshacer. Se eliminarán permanentemente estos {selectedCount} {itemNamePlural}.
             <div className="mt-2">
               Para confirmar, escriba <strong>"{requiredText}"</strong> abajo.
             </div>
@@ -75,17 +69,17 @@ export function DeleteButtonWithConfirm({
              placeholder={`Escriba "${requiredText}"`} 
              value={inputValue} 
              onChange={(e) => setInputValue(e.target.value)}
-             disabled={loading}
+             disabled={isDeleting}
           />
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
           <Button 
             variant="destructive"
             onClick={handleConfirm}
-            disabled={inputValue.toLowerCase() !== requiredText.toLowerCase() || loading}
+            disabled={inputValue.toLowerCase() !== requiredText.toLowerCase() || isDeleting}
           >
-            {loading ? "Eliminando..." : "Eliminar"}
+            {isDeleting ? "Eliminando..." : "Eliminar Todos"}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
