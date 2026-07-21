@@ -1,342 +1,204 @@
 "use server"
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { OccurrenceInput, occurrenceSchema } from "@/lib/validations/fonoteca";
 import { Occurrence } from "@/types/fonoteca";
 import { deleteR2Folder } from "./multimedia";
+import {
+  getCrudPage,
+  getAllCrud,
+  getCrudItem,
+  mutateCrud,
+  multipleDeleteCrud,
+} from "@/lib/backend/crud";
+
+function formatOccurrence(item: any): Occurrence {
+  if (!item) return item;
+  const taxon = item.taxa
+    ? {
+        ...item.taxa,
+        genus: item.taxa.genera
+          ? {
+              ...item.taxa.genera,
+              family: item.taxa.genera.families
+                ? {
+                    ...item.taxa.genera.families,
+                    order_obj: item.taxa.genera.families.orders
+                      ? {
+                          ...item.taxa.genera.families.orders,
+                          class_obj: item.taxa.genera.families.orders.classes,
+                        }
+                      : undefined,
+                  }
+                : undefined,
+            }
+          : undefined,
+      }
+    : item.taxon;
+
+  const collection = item.collections
+    ? {
+        ...item.collections,
+        institution: item.collections.institutions,
+      }
+    : item.collection;
+
+  return {
+    ...item,
+    taxon,
+    location: item.locations || item.location,
+    collection,
+    event: item.events || item.event,
+    ecosystem: item.ecosystems || item.ecosystem,
+    multimedia: item.multimedia || [],
+  } as Occurrence;
+}
 
 export async function getOccurrences({
   page = 1,
   limit = 10,
   search = "",
   taxonId = "",
-  hasImage = "all", // "all", "yes", "no"
-  hasAudio = "all", // "all", "yes", "no"
   eventId = "",
 }: {
   page?: number;
   limit?: number;
   search?: string;
   taxonId?: string;
-  hasImage?: string;
-  hasAudio?: string;
   eventId?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    const res = await getCrudPage<any>("occurrences", {
+      page,
+      limit,
+      search,
+      taxonId,
+      eventId,
+    });
 
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+    const formattedData = (res.data || []).map(formatOccurrence);
 
-  let query = supabase
-    .from("occurrences")
-    .select(`
-      *, 
-      taxon:taxa(
-        *, 
-        genus:genera(
-          *, 
-          family:families(
-            *, 
-            order_obj:orders(
-              *, 
-              class_obj:classes(*)
-            )
-          )
-        )
-      ), 
-      location:locations(*), 
-      collection:collections(*, institution:institutions(*)),
-      multimedia(*)
-    `, { count: "exact" });
-
-
-  if (search) {
-    query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
-  }
-
-  if (taxonId) {
-    query = query.eq("taxon_id", taxonId);
-  }
-
-  if (eventId) {
-    query = query.eq("event_id", eventId);
-  }
-
-  // Media filtering
-  if (hasImage === "yes" || hasImage === "no") {
-    const { data: imageIds } = await supabase
-      .from("multimedia")
-      .select("occurrence_id")
-      .eq("type", "Still");
-    const ids = Array.from(new Set(imageIds?.map((m) => m.occurrence_id) || []));
-    if (hasImage === "yes") {
-      query = query.in("id", ids);
-    } else {
-      query = query.not("id", "in", `(${ids.length > 0 ? ids.join(",") : "00000000-0000-0000-0000-000000000000"})`);
-    }
-  }
-
-  if (hasAudio === "yes" || hasAudio === "no") {
-    const { data: audioIds } = await supabase
-      .from("multimedia")
-      .select("occurrence_id")
-      .eq("type", "Sound");
-    const ids = Array.from(new Set(audioIds?.map((m) => m.occurrence_id) || []));
-    if (hasAudio === "yes") {
-      query = query.in("id", ids);
-    } else {
-      query = query.not("id", "in", `(${ids.length > 0 ? ids.join(",") : "00000000-0000-0000-0000-000000000000"})`);
-    }
-  }
-
-  const { data, count, error } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
+    return {
+      data: formattedData,
+      count: res.meta.totalItems,
+    };
+  } catch (error: any) {
     console.error("error fetching occurrences:", error);
-    return { data: [] as Occurrence[], count: 0, error: error.message };
+    return { data: [] as Occurrence[], count: 0, error: error.message || "Error al cargar ocurrencias." };
   }
-
-  // Map supabase structure to our expected nested structure
-  const formattedData = (data || []).map((item: any) => ({
-    ...item,
-  })) as Occurrence[];
-
-  return {
-    data: formattedData,
-    count: count || 0,
-  };
 }
 
 export async function getOccurrence(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("occurrences")
-    .select(`
-      *, 
-      taxon:taxa(
-        *, 
-        genus:genera(
-          *, 
-          family:families(
-            *, 
-            order_obj:orders(
-              *, 
-              class_obj:classes(*)
-            )
-          )
-        )
-      ), 
-      location:locations(*), 
-      event:events(*),
-      collection:collections(*, institution:institutions(*)),
-      ecosystem:ecosystems(*)
-    `)
-
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const raw = await getCrudItem<any>("occurrences", id);
+    return { data: formatOccurrence(raw) };
+  } catch (error: any) {
+    return { error: error.message || "No se encontró la ocurrencia." };
   }
-
-  return { data: data as Occurrence };
 }
 
 export async function createOccurrence(input: OccurrenceInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = occurrenceSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("occurrences")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<any>("occurrences", "POST", parsed.data);
+    revalidatePath("/dashboard/occurrences");
+    return { success: true, data: formatOccurrence(data) };
+  } catch (error: any) {
+    return { error: error.message || "Error al crear ocurrencia." };
   }
-
-  revalidatePath("/dashboard/occurrences");
-  return { success: true, data: (data as any) as Occurrence };
 }
 
 export async function updateOccurrence(id: string, input: OccurrenceInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = occurrenceSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("occurrences")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<any>("occurrences", "PATCH", parsed.data, id);
+    revalidatePath("/dashboard/occurrences");
+    revalidatePath(`/dashboard/occurrences/${id}`);
+    return { success: true, data: formatOccurrence(data) };
+  } catch (error: any) {
+    return { error: error.message || "Error al actualizar ocurrencia." };
   }
+}
 
-  revalidatePath("/dashboard/occurrences");
-  revalidatePath(`/dashboard/occurrences/${id}`);
-  return { success: true, data: (data as any) as Occurrence };
+export async function updateOccurrenceStatus(id: string, status: string) {
+  try {
+    const data = await mutateCrud<any>("occurrences", "PATCH", { record_status: status }, id);
+    revalidatePath("/dashboard/occurrences");
+    revalidatePath(`/dashboard/occurrences/${id}`);
+    return { success: true, data: formatOccurrence(data) };
+  } catch (error: any) {
+    return { error: error.message || "Error al actualizar el estado de la ocurrencia." };
+  }
 }
 
 export async function deleteOccurrence(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("occurrences")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Cascade delete in R2
   try {
-    await deleteR2Folder(`occurrences/${id}`);
-  } catch (r2Err) {
-    console.error(`Failed to delete R2 folder for occurrence ${id}:`, r2Err);
-  }
+    await mutateCrud("occurrences", "DELETE", undefined, id);
 
-  revalidatePath("/dashboard/occurrences");
-  return { success: true };
-}
-
-export async function deleteOccurrences(ids: string[]) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("occurrences")
-    .delete()
-    .in("id", ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Cascade delete in R2
-  for (const id of ids) {
+    // Cascade delete in R2
     try {
       await deleteR2Folder(`occurrences/${id}`);
     } catch (r2Err) {
       console.error(`Failed to delete R2 folder for occurrence ${id}:`, r2Err);
     }
-  }
 
-  revalidatePath("/dashboard/occurrences");
-  return { success: true };
+    revalidatePath("/dashboard/occurrences");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Error al eliminar la ocurrencia." };
+  }
+}
+
+export async function deleteOccurrences(ids: string[]) {
+  try {
+    await multipleDeleteCrud("occurrences", ids);
+
+    // Cascade delete in R2
+    for (const id of ids) {
+      try {
+        await deleteR2Folder(`occurrences/${id}`);
+      } catch (r2Err) {
+        console.error(`Failed to delete R2 folder for occurrence ${id}:`, r2Err);
+      }
+    }
+
+    revalidatePath("/dashboard/occurrences");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Error al eliminar múltiples ocurrencias." };
+  }
 }
 
 export async function getAllOccurrencesForExport({
   search = "",
   taxonId = "",
-  hasImage = "all",
-  hasAudio = "all",
 }: {
   search?: string;
   taxonId?: string;
-  hasImage?: string;
-  hasAudio?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    const data = await getAllCrud<any>("occurrences", {
+      search,
+      taxonId,
+    });
 
-  let query = supabase
-    .from("occurrences")
-    .select(`
-      *, 
-      taxon:taxa(
-        *, 
-        genus:genera(
-          *, 
-          family:families(
-            *, 
-            order_obj:orders(
-              *, 
-              class_obj:classes(*)
-            )
-          )
-        )
-      ), 
-      location:locations(*), 
-      collection:collections(*, institution:institutions(*)),
-      multimedia(*)
-    `);
-
-
-  if (search) {
-    query = query.or(`occurrenceID.ilike.%${search}%,recordedBy.ilike.%${search}%,catalogNumber.ilike.%${search}%`);
-  }
-
-  if (taxonId) {
-    query = query.eq("taxon_id", taxonId);
-  }
-
-  // Media filtering (simplified for export, ideally should match getOccurrences logic)
-  if (hasImage === "yes" || hasImage === "no") {
-    const { data: imageIds } = await supabase
-      .from("multimedia")
-      .select("occurrence_id")
-      .eq("type", "Still");
-    const ids = Array.from(new Set(imageIds?.map((m) => m.occurrence_id) || []));
-    if (hasImage === "yes") {
-      query = query.in("id", ids);
-    } else {
-      query = query.not("id", "in", `(${ids.length > 0 ? ids.join(",") : "00000000-0000-0000-0000-000000000000"})`);
-    }
-  }
-
-  if (hasAudio === "yes" || hasAudio === "no") {
-    const { data: audioIds } = await supabase
-      .from("multimedia")
-      .select("occurrence_id")
-      .eq("type", "Sound");
-    const ids = Array.from(new Set(audioIds?.map((m) => m.occurrence_id) || []));
-    if (hasAudio === "yes") {
-      query = query.in("id", ids);
-    } else {
-      query = query.not("id", "in", `(${ids.length > 0 ? ids.join(",") : "00000000-0000-0000-0000-000000000000"})`);
-    }
-  }
-
-  const { data, error } = await query.order("created_at", { ascending: false });
-
-  if (error) {
+    const formattedData = (data || []).map(formatOccurrence);
+    return { data: formattedData };
+  } catch (error: any) {
     console.error("error fetching all occurrences for export:", error);
     return { data: [] as Occurrence[] };
   }
-
-  const formattedData = (data || []).map((item: any) => ({
-    ...item,
-  })) as Occurrence[];
-
-  return { data: formattedData };
 }
 
 export async function bulkCreateOccurrences(inputs: any[]) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   let successCount = 0;
   let errorCount = 0;
   const errors: string[] = [];
@@ -350,12 +212,12 @@ export async function bulkCreateOccurrences(inputs: any[]) {
       continue;
     }
 
-    const { error } = await supabase.from("occurrences").insert([parsed.data]);
-    if (error) {
-      errorCount++;
-      errors.push(`ID ${input.occurrenceID || '?'}: ${error.message}`);
-    } else {
+    try {
+      await mutateCrud("occurrences", "POST", parsed.data);
       successCount++;
+    } catch (err: any) {
+      errorCount++;
+      errors.push(`ID ${input.occurrenceID || '?'}: ${err.message || "Error al insertar"}`);
     }
   }
 

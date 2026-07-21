@@ -18,7 +18,7 @@ import {
   ChevronDown, LayoutList, Music, Image as ImageIcon, Trash2
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { deleteOccurrence, deleteOccurrences, getAllOccurrencesForExport } from "@/actions/occurrences";
+import { deleteOccurrence, deleteOccurrences, getAllOccurrencesForExport, updateOccurrenceStatus } from "@/actions/occurrences";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -128,11 +128,9 @@ export function OccurrencesClient({
         setIsExporting(true);
         const search = searchParams.get("search") || "";
         const taxonId = searchParams.get("taxonId") || "";
-        const hasImage = searchParams.get("hasImage") || "all";
-        const hasAudio = searchParams.get("hasAudio") || "all";
 
         const res = await getAllOccurrencesForExport({
-          search, taxonId, hasImage, hasAudio
+          search, taxonId
         });
         dataToExport = res.data;
       }
@@ -196,9 +194,17 @@ export function OccurrencesClient({
     }
   };
 
+  const handleStatusChange = async (id: string, status: string) => {
+    const res = await updateOccurrenceStatus(id, status);
+    if (res.success) {
+      showToast.success("Estado Actualizado", `El estado ha cambiado a "${status}".`);
+      router.refresh();
+    } else {
+      showToast.error("Error", res.error || "No se pudo actualizar el estado.");
+    }
+  };
+
   const currentTaxonId = searchParams.get("taxonId") || "all";
-  const currentHasImage = searchParams.get("hasImage") || "all";
-  const currentHasAudio = searchParams.get("hasAudio") || "all";
 
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -221,8 +227,6 @@ export function OccurrencesClient({
       const taxon = taxa.find(t => t.id === currentTaxonId);
       filters.push({ key: "taxonId", label: `Taxón: ${taxon?.scientificName || currentTaxonId}` });
     }
-    if (currentHasImage !== "all") filters.push({ key: "hasImage", label: currentHasImage === "yes" ? "Con Imágenes" : "Sin Imágenes" });
-    if (currentHasAudio !== "all") filters.push({ key: "hasAudio", label: currentHasAudio === "yes" ? "Con Audio" : "Sin Audio" });
     return filters;
   };
 
@@ -355,45 +359,6 @@ export function OccurrencesClient({
                 </Command>
               </div>
             </div>
-
-            {/* RADIO GROUPS FOR MEDIA */}
-            <div className="space-y-4 border-t pt-6">
-              <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Presencia de Imágenes</Label>
-                <RadioGroup value={currentHasImage} onValueChange={(val: string) => handleFilterChange("hasImage", val)} className="flex flex-col gap-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="mi-all" />
-                    <Label htmlFor="mi-all" className="font-normal cursor-pointer">Todas</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="mi-yes" />
-                    <Label htmlFor="mi-yes" className="font-normal cursor-pointer">Con Imágenes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="mi-no" />
-                    <Label htmlFor="mi-no" className="font-normal cursor-pointer">Sin Imágenes</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-4 pt-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Presencia de Audio</Label>
-                <RadioGroup value={currentHasAudio} onValueChange={(val: string) => handleFilterChange("hasAudio", val)} className="flex flex-col gap-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="ma-all" />
-                    <Label htmlFor="ma-all" className="font-normal cursor-pointer">Todos</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="ma-yes" />
-                    <Label htmlFor="ma-yes" className="font-normal cursor-pointer">Con Audio</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="ma-no" />
-                    <Label htmlFor="ma-no" className="font-normal cursor-pointer">Sin Audio</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 border-t bg-background">
             <Button className="w-full h-10 shadow-sm font-semibold" onClick={() => setIsFilterSheetOpen(false)}>Ver Resultados</Button>
@@ -419,6 +384,7 @@ export function OccurrencesClient({
               <TableHead>Ubicación</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Registrado Por</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -483,6 +449,30 @@ export function OccurrencesClient({
                     </TableCell>
                     <TableCell>{oc.recordedBy}</TableCell>
                     <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <Button variant="ghost" className="h-6 p-1 cursor-pointer">
+                            <Badge variant={oc.record_status === "published" ? "default" : "secondary"} className="capitalize text-[10px] h-5 px-1.5 cursor-pointer">
+                              {oc.record_status || "draft"}
+                            </Badge>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel className="text-xs">Cambiar Estado</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "draft")} className="text-xs">
+                            Borrador (Draft)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "published")} className="text-xs">
+                            Publicado (Published)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "inactive")} className="text-xs">
+                            Inactivo (Inactive)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-1">
                         <Link href={`/dashboard/occurrences/${oc.id}`} className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")} title="Ver Detalles">
                           <Eye className="h-4 w-4" />
@@ -502,7 +492,7 @@ export function OccurrencesClient({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
+                <TableCell colSpan={10} className="h-24 text-center">
                   No se encontraron resultados.
                 </TableCell>
               </TableRow>

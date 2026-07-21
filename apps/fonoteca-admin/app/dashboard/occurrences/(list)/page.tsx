@@ -12,8 +12,6 @@ export default async function OccurrencesPage({
   const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
   const taxonId = typeof params.taxonId === "string" ? params.taxonId : "";
-  const hasImage = typeof params.hasImage === "string" ? params.hasImage : "all";
-  const hasAudio = typeof params.hasAudio === "string" ? params.hasAudio : "all";
 
   const [{ data: occurrences, count, error }, { data: taxa }] = await Promise.all([
     getOccurrences({
@@ -21,8 +19,6 @@ export default async function OccurrencesPage({
       limit,
       search,
       taxonId,
-      hasImage,
-      hasAudio,
     }),
     getTaxa({ limit: 1000 }) // Load all taxa for filtering
   ]);

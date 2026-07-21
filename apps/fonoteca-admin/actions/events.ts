@@ -1,10 +1,22 @@
 "use server"
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { EventInput, eventSchema } from "@/lib/validations/fonoteca";
 import { Event } from "@/types/fonoteca";
+import {
+  getCrudPage,
+  getCrudItem,
+  mutateCrud,
+} from "@/lib/backend/crud";
+
+function formatEvent(item: any): Event {
+  if (!item) return item;
+  return {
+    ...item,
+    location: item.locations || item.location,
+    institution: item.institutions || item.institution,
+  } as Event;
+}
 
 export async function getEvents({
   page = 1,
@@ -15,129 +27,82 @@ export async function getEvents({
   limit?: number;
   search?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    const res = await getCrudPage<any>("events", {
+      page,
+      limit,
+      search,
+    });
 
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+    const formattedData = (res.data || []).map(formatEvent);
 
-  let query = supabase
-    .from("events")
-    .select("*, locations(*)", { count: "exact" });
-
-  if (search) {
-    query = query.or(`eventID.ilike.%${search}%,samplingProtocol.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%`);
-  }
-
-  const { data, count, error } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
+    return {
+      data: formattedData,
+      count: res.meta.totalItems,
+    };
+  } catch (error: any) {
     console.error("error fetching events:", error);
-    return { data: [] as Event[], count: 0, error: error.message };
+    return { data: [] as Event[], count: 0, error: error.message || "Error al cargar eventos." };
   }
-
-  const formattedData = (data || []).map((item: any) => ({
-    ...item,
-    location: item.locations,
-  })) as Event[];
-
-  return {
-    data: formattedData,
-    count: count || 0,
-  };
 }
 
 export async function getEvent(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("events")
-    .select("*, locations(*)")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const raw = await getCrudItem<any>("events", id);
+    return { data: formatEvent(raw) };
+  } catch (error: any) {
+    return { error: error.message || "No se encontró el evento." };
   }
-
-  const formattedData = {
-    ...data,
-    location: data.locations,
-  } as Event;
-
-  return { data: formattedData };
 }
 
 export async function createEvent(input: EventInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  // Get current user for audit
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    input.created_by_id = user.id;
-  }
-
   const parsed = eventSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("events")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<any>("events", "POST", parsed.data);
+    revalidatePath("/dashboard/events");
+    return { success: true, data: formatEvent(data) };
+  } catch (error: any) {
+    return { error: error.message || "Error al crear evento." };
   }
-
-  revalidatePath("/dashboard/events");
-  return { success: true, data: (data as any) as Event };
 }
 
 export async function updateEvent(id: string, input: EventInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = eventSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("events")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<any>("events", "PATCH", parsed.data, id);
+    revalidatePath("/dashboard/events");
+    revalidatePath(`/dashboard/events/${id}`);
+    return { success: true, data: formatEvent(data) };
+  } catch (error: any) {
+    return { error: error.message || "Error al actualizar evento." };
   }
+}
 
-  revalidatePath("/dashboard/events");
-  revalidatePath(`/dashboard/events/${id}`);
-  return { success: true, data: (data as any) as Event };
+export async function updateEventStatus(id: string, status: string) {
+  try {
+    const data = await mutateCrud<any>("events", "PATCH", { record_status: status }, id);
+    revalidatePath("/dashboard/events");
+    revalidatePath(`/dashboard/events/${id}`);
+    return { success: true, data: formatEvent(data) };
+  } catch (error: any) {
+    return { error: error.message || "Error al actualizar el estado del evento." };
+  }
 }
 
 export async function deleteEvent(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("events")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
+  try {
+    await mutateCrud("events", "DELETE", undefined, id);
+    revalidatePath("/dashboard/events");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Error al eliminar el evento." };
   }
-
-  revalidatePath("/dashboard/events");
-  return { success: true };
 }

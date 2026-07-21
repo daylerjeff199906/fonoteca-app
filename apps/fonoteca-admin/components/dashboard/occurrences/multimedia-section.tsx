@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
-import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
 import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -207,8 +206,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       setIsUserLoading(false);
     });
   }, [debouncedCreatorSearch]);
-
-  const supabase = createFonotecaClient();
 
   const loadMultimedia = async () => {
     setInitialLoading(true);
