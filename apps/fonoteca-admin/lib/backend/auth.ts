@@ -349,11 +349,11 @@ export async function verifyMfaLogin(mfaToken: string, code: string): Promise<Lo
 }
 
 // 7. POST /api/v1/auth/forgot-password
-export async function requestPasswordReset(email: string, resetUrl: string) {
+export async function requestPasswordReset(email: string) {
   await fetch(apiUrl(authPath("FORGOT_PASSWORD", "/auth/forgot-password")), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ email, reset_url: resetUrl }),
+    body: JSON.stringify({ email }),
     cache: "no-store",
   });
 }

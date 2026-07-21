@@ -8,8 +8,7 @@ const message = "Si el correo está registrado, recibirás instrucciones para re
 export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ message: "Ingresa un correo válido." }, { status: 400 });
-  const resetUrl = new URL("/reset-password", request.url).toString();
-  await requestPasswordReset(parsed.data.email, resetUrl).catch(() => undefined);
+  await requestPasswordReset(parsed.data.email).catch(() => undefined);
   // Respuesta uniforme: evita enumerar cuentas existentes.
   return NextResponse.json({ message });
 }
