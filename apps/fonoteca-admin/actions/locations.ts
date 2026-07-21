@@ -5,6 +5,25 @@ import { LocationInput, locationSchema } from "@/lib/validations/fonoteca";
 import { Location } from "@/types/fonoteca";
 import { getCrudPage, getCrudItem, mutateCrud, deactivateCrud, multipleDeleteCrud, getAllCrud } from "@/lib/backend/crud";
 
+function formatLocation(item: any): Location {
+  if (!item) return item;
+  return {
+    ...item,
+    stateProvince: item.stateProvince ?? item.stateprovince ?? null,
+    geodeticDatum: item.geodeticDatum ?? item.geodeticdatum ?? null,
+    georeferenceProtocol: item.georeferenceProtocol ?? item.georeferenceprotocol ?? null,
+    georeferenceSources: item.georeferenceSources ?? item.georeferencesources ?? null,
+    georeferencedDate: item.georeferencedDate ?? (item.georeferenceddate ? new Date(item.georeferenceddate).toISOString().split('T')[0] : null),
+    district: item.ubigeo_districts ? {
+      ...item.ubigeo_districts,
+      province: item.ubigeo_districts.ubigeo_provinces ? {
+        ...item.ubigeo_districts.ubigeo_provinces,
+        department: item.ubigeo_districts.ubigeo_provinces.ubigeo_departments,
+      } : undefined,
+    } : item.district,
+  } as Location;
+}
+
 export async function getLocations({
   page = 1,
   limit = 10,
@@ -15,8 +34,9 @@ export async function getLocations({
   search?: string;
 }) {
   try {
-    const result = await getCrudPage<Location>("locations", { page, limit, search });
-    return { data: result.data, count: result.meta.totalItems };
+    const result = await getCrudPage<any>("locations", { page, limit, search });
+    const formattedData = (result.data || []).map(formatLocation);
+    return { data: formattedData, count: result.meta.totalItems };
   } catch (error) {
     console.error("error fetching locations:", error);
     return { data: [] as Location[], count: 0, error: error instanceof Error ? error.message : "Error al cargar ubicaciones" };
@@ -25,8 +45,8 @@ export async function getLocations({
 
 export async function getLocation(id: string) {
   try {
-    const data = await getCrudItem<Location>("locations", id);
-    return { data };
+    const raw = await getCrudItem<any>("locations", id);
+    return { data: formatLocation(raw) };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "No se pudo cargar la ubicación" };
   }
@@ -70,9 +90,9 @@ export async function createLocation(input: LocationInput) {
   }
 
   try {
-    const data = await mutateCrud<Location>("locations", "POST", parsed.data);
+    const raw = await mutateCrud<any>("locations", "POST", parsed.data);
     revalidatePath("/dashboard/locations");
-    return { success: true, data };
+    return { success: true, data: formatLocation(raw) };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Error al crear la ubicación" };
   }
@@ -85,11 +105,11 @@ export async function updateLocation(id: string, input: LocationInput) {
   }
 
   try {
-    const data = await mutateCrud<Location>("locations", "PATCH", parsed.data, id);
+    const raw = await mutateCrud<any>("locations", "PATCH", parsed.data, id);
     revalidatePath("/dashboard/locations");
     revalidatePath(`/dashboard/locations/${id}`);
     revalidatePath(`/dashboard/locations/${id}/edit`);
-    return { success: true, data };
+    return { success: true, data: formatLocation(raw) };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Error al actualizar la ubicación" };
   }
