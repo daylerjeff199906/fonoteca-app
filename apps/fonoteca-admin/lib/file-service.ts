@@ -13,6 +13,17 @@ export interface FileServiceResource {
   sha256: string;
   key: string;
   url: string;
+  /**
+   * Variante creada por Files API. Su URL puede estar firmada, por lo que debe
+   * consumirse exactamente como llega del servicio.
+   */
+  processed?: {
+    key: string;
+    url: string;
+    content_type: string;
+    width?: number;
+    height?: number;
+  };
   metadata?: Record<string, any>;
   duplicate: boolean;
 }

@@ -21,16 +21,9 @@ export const getOptimizedMediaUrl = (url: string, isAudio: boolean = false): str
   const driveThumb = getDriveThumbnailUrl(url);
   if (driveThumb && !isAudio) return driveThumb;
 
-  if (url.includes('/original/')) {
-    if (isAudio) {
-      const ext = url.split('.').pop();
-      if (ext && ['wav', 'flac', 'm4a', 'mp3'].includes(ext.toLowerCase())) {
-        return url.replace('/original/', '/variants/').replace(new RegExp(`\\.${ext}$`, 'i'), '_processed.ogg');
-      }
-    } else {
-      return url.replace('/original/', '/variants/original_q80.webp');
-    }
-  }
-
+  // Las URLs de Files API pueden estar prefirmadas. Alterar el path, el
+  // nombre o los parámetros invalida la firma; la variante debe venir ya
+  // resuelta desde la respuesta de carga o desde la API de multimedia.
+  void isAudio;
   return url;
 };

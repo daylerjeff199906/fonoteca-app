@@ -102,7 +102,8 @@ const getDriveThumbnailUrl = (url: string) => {
   if (match && match[1]) {
     return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
   }
-  return null;
+  // La URL puede ser prefirmada: se consume sin modificarla.
+  return url;
 };
 
 const sanitizeFilename = (name: string) => {
@@ -822,7 +823,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                         setSliderOpen(true);
                       }}
                     >
-                      <img src={sp.identifier} className="h-full w-full object-cover" />
+                      <img src={getDriveThumbnailUrl(sp.identifier) || sp.identifier} className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
                         <Info className="h-3 w-3 text-white" />
                       </div>
@@ -1287,7 +1288,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
               ) : editingItem?.type === MEDIA_TYPE.STILL ? (
                 <img
-                  src={getAudioUrl(editUrl)}
+                  src={getDriveThumbnailUrl(editUrl) || editUrl}
                   className="max-h-full max-w-full object-contain"
                   alt="Preview"
                   onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }}

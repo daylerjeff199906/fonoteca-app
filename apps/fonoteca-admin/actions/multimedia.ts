@@ -190,7 +190,7 @@ export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_i
   }
 }
 
-export async function uploadToFileService(formData: FormData): Promise<{ success: boolean; url?: string; file?: any; error?: string }> {
+export async function uploadToFileService(formData: FormData): Promise<{ success: boolean; url?: string; originalUrl?: string; file?: any; error?: string }> {
   try {
     if (!formData.has("duplicate_policy")) {
       formData.append("duplicate_policy", "reuse");
@@ -203,7 +203,15 @@ export async function uploadToFileService(formData: FormData): Promise<{ success
     }
 
     const result = await uploadFileToFileService(formData);
-    return { success: true, url: result.url, file: result };
+    // Files API devuelve una URL prefirmada para la variante cuando procesa
+    // una imagen. No se debe reconstruir ni modificar: ruta y query forman
+    // parte de la firma S3/MinIO.
+    return {
+      success: true,
+      url: result.processed?.url ?? result.url,
+      originalUrl: result.url,
+      file: result,
+    };
   } catch (err: any) {
     console.error("Files API upload error:", err);
     return { success: false, error: err.message || "Error al subir archivo" };
