@@ -265,7 +265,7 @@ export const formatMediaUrl = (identifier: string, isAudio: boolean = false) => 
     return identifier;
 };
 
-import { supabase } from "../lib/supabase";
+import { fetchApi } from "../lib/api";
 
 export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise<{ species: Species[], totalCount: number }> {
     const {
@@ -280,156 +280,24 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
         limit = 20
     } = options;
 
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-    // Base query for counting AND fetching
-    const multimediaJoin = onlyWithAudio ? '!inner' : '';
+    try {
+        const queryParams = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+        });
+        if (searchTerm) queryParams.set("search", searchTerm);
+        if (location && location !== 'All') queryParams.set("location", location);
+        if (className && className !== 'All') queryParams.set("class", className);
+        if (order && order !== 'All') queryParams.set("order", order);
+        if (family && family !== 'All') queryParams.set("family", family);
+        if (genus && genus !== 'All') queryParams.set("genus", genus);
 
-    let query = supabase
-        .from("occurrences")
-        .select(`
-            id,
-            occurrenceID,
-            taxon_id,
-            location_id,
-            record_status,
-            occurrence_date,
-            temperature_c,
-            relative_humidity_percent,
-            elevation_masl,
-            occurrenceRemarks,
-            identificationMethod,
-            microhabitat_remarks,
-            basisOfRecord,
-            catalogNumber,
-            preparations,
-            disposition,
-            individualCount:individualcount,
-            dynamicProperties:dynamicproperties,
-            dateIdentified:dateidentified,
-            identificationRemarks:identificationremarks,
-            license,
-            rightsHolder:rightsholder,
-            has_cloud_voucher,
-            institutions (
-                name,
-                code
-            ),
-            collections (
-                name,
-                code
-            ),
-            taxa!inner (
-                scientificName,
-                vernacularName,
-                genus:genera!inner (
-                    name,
-                    family:families!inner (
-                        name,
-                        orders:orders!inner (
-                            name,
-                            classes:classes!inner (
-                                name,
-                                kingdom,
-                                phylum
-                            )
-                        )
-                    )
-                )
-            ),
-            locations:locations!inner (
-                locality,
-                decimalLatitude,
-                decimalLongitude,
-                coordinateUncertaintyInMeters,
-                country,
-                stateProvince:stateprovince,
-                geodeticDatum:geodeticdatum,
-                georeferenceProtocol:georeferenceprotocol,
-                georeferenceSources:georeferencesources,
-                georeferencedDate:georeferenceddate,
-                district:ubigeo_districts (
-                    name,
-                    province:ubigeo_provinces (
-                        name,
-                        department:ubigeo_departments (
-                            name
-                        )
-                    )
-                )
-            ),
-            events (
-                id,
-                eventID,
-                eventDate,
-                eventTime,
-                samplingProtocol
-            ),
-            ecosystems (
-                name,
-                region:natural_regions (
-                    name
-                )
-            ),
-            multimedia${multimediaJoin}(
-                id,
-                identifier,
-                type,
-                format,
-                title,
-                description,
-                tag,
-                vocalization_type,
-                background_species,
-                duration_seconds,
-                file_size_bytes,
-                parent_multimedia_id,
-                is_public
-            )
-        `, { count: 'exact' })
-        .eq('record_status', 'published');
+        const response = await fetchApi<{ data: DbOccurrence[]; meta?: { totalItems: number }; count?: number }>(
+            `/occurrences?${queryParams.toString()}`
+        );
 
-
-    // 1. Search filter
-    if (searchTerm) {
-        query = query.or(`scientificName.ilike.%${searchTerm}%,vernacularName.ilike.%${searchTerm}%`, { foreignTable: 'taxa' });
-    }
-
-    // 2. Taxonomic filters (Category was mapped to class, now we use class directly)
-    if (className && className !== 'All') {
-        query = query.eq('taxa.genus.family.orders.classes.name', className);
-    }
-
-    if (order && order !== 'All') {
-        query = query.eq('taxa.genus.family.orders.name', order);
-    }
-
-    if (family && family !== 'All') {
-        query = query.eq('taxa.genus.family.name', family);
-    }
-
-    if (genus && genus !== 'All') {
-        query = query.eq('taxa.genus.name', genus);
-    }
-
-    // 3. Location filter
-    if (location && location !== 'All') {
-        query = query.eq('locations.locality', location);
-    }
-
-    // 4. Audio filter (Backend via inner join)
-    // if (onlyWithAudio) {
-    //     query = query.eq('multimedia.type', 'Sound');
-    // }
-
-    // 5. Pagination
-    query = query.range(from, to).order('created_at', { ascending: false });
-
-    const { data: occurrences, error, count } = await query as { data: DbOccurrence[] | null, error: any, count: number | null };
-    if (error) {
-        console.error("Error fetching species from Supabase:", error);
-        return { species: [], totalCount: 0 };
-    }
+        const occurrences = response.data || [];
+        const count = response.meta?.totalItems ?? response.count ?? occurrences.length;
 
     const speciesList: Species[] = (occurrences || []).map((occ) => {
         const taxon = occ.taxa;
@@ -584,121 +452,16 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
         species: speciesList,
         totalCount: count || 0
     };
+  } catch (err) {
+    console.error("Error in getAllSpecies:", err);
+    return { species: [], totalCount: 0 };
+  }
 }
 
 export async function getSpeciesById(id: string): Promise<Species | undefined> {
-    const { data: occurrence, error } = await supabase
-        .from('occurrences')
-        .select(`
-            id,
-            occurrenceID,
-            basisOfRecord,
-            catalogNumber,
-            preparations,
-            disposition,
-            individualCount:individualcount,
-            dynamicProperties:dynamicproperties,
-            dateIdentified:dateidentified,
-            identificationRemarks:identificationremarks,
-            license,
-            rightsHolder:rightsholder,
-            has_cloud_voucher,
-            institutions (
-                name,
-                code
-            ),
-            collections (
-                name,
-                code
-            ),
-            lifeStage,
-            sex,
-            identifiedBy,
-            record_status,
-            occurrence_date,
-            temperature_c,
-            relative_humidity_percent,
-            elevation_masl,
-            occurrenceRemarks,
-            identificationMethod,
-            microhabitat_remarks,
-            events (
-                id,
-                eventID,
-                eventDate,
-                eventTime,
-                samplingProtocol
-            ),
-            taxa:taxa!inner(
-                scientificName,
-                vernacularName,
-                genus:genera!inner(
-                    name,
-                    family:families!inner(
-                        name,
-                        orders:orders!inner(
-                            name,
-                            classes:classes!inner(
-                                name,
-                                kingdom,
-                                phylum
-                            )
-                        )
-                    )
-                )
-            ),
-            locations:locations!inner(
-                locality,
-                decimalLatitude,
-                decimalLongitude,
-                country,
-                stateProvince:stateprovince,
-                geodeticDatum:geodeticdatum,
-                georeferenceProtocol:georeferenceprotocol,
-                georeferenceSources:georeferencesources,
-                georeferencedDate:georeferenceddate,
-                district:ubigeo_districts (
-                    name,
-                    province:ubigeo_provinces (
-                        name,
-                        department:ubigeo_departments (
-                            name
-                        )
-                    )
-                )
-            ),
-            ecosystems (
-                name,
-                region:natural_regions (
-                    name
-                )
-            ),
-            multimedia:multimedia(
-                id,
-                identifier,
-                type,
-                format,
-                title,
-                description,
-                tag,
-                vocalization_type,
-                background_species,
-                duration_seconds,
-                file_size_bytes,
-                parent_multimedia_id,
-                is_public
-            )
-        `)
-        .eq('id', id)
-        .eq('record_status', 'published')
-        .single() as { data: DbOccurrence | null, error: any };
-
-    console.log("Occurrence data:", occurrence);
-    if (error) {
-        console.error("Supabase Error in getSpeciesById:", error);
-    }
-
-    if (error || !occurrence) return undefined;
+    try {
+        const occurrence = await fetchApi<DbOccurrence>(`/occurrences/${id}`);
+        if (!occurrence) return undefined;
 
     const taxon = occurrence.taxa;
     const loc = occurrence.locations;
@@ -843,36 +606,17 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
             georeferencedDate: loc?.georeferencedDate || null,
         }
     };
+  } catch (err) {
+    console.error("Error in getSpeciesById:", err);
+    return undefined;
+  }
 }
 
-// Helper to fetch unique filter values directly from Supabase
+// Helper to fetch unique filter values
 export async function getFilterMetaData() {
-    // We only want metadata from published occurrences
-    const { data: occurrences } = await supabase
-        .from('occurrences')
-        .select(`
-            record_status,
-            taxa (
-                scientificName, 
-                vernacularName, 
-                genus:genera (
-                    name, 
-                    family:families (
-                        name, 
-                        orders:orders (
-                            name, 
-                            classes:classes (
-                                name
-                            )
-                        )
-                    )
-                )
-            ),
-            locations (
-                locality
-            )
-        `)
-        .eq('record_status', 'published') as { data: any[] | null };
+    try {
+        const response = await fetchApi<{ data: any[] }>("/occurrences?limit=100");
+        const occurrences = response.data || [];
 
     const taxa = occurrences?.map(o => o.taxa).filter(Boolean) || [];
     const locs = occurrences?.map(o => o.locations).filter(Boolean) || [];
@@ -895,4 +639,8 @@ export async function getFilterMetaData() {
     const localities = Array.from(new Set(locs?.map((l: any) => l.locality).filter(Boolean) as string[])).sort();
 
     return { classes, orders, families, genera, localities, taxonomyPaths };
+  } catch (err) {
+    console.error("Error in getFilterMetaData:", err);
+    return { classes: [], orders: [], families: [], genera: [], localities: [], taxonomyPaths: [] };
+  }
 }

@@ -31,8 +31,6 @@
     "@repo/data": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.47.10",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.15.2",
     "class-variance-authority": "^0.7.1",

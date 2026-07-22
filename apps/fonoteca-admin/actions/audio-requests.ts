@@ -1,12 +1,11 @@
-"use server"
+"use server";
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { sendRequestResolutionEmail } from "@/utils/email";
 import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
 
 const getR2Key = (url: string) => {
   if (url.startsWith(R2_PUBLIC_URL)) {
@@ -42,184 +41,112 @@ export async function getAudioRequestsList({
   limit?: number;
   status?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    const params: Record<string, string | number | undefined> = { page, limit };
+    if (status && status !== "all") {
+      params.request_status = status;
+    }
 
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+    const result = await getCrudPage<any>("audio-requests", params);
+    const formattedData = (result.data || []).map((req: any) => {
+      const items = (req.audio_request_items || [])
+        .map((item: any) => {
+          if (!item.multimedia) return null;
+          return {
+            ...item.multimedia,
+            occurrence: item.multimedia.occurrences ? {
+              ...item.multimedia.occurrences,
+              taxon: item.multimedia.occurrences.taxa
+            } : undefined
+          };
+        })
+        .filter(Boolean);
 
-  let query = supabase
-    .from("audio_requests")
-    .select(`
-      *,
-      audio_request_items (
-        multimedia (
-          id,
-          title,
-          type,
-          format,
-          creator,
-          identifier,
-          tag,
-          vocalization_type,
-          duration_seconds,
-          occurrences (
-            id,
-            taxa (
-              id,
-              scientificName
-            )
-          )
-        )
-      )
-    `, { count: "exact" });
-
-  if (status && status !== "all") {
-    query = query.eq("request_status", status);
-  }
-
-  const { data, count, error } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    console.error("Error fetching audio requests:", error);
-    return { data: [], count: 0, error: error.message };
-  }
-
-  // Format data to map multimedia items correctly
-  const formattedData = (data || []).map((req: any) => {
-    const items = (req.audio_request_items || [])
-      .map((item: any) => {
-        if (!item.multimedia) return null;
-        return {
-          ...item.multimedia,
-          occurrence: item.multimedia.occurrences ? {
-            ...item.multimedia.occurrences,
-            taxon: item.multimedia.occurrences.taxa
-          } : undefined
-        };
-      })
-      .filter(Boolean);
+      return {
+        ...req,
+        items
+      };
+    });
 
     return {
-      ...req,
-      items
+      data: formattedData,
+      count: result.meta?.totalItems ?? formattedData.length,
     };
-  });
-
-  return {
-    data: formattedData,
-    count: count || 0,
-  };
+  } catch (error) {
+    console.error("Error fetching audio requests:", error);
+    return { data: [], count: 0, error: error instanceof Error ? error.message : "Error al obtener solicitudes" };
+  }
 }
 
 export async function updateAudioRequestStatus(id: string, status: 'approved' | 'rejected') {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const updatePayload: Record<string, any> = {
-    request_status: status,
-    updated_at: new Date().toISOString()
-  };
-
-  if (status === 'approved') {
-    // Ephemeral links are valid for 48 hours
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 48);
-    updatePayload.expires_at = expiresAt.toISOString();
-  } else {
-    updatePayload.expires_at = null;
-  }
-
-  const { data, error } = await supabase
-    .from("audio_requests")
-    .update(updatePayload)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error updating audio request status:", error);
-    return { error: error.message };
-  }
-
-  // Trigger resolution email in background/async
   try {
-    // 1. Fetch details of the request items to generate presigned URLs and taxonomy details
-    const { data: fullRequest } = await supabase
-      .from("audio_requests")
-      .select(`
-        *,
-        audio_request_items (
-          multimedia (
-            id,
-            title,
-            format,
-            duration_seconds,
-            vocalization_type,
-            background_species,
-            identifier,
-            occurrences (
-              id,
-              taxa (
-                id,
-                scientificName,
-                vernacularName,
-                genus:genera (
-                  name,
-                  family:families (
-                    name
-                  )
-                )
-              )
-            )
-          )
-        )
-      `)
-      .eq("id", id)
-      .single();
+    const updatePayload: Record<string, any> = {
+      request_status: status,
+      updated_at: new Date().toISOString()
+    };
 
-    const rawItems = (fullRequest?.audio_request_items || [])
-      .map((item: any) => item.multimedia)
-      .filter(Boolean);
+    if (status === 'approved') {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 48);
+      updatePayload.expires_at = expiresAt.toISOString();
+    } else {
+      updatePayload.expires_at = null;
+    }
 
-    const items = await Promise.all(
-      rawItems.map(async (item: any) => {
-        let downloadUrl = "";
-        if (data.request_status === 'approved' && item.identifier) {
-          // Generate a 48-hour presigned URL matching the request's lifetime
-          downloadUrl = await getPresignedDownloadUrl(item.identifier, 172800);
-        }
-        const taxon = item.occurrences?.taxa;
-        return {
-          title: item.title,
-          format: item.format,
-          duration: item.duration_seconds,
-          vocalizationType: item.vocalization_type,
-          backgroundSpecies: item.background_species,
-          occurrenceId: item.occurrences?.id || item.occurrence_id,
-          scientificName: taxon?.scientificName,
-          vernacularName: taxon?.vernacularName,
-          genusName: taxon?.genus?.name,
-          familyName: taxon?.genus?.family?.name,
-          downloadUrl,
-        };
-      })
-    );
+    const data = await mutateCrud<any>("audio-requests", "PATCH", updatePayload, id);
 
-    await sendRequestResolutionEmail({
-      recipientEmail: data.requester_email,
-      requesterName: data.requester_name || "Investigador",
-      status: data.request_status as 'approved' | 'rejected',
-      requestId: data.id,
-      expiresAt: data.expires_at,
-      items,
-    });
-  } catch (emailErr) {
-    console.error("Failed to send resolution email notification:", emailErr);
+    // Trigger resolution email in background/async
+    try {
+      let fullRequest: any = null;
+      try {
+        fullRequest = await getCrudItem<any>("audio-requests", id);
+      } catch {
+        fullRequest = data;
+      }
+
+      const rawItems = (fullRequest?.audio_request_items || [])
+        .map((item: any) => item.multimedia)
+        .filter(Boolean);
+
+      const items = await Promise.all(
+        rawItems.map(async (item: any) => {
+          let downloadUrl = "";
+          if (data.request_status === 'approved' && item.identifier) {
+            downloadUrl = await getPresignedDownloadUrl(item.identifier, 172800);
+          }
+          const taxon = item.occurrences?.taxa || item.occurrence?.taxon;
+          return {
+            title: item.title,
+            format: item.format,
+            duration: item.duration_seconds,
+            vocalizationType: item.vocalization_type,
+            backgroundSpecies: item.background_species,
+            occurrenceId: item.occurrences?.id || item.occurrence_id,
+            scientificName: taxon?.scientificName,
+            vernacularName: taxon?.vernacularName,
+            genusName: taxon?.genus?.name,
+            familyName: taxon?.genus?.family?.name,
+            downloadUrl,
+          };
+        })
+      );
+
+      await sendRequestResolutionEmail({
+        recipientEmail: data.requester_email,
+        requesterName: data.requester_name || "Investigador",
+        status: data.request_status as 'approved' | 'rejected',
+        requestId: data.id,
+        expiresAt: data.expires_at,
+        items,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send resolution email notification:", emailErr);
+    }
+
+    revalidatePath("/dashboard/audio-requests");
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error updating audio request status:", error);
+    return { error: error instanceof Error ? error.message : "Error al actualizar estado" };
   }
-
-  revalidatePath("/dashboard/audio-requests");
-  return { success: true, data };
 }

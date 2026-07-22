@@ -15,7 +15,7 @@ import {
     Lock
 } from 'lucide-react';
 import { useAudioRequestStore, type CartItem } from '../../store/useAudioRequestStore';
-import { supabase } from '../../lib/supabase';
+import { fetchApi } from '../../lib/api';
 
 interface AudioRequestCartProps {
     lang: string;
@@ -182,31 +182,31 @@ export const AudioRequestCart: React.FC<AudioRequestCartProps> = ({ lang }) => {
 
         try {
             // 1. Submit Request details
-            const { data: requestData, error: requestError } = await (supabase as any)
-                .from('audio_requests')
-                .insert({
+            const requestData = await fetchApi<any>('/audio-requests', {
+                method: 'POST',
+                body: JSON.stringify({
                     requester_name: fullName.trim(),
                     institution: institution.trim(),
                     requester_email: email.trim().toLowerCase(),
                     observation_rationale: `${rationale.trim()} [Category: ${category}]`,
                     request_status: 'pending'
                 })
-                .select()
-                .single();
+            });
 
-            if (requestError) throw requestError;
+            const requestId = requestData?.id || requestData?.data?.id;
 
             // 2. Submit items mapped to the request id
             const requestItems = cartItems.map((item) => ({
-                request_id: requestData.id,
+                request_id: requestId,
                 multimedia_id: item.multimediaId
             }));
 
-            const { error: itemsError } = await (supabase as any)
-                .from('audio_request_items')
-                .insert(requestItems);
-
-            if (itemsError) throw itemsError;
+            for (const item of requestItems) {
+                await fetchApi<any>('/audio-request-items', {
+                    method: 'POST',
+                    body: JSON.stringify(item)
+                });
+            }
 
             // Notify admin app to trigger confirmation & alert emails
             try {

@@ -1,125 +1,55 @@
-import { supabase } from "../lib/supabase";
+import { fetchApi } from "../lib/api";
+
+interface PaginatedResponse {
+  meta?: {
+    totalItems: number;
+  };
+}
 
 export async function getRealStats() {
-    try {
-        // 1. Total Occurrences with Audio (Recordings)
-        const { count: recordingsCount, error: recordingsError } = await supabase
-            .from('occurrences')
-            .select('id, multimedia!inner(id)', { count: 'exact', head: true })
-            .eq('multimedia.type', 'Sound');
+  try {
+    const [multimediaRes, taxaRes, familiesRes, ordersRes, classesRes] = await Promise.allSettled([
+      fetchApi<PaginatedResponse>("/multimedia?limit=1"),
+      fetchApi<PaginatedResponse>("/taxa?limit=1"),
+      fetchApi<PaginatedResponse>("/families?limit=1"),
+      fetchApi<PaginatedResponse>("/orders?limit=1"),
+      fetchApi<PaginatedResponse>("/classes?limit=1"),
+    ]);
 
-        // 2. Total Species (Unique Taxa)
-        const { count: speciesCount, error: speciesError } = await supabase
-            .from('taxa')
-            .select('*', { count: 'exact', head: true });
+    const getValue = (res: PromiseSettledResult<PaginatedResponse>): number => {
+      if (res.status === "fulfilled" && res.value?.meta?.totalItems !== undefined) {
+        return res.value.meta.totalItems;
+      }
+      return 0;
+    };
 
-        // 3. Total Families
-        const { count: familiesCount, error: familiesError } = await supabase
-            .from('families')
-            .select('*', { count: 'exact', head: true });
-
-        // 4. Total Orders
-        const { count: ordersCount, error: ordersError } = await supabase
-            .from('orders')
-            .select('*', { count: 'exact', head: true });
-
-        // 5. Total Classes
-        const { count: classesCount, error: classesError } = await supabase
-            .from('classes')
-            .select('*', { count: 'exact', head: true });
-
-        if (recordingsError || speciesError || familiesError || ordersError || classesError) {
-            console.error("Supabase Query Error:", { recordingsError, speciesError, familiesError, ordersError, classesError });
-
-            const { count: multimediaCount } = await supabase
-                .from('multimedia')
-                .select('*', { count: 'exact', head: true })
-                .eq('type', 'Sound');
-
-            return {
-                recordings: (recordingsCount !== null ? recordingsCount : multimediaCount) || 0,
-                species: speciesCount || 0,
-                families: familiesCount || 0,
-                orders: ordersCount || 0,
-                classes: classesCount || 0
-            };
-        }
-
-        return {
-            recordings: recordingsCount || 0,
-            species: speciesCount || 0,
-            families: familiesCount || 0,
-            orders: ordersCount || 0,
-            classes: classesCount || 0
-        };
-    } catch (err) {
-        console.error("Critical error in getRealStats:", err);
-        return { recordings: 0, species: 0, families: 0, orders: 0, classes: 0 };
-    }
+    return {
+      recordings: getValue(multimediaRes),
+      species: getValue(taxaRes),
+      families: getValue(familiesRes),
+      orders: getValue(ordersRes),
+      classes: getValue(classesRes),
+    };
+  } catch (err) {
+    console.error("Error in getRealStats:", err);
+    return { recordings: 0, species: 0, families: 0, orders: 0, classes: 0 };
+  }
 }
 
 export async function getSpeciesByClass() {
-    // Fetch all classes and count species for each
-    interface NestedTaxonomy {
-        id: string;
-        name: string;
-        label_name: any;
-        icon: string | null;
-        image_url: string | null;
-        orders: {
-            families: {
-                genera: {
-                    taxa: {
-                        id: string;
-                    }[];
-                }[];
-            }[];
-        }[];
-    }
+  try {
+    const classes = await fetchApi<any[]>("/classes");
+    if (!Array.isArray(classes)) return [];
 
-    const { data: classes, error: classesError } = await supabase
-        .from('classes')
-        .select(`
-            id,
-            name,
-            label_name,
-            icon,
-            image_url,
-            orders:orders (
-                families:families (
-                    genera:genera (
-                        taxa:taxa (
-                            id
-                        )
-                    )
-                )
-            )
-        `) as { data: NestedTaxonomy[] | null, error: any };
-
-    if (classesError || !classes) {
-        console.error("Error fetching species by class:", classesError);
-        return [];
-    }
-
-    const results = classes.map(cls => {
-        // Flatten the nesting to count taxa
-        let totalTaxa = 0;
-        cls.orders?.forEach(order => {
-            order.families?.forEach(family => {
-                family.genera?.forEach(genus => {
-                    totalTaxa += genus.taxa?.length || 0;
-                });
-            });
-        });
-
-        return {
-            id: cls.name,
-            label_name: cls.label_name,
-            icon: cls.icon,
-            count: totalTaxa,
-            image_url: cls.image_url
-        };
-    });
-
-    return results;
+    return classes.map((cls) => ({
+      id: cls.name,
+      label_name: cls.label_name || cls.name,
+      icon: cls.icon || null,
+      count: cls._count?.taxa ?? 0,
+      image_url: cls.image_url || null,
+    }));
+  } catch (err) {
+    console.error("Error fetching species by class:", err);
+    return [];
+  }
 }
