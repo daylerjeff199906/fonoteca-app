@@ -116,6 +116,39 @@ const sanitizeFilename = (name: string) => {
     .replace(/^_|_$/g, "");         // Trim underscores
 };
 
+const uploadFileViaApi = async (formData: FormData): Promise<{ success: boolean; url?: string; originalUrl?: string; file?: any; error?: string }> => {
+  try {
+    if (!formData.has("duplicate_policy")) {
+      formData.append("duplicate_policy", "reuse");
+    }
+    if (!formData.has("process_image")) {
+      formData.append("process_image", "true");
+    }
+    if (!formData.has("process_audio")) {
+      formData.append("process_audio", "true");
+    }
+
+    const res = await fetch("/api/files/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      return { success: false, error: data?.detail || data?.message || `Error ${res.status} al procesar el archivo` };
+    }
+
+    return {
+      success: true,
+      url: data.processed?.url ?? data.url,
+      originalUrl: data.url,
+      file: data,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Error de conexión al subir el archivo" };
+  }
+};
+
 export function MultimediaSection({ occurrenceId, location }: { occurrenceId: string, location?: string }) {
   const [items, setItems] = useState<Multimedia[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -271,7 +304,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           })
         );
 
-        const uploadResp = await uploadToFileService(formData);
+        const uploadResp = await uploadFileViaApi(formData);
         if (!uploadResp.success || !uploadResp.url) {
           showToast.error("Error de subida", uploadResp.error || `Error al subir ${file.name}`);
           continue;
@@ -525,7 +558,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         })
       );
 
-      const uploadResp = await uploadToFileService(formData);
+      const uploadResp = await uploadFileViaApi(formData);
       if (!uploadResp.success || !uploadResp.url) {
         showToast.error("Error de Preparación", uploadResp.error || `Error al subir ${file.name}.`);
         return false;
