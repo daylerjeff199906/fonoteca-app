@@ -5,6 +5,7 @@ import { X, ChevronLeft, ChevronRight, MapPin, Eye, EyeOff, User, Tag, Info, Cal
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { getOptimizedMediaUrl } from "@/utils/multimedia";
 
 interface MultimediaViewerProps {
   items: Multimedia[];
@@ -62,7 +63,7 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 relative overflow-hidden group">
           {currentItem.type === MEDIA_TYPE.STILL ? (
             <img
-              src={currentItem.identifier}
+              src={getOptimizedMediaUrl(currentItem.identifier, false)}
               alt={currentItem.title || "Viewer"}
               className="max-h-full max-w-full object-contain shadow-2xl transition-all duration-500"
             />
@@ -71,7 +72,7 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
                <div className="h-40 w-40 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse">
                   <FileText className="h-16 w-16 text-primary" />
                </div>
-               <audio src={currentItem.identifier} controls className="w-full max-w-2xl" />
+               <audio src={getOptimizedMediaUrl(currentItem.identifier, true)} controls className="w-full max-w-2xl" />
             </div>
           )}
 
@@ -110,7 +111,7 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
                   idx === currentIndex ? "border-primary scale-110 shadow-lg z-10" : "border-transparent opacity-40 hover:opacity-80"
                 )}
               >
-                <img src={item.identifier} className="h-full w-full object-cover" />
+                <img src={getOptimizedMediaUrl(item.identifier, item.type === MEDIA_TYPE.SOUND)} className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
