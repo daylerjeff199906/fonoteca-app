@@ -59,18 +59,27 @@ export function ClassForm({
       const formData = new FormData();
       formData.append("file", file);
       const className = watch("name") || "unnamed";
-      const sanitizedName = className.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      const path = `classes/${sanitizedName}_${Date.now()}.${file.name.split('.').pop()}`;
-      formData.append("path", path);
+      formData.append(
+        "metadata",
+        JSON.stringify({
+          class_name: className,
+          source: "class_form",
+        })
+      );
 
-      const resp = await uploadToR2(formData);
-      if (resp.success && resp.url) {
-        setValue("image_url", resp.url);
-        
+      const res = await fetch("/api/files/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setValue("image_url", data.url);
+
         // If we are editing, update the DB immediately
         if (id) {
           const currentData = watch();
-          const updateResp = await updateClass(id, { ...currentData, image_url: resp.url });
+          const updateResp = await updateClass(id, { ...currentData, image_url: data.url });
           if (updateResp.success) {
             showToast.success("Imagen actualizada", "La imagen y los datos de la clase se guardaron correctamente.");
           } else {
@@ -80,7 +89,7 @@ export function ClassForm({
           showToast.success("Imagen subida", "La imagen se adjuntará al guardar la clase.");
         }
       } else {
-        showToast.error("No se pudo subir la imagen", resp.error || "El servidor no pudo procesar el archivo.");
+        showToast.error("No se pudo subir la imagen", data.detail || "El servidor no pudo procesar el archivo.");
       }
     } catch (err) {
       showToast.error("No se pudo subir la imagen", "Ocurrió un error inesperado durante la subida.");
@@ -92,33 +101,29 @@ export function ClassForm({
   const removeImage = async () => {
     if (!imageUrl) return;
 
-    const isR2 = imageUrl.includes("r2.cloudflarestorage.com") || imageUrl.includes("pub-"); // Basic check for R2
+    const confirmDelete = confirm("¿Estás seguro de eliminar esta imagen del servidor permanentemente?");
+    if (!confirmDelete) return;
 
-    if (isR2) {
-      const confirmDelete = confirm("¿Estás seguro de eliminar esta imagen del servidor permanentemente?");
-      if (!confirmDelete) return;
-
-      setUploading(true);
-      const resp = await deleteFileFromR2(imageUrl);
-      setUploading(false);
-
-      if (!resp.success && resp.error) {
-        showToast.error("No se pudo eliminar la imagen", resp.error);
-        // We continue anyway to clear the field if the user wants
+    setUploading(true);
+    try {
+      if (imageUrl.includes("/api/files/")) {
+        const fileId = imageUrl.split("/api/files/").pop()?.split("?")[0]?.split("/")[0];
+        if (fileId) {
+          await fetch(`/api/files/${fileId}`, { method: "DELETE" });
+        }
       }
+    } catch (err) {
+      console.error("Error removing image file:", err);
+    } finally {
+      setUploading(false);
     }
 
     setValue("image_url", "");
 
-    // If we are editing, we should ideally update the DB immediately if the user wants that behavior
     if (id) {
       const currentData = watch();
-      const { success } = await updateClass(id, { ...currentData, image_url: null });
-      if (success) {
-        showToast.info("Imagen eliminada", "El registro de la clase fue actualizado.");
-      }
-    } else {
-      showToast.info("Imagen quitada", "El cambio se aplicará cuando guardes la clase.");
+      await updateClass(id, { ...currentData, image_url: "" });
+      showToast.success("Imagen removida", "Se ha quitado la imagen de la clase.");
     }
   };
 

@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
-import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
+import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, uploadToFileService } from "@/actions/multimedia";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showToast } from "@/lib/toast";
 import axios from "axios";
-import { R2_PUBLIC_URL } from "@/lib/r2";
 import { cn } from "@/lib/utils";
 import { multimediaSchema } from "@/lib/validations/fonoteca";
 import { searchProfiles } from "@/actions/users";
@@ -256,25 +255,26 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           continue;
         }
 
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        setUploadProgress(prev => ({ ...prev, [fileId]: 10 }));
 
-        const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
-        if (signResp.error || !signResp.url) {
-          showToast.error("Error de subida", `Error al preparar subida de ${file.name}`);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append(
+          "metadata",
+          JSON.stringify({
+            occurrence_id: occurrenceId,
+            source: "occurrence_multimedia_batch",
+          })
+        );
+
+        const uploadResp = await uploadToFileService(formData);
+        if (!uploadResp.success || !uploadResp.url) {
+          showToast.error("Error de subida", uploadResp.error || `Error al subir ${file.name}`);
           continue;
         }
 
-        await axios.put(signResp.url, file, {
-          headers: { "Content-Type": file.type || "application/octet-stream" },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(prev => ({ ...prev, [fileId]: percent }));
-            }
-          }
-        });
-
-        const publicUrl = `${R2_PUBLIC_URL}/${uploadPath}`;
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+        const publicUrl = uploadResp.url;
 
         const payload = {
           occurrence_id: occurrenceId,
@@ -508,25 +508,25 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         return false;
       }
 
-      // 1. Get Presigned URL
-      const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
-      if (signResp.error || !signResp.url) {
-        showToast.error("Error de Preparación", `Error al preparar subida de ${file.name}.`);
+      // 1. Upload File via Files API
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append(
+        "metadata",
+        JSON.stringify({
+          occurrence_id: occurrenceId,
+          tag: "spectrogram",
+        })
+      );
+
+      const uploadResp = await uploadToFileService(formData);
+      if (!uploadResp.success || !uploadResp.url) {
+        showToast.error("Error de Preparación", uploadResp.error || `Error al subir ${file.name}.`);
         return false;
       }
 
-      // 2. Upload with Progress
-      await axios.put(signResp.url, file, {
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(prev => ({ ...prev, [fileId]: percent }));
-          }
-        }
-      });
-
-      const publicUrl = `${R2_PUBLIC_URL}/${uploadPath}`;
+      setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+      const publicUrl = uploadResp.url;
 
       const createResp = await createMultimedia({
         occurrence_id: occurrenceId,

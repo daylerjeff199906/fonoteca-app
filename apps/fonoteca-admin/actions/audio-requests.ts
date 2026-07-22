@@ -2,34 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { sendRequestResolutionEmail } from "@/utils/email";
-import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
 
-const getR2Key = (url: string) => {
-  if (url.startsWith(R2_PUBLIC_URL)) {
-    return url.replace(`${R2_PUBLIC_URL}/`, "");
-  }
-  const parts = url.split('.r2.dev/');
-  if (parts.length > 1) return parts[1];
-  return url;
-};
-
-async function getPresignedDownloadUrl(url: string, expiresIn = 3600) {
+async function getPresignedDownloadUrl(url: string) {
   if (!url) return "";
-  const key = getR2Key(url);
-  try {
-    const command = new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-      ResponseContentDisposition: `attachment; filename="${key.split('/').pop()}"`,
-    });
-    return await getSignedUrl(r2Client, command, { expiresIn });
-  } catch (err) {
-    console.error("Error signing download url:", err);
-    return url;
-  }
+  return url;
 }
 
 export async function getAudioRequestsList({
@@ -112,7 +89,7 @@ export async function updateAudioRequestStatus(id: string, status: 'approved' | 
         rawItems.map(async (item: any) => {
           let downloadUrl = "";
           if (data.request_status === 'approved' && item.identifier) {
-            downloadUrl = await getPresignedDownloadUrl(item.identifier, 172800);
+            downloadUrl = await getPresignedDownloadUrl(item.identifier);
           }
           const taxon = item.occurrences?.taxa || item.occurrence?.taxon;
           return {

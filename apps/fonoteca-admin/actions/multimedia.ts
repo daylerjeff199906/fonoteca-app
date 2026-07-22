@@ -4,14 +4,7 @@ import { revalidatePath } from "next/cache";
 import { MultimediaInput, multimediaSchema } from "@/lib/validations/fonoteca";
 import { Multimedia } from "@/types/fonoteca";
 import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
-import { 
-  DeleteObjectCommand, 
-  ListObjectsV2Command, 
-  DeleteObjectsCommand, 
-  PutObjectCommand 
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
+import { uploadFileToFileService, deleteFileFromFileService } from "@/lib/file-service";
 
 export async function getMultimediaList({
   page = 1,
@@ -111,17 +104,12 @@ export async function deleteMultimedia(id: string) {
     // 2. Delete from database
     await mutateCrud("multimedia", "DELETE", undefined, id);
 
-    // 3. Delete from R2 bucket if url belongs to R2
-    if (item && item.identifier && item.identifier.startsWith(R2_PUBLIC_URL)) {
+    // 3. Delete from Files API if identifier exists
+    if (item && item.identifier) {
       try {
-        const path = item.identifier.replace(`${R2_PUBLIC_URL}/`, "");
-        const command = new DeleteObjectCommand({
-          Bucket: R2_BUCKET_NAME,
-          Key: path,
-        });
-        await r2Client.send(command);
-      } catch (r2Err) {
-        console.error("Failed to delete from R2:", r2Err);
+        await deleteFileFromFileService(item.identifier);
+      } catch (fileErr) {
+        console.error("Failed to delete file from Files API:", fileErr);
       }
     }
 
@@ -132,51 +120,13 @@ export async function deleteMultimedia(id: string) {
   }
 }
 
-export async function deleteR2Folder(prefix: string) {
-  try {
-    const listCommand = new ListObjectsV2Command({
-      Bucket: R2_BUCKET_NAME,
-      Prefix: prefix.endsWith('/') ? prefix : `${prefix}/`,
-    });
-
-    const listResp = await r2Client.send(listCommand);
-
-    if (listResp.Contents && listResp.Contents.length > 0) {
-      const deleteCommand = new DeleteObjectsCommand({
-        Bucket: R2_BUCKET_NAME,
-        Delete: {
-          Objects: listResp.Contents.map((obj) => ({ Key: obj.Key })),
-          Quiet: true,
-        },
-      });
-
-      await r2Client.send(deleteCommand);
-    }
-    return { success: true };
-  } catch (err: any) {
-    console.error(`Failed to delete R2 folder ${prefix}:`, err);
-    return { error: err.message };
-  }
+export async function deleteR2Folder(_prefix: string) {
+  // Deprecated folder cleanup stub for Files API
+  return { success: true };
 }
 
-export async function getPresignedUrl(path: string, contentType: string) {
-  try {
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: path,
-      ContentType: contentType,
-    });
-
-    const url = await getSignedUrl(r2Client, command, { 
-      expiresIn: 900,
-      signableHeaders: new Set(["content-type"])
-    });
-    
-    return { success: true, url };
-  } catch (err: any) {
-    console.error("Error generating presigned URL:", err);
-    return { error: err.message };
-  }
+export async function getPresignedUrl(_path: string, _contentType: string) {
+  return { success: false, error: "Obsolete endpoint. Use Files API upload endpoint." };
 }
 
 export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_index: number }[]) {
@@ -191,48 +141,36 @@ export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_i
   }
 }
 
-export async function uploadToR2(formData: FormData) {
-  const file = formData.get("file") as File;
-  const path = formData.get("path") as string;
-
-  if (!file) return { error: "No file provided" };
-  
+export async function uploadToFileService(formData: FormData): Promise<{ success: boolean; url?: string; file?: any; error?: string }> {
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: path,
-      Body: buffer,
-      ContentType: file.type || "application/octet-stream",
-    });
-
-    await r2Client.send(command);
-
-    const publicUrl = `${R2_PUBLIC_URL}/${path}`;
-    return { success: true, url: publicUrl };
+    const result = await uploadFileToFileService(formData);
+    return { success: true, url: result.url, file: result };
   } catch (err: any) {
-    console.error("R2 Upload error:", err);
-    return { error: err.message || "Failed to upload to R2" };
+    console.error("Files API upload error:", err);
+    return { success: false, error: err.message || "Error al subir archivo" };
   }
 }
 
-export async function deleteFileFromR2(url: string) {
-  if (!url || !url.startsWith(R2_PUBLIC_URL)) {
-    return { success: false, error: "Invalid URL or not an R2 file" };
+// Keep uploadToR2 alias for backward compatibility with existing components
+export async function uploadToR2(formData: FormData) {
+  return uploadToFileService(formData);
+}
+
+export async function deleteFileFromFile(urlOrId: string): Promise<{ success: boolean; error?: string }> {
+  if (!urlOrId) {
+    return { success: false, error: "No URL or File ID provided" };
   }
 
   try {
-    const path = url.replace(`${R2_PUBLIC_URL}/`, "");
-    const command = new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: path,
-    });
-    await r2Client.send(command);
+    await deleteFileFromFileService(urlOrId);
     return { success: true };
   } catch (err: any) {
-    console.error("R2 Delete error:", err);
-    return { error: err.message || "Failed to delete from R2" };
+    console.error("Files API delete error:", err);
+    return { success: false, error: err.message || "Error al eliminar archivo" };
   }
+}
+
+// Keep deleteFileFromR2 alias for backward compatibility with existing components
+export async function deleteFileFromR2(urlOrId: string) {
+  return deleteFileFromFile(urlOrId);
 }

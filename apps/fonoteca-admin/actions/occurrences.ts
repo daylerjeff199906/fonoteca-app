@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { OccurrenceInput, occurrenceSchema } from "@/lib/validations/fonoteca";
 import { Occurrence } from "@/types/fonoteca";
-import { deleteR2Folder } from "./multimedia";
 import {
   getCrudPage,
   getAllCrud,
@@ -150,14 +149,6 @@ export async function updateOccurrenceStatus(id: string, status: string) {
 export async function deleteOccurrence(id: string) {
   try {
     await mutateCrud("occurrences", "DELETE", undefined, id);
-
-    // Cascade delete in R2
-    try {
-      await deleteR2Folder(`occurrences/${id}`);
-    } catch (r2Err) {
-      console.error(`Failed to delete R2 folder for occurrence ${id}:`, r2Err);
-    }
-
     revalidatePath("/dashboard/occurrences");
     return { success: true };
   } catch (error: any) {
@@ -168,20 +159,10 @@ export async function deleteOccurrence(id: string) {
 export async function deleteOccurrences(ids: string[]) {
   try {
     await multipleDeleteCrud("occurrences", ids);
-
-    // Cascade delete in R2
-    for (const id of ids) {
-      try {
-        await deleteR2Folder(`occurrences/${id}`);
-      } catch (r2Err) {
-        console.error(`Failed to delete R2 folder for occurrence ${id}:`, r2Err);
-      }
-    }
-
     revalidatePath("/dashboard/occurrences");
     return { success: true };
   } catch (error: any) {
-    return { error: error.message || "Error al eliminar múltiples ocurrencias." };
+    return { error: error.message || "Error al eliminar las ocurrencias seleccionadas." };
   }
 }
 

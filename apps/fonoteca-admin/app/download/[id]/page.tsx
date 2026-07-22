@@ -1,6 +1,3 @@
-import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getCrudItem } from "@/lib/backend/crud";
 import { 
   FileAudio, 
@@ -18,28 +15,8 @@ import Link from "next/link";
 
 export const revalidate = 0;
 
-const getR2Key = (url: string) => {
-  if (url.startsWith(R2_PUBLIC_URL)) {
-    return url.replace(`${R2_PUBLIC_URL}/`, "");
-  }
-  const parts = url.split('.r2.dev/');
-  if (parts.length > 1) return parts[1];
-  return url;
-};
-
 const getDownloadUrl = async (url: string) => {
-  const key = getR2Key(url);
-  try {
-    const command = new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-      ResponseContentDisposition: `attachment; filename="${key.split('/').pop()}"`,
-    });
-    return await getSignedUrl(r2Client, command, { expiresIn: 3600 });
-  } catch (err) {
-    console.error("Error signing download url:", err);
-    return url;
-  }
+  return url || "";
 };
 
 export default async function DownloadPage({
