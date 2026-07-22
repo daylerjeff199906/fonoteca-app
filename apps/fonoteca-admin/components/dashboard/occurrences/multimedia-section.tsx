@@ -259,6 +259,9 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
 
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("duplicate_policy", "reuse");
+        formData.append("process_image", "true");
+        formData.append("process_audio", "true");
         formData.append(
           "metadata",
           JSON.stringify({
@@ -511,6 +514,8 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       // 1. Upload File via Files API
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("duplicate_policy", "reuse");
+      formData.append("process_image", "true");
       formData.append(
         "metadata",
         JSON.stringify({

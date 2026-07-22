@@ -143,6 +143,16 @@ export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_i
 
 export async function uploadToFileService(formData: FormData): Promise<{ success: boolean; url?: string; file?: any; error?: string }> {
   try {
+    if (!formData.has("duplicate_policy")) {
+      formData.append("duplicate_policy", "reuse");
+    }
+    if (!formData.has("process_image")) {
+      formData.append("process_image", "true");
+    }
+    if (!formData.has("process_audio")) {
+      formData.append("process_audio", "true");
+    }
+
     const result = await uploadFileToFileService(formData);
     return { success: true, url: result.url, file: result };
   } catch (err: any) {

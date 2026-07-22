@@ -59,6 +59,8 @@ export function ClassForm({
       const formData = new FormData();
       formData.append("file", file);
       const className = watch("name") || "unnamed";
+      formData.append("duplicate_policy", "reuse");
+      formData.append("process_image", "true");
       formData.append(
         "metadata",
         JSON.stringify({
