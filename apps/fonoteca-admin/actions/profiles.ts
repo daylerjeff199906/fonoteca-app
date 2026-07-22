@@ -36,3 +36,22 @@ export async function getCurrentProfile() {
     return { error: error instanceof Error ? error.message : "Error al obtener perfil actual" };
   }
 }
+
+export async function searchProfiles(search: string = "") {
+  try {
+    const result = await getCrudPage<any>("users", { page: 1, limit: 20, search });
+    const formattedData = (result.data || []).map((u: any) => ({
+      id: u.id,
+      first_name: u.first_name || u.name?.split(" ")[0] || u.email?.split("@")[0] || "",
+      last_name: u.last_name || (u.name ? u.name.split(" ").slice(1).join(" ") : ""),
+      email: u.email || "",
+      avatar_url: u.avatar_url || null,
+    }));
+
+    return { data: formattedData, success: true };
+  } catch (error: any) {
+    console.error("Error searching profiles:", error);
+    return { data: [], success: false, error: error.message };
+  }
+}
+
