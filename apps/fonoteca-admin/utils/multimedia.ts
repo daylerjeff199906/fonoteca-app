@@ -15,3 +15,22 @@ export const getDriveEmbedUrl = (url: string) => {
   }
   return null;
 };
+
+export const getOptimizedMediaUrl = (url: string, isAudio: boolean = false): string => {
+  if (!url) return "";
+  const driveThumb = getDriveThumbnailUrl(url);
+  if (driveThumb && !isAudio) return driveThumb;
+
+  if (url.includes('/original/')) {
+    if (isAudio) {
+      const ext = url.split('.').pop();
+      if (ext && ['wav', 'flac', 'm4a', 'mp3'].includes(ext.toLowerCase())) {
+        return url.replace('/original/', '/variants/').replace(new RegExp(`\\.${ext}$`, 'i'), '_processed.ogg');
+      }
+    } else {
+      return url.replace('/original/', '/variants/original_q80.webp');
+    }
+  }
+
+  return url;
+};

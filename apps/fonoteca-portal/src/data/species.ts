@@ -262,6 +262,18 @@ export const formatMediaUrl = (identifier: string, isAudio: boolean = false) => 
         }
     }
 
+    // Files API optimized variants for portal preview & audio playback
+    if (identifier.includes('/original/')) {
+        if (isAudio) {
+            const ext = identifier.split('.').pop();
+            if (ext && ['wav', 'flac', 'm4a', 'mp3'].includes(ext.toLowerCase())) {
+                return identifier.replace('/original/', '/variants/').replace(new RegExp(`\\.${ext}$`, 'i'), '_processed.ogg');
+            }
+        } else {
+            return identifier.replace('/original/', '/variants/original_q80.webp');
+        }
+    }
+
     return identifier;
 };
 

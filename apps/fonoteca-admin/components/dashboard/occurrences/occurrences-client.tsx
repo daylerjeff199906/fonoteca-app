@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { showToast } from "@/lib/toast";
-import { getDriveThumbnailUrl } from "@/utils/multimedia";
+import { getDriveThumbnailUrl, getOptimizedMediaUrl } from "@/utils/multimedia";
 import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
 export function OccurrencesClient({
@@ -393,7 +393,7 @@ export function OccurrencesClient({
               data.map((oc) => {
                 const stillImage = oc.multimedia?.find(m => m.type === 'Still');
                 const hasSound = oc.multimedia?.some(m => m.type === 'Sound');
-                const thumbUrl = stillImage ? (getDriveThumbnailUrl(stillImage.identifier) || stillImage.identifier) : null;
+                const thumbUrl = stillImage ? getOptimizedMediaUrl(stillImage.identifier, false) : null;
 
                 return (
                   <TableRow key={oc.id} className={cn(selectedIds.includes(oc.id) && "bg-primary/5")}>
@@ -450,12 +450,12 @@ export function OccurrencesClient({
                     <TableCell>{oc.recordedBy}</TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Button variant="ghost" className="h-6 p-1 cursor-pointer">
-                            <Badge variant={oc.record_status === "published" ? "default" : "secondary"} className="capitalize text-[10px] h-5 px-1.5 cursor-pointer">
-                              {oc.record_status || "draft"}
-                            </Badge>
-                          </Button>
+                        <DropdownMenuTrigger
+                          render={<Button variant="ghost" className="h-6 p-1 cursor-pointer" />}
+                        >
+                          <Badge variant={oc.record_status === "published" ? "default" : "secondary"} className="capitalize text-[10px] h-5 px-1.5 cursor-pointer">
+                            {oc.record_status || "draft"}
+                          </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel className="text-xs">Cambiar Estado</DropdownMenuLabel>
