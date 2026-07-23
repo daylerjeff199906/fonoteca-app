@@ -111,7 +111,7 @@ export function FamiliesClient({ data, count, orders }: { data: Family[]; count:
         </Table>
       </div>
 
-      <PaginationButtons totalCount={count} />
+      <PaginationButtons totalCount={count} itemLabel="Familias" />
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
         <SheetContent className="overflow-y-auto min-w-[35vw] p-6">

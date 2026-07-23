@@ -360,12 +360,7 @@ export function SystemUsersClient({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Mostrando <span className="font-medium">{initialUsers.length}</span> de <span className="font-medium">{totalCount}</span> usuarios
-        </p>
-        <PaginationButtons totalCount={totalCount} pageSize={10} />
-      </div>
+      <PaginationButtons totalCount={totalCount} itemLabel="Usuarios" />
 
       {/* CREATE / EDIT DIALOG */}
       <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {

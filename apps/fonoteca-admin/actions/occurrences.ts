@@ -65,12 +65,16 @@ export async function getOccurrences({
   search = "",
   taxonId = "",
   eventId = "",
+  basisOfRecord = "",
+  status = "",
 }: {
   page?: number;
   limit?: number;
   search?: string;
   taxonId?: string;
   eventId?: string;
+  basisOfRecord?: string;
+  status?: string;
 }) {
   try {
     const res = await getCrudPage<any>("occurrences", {
@@ -79,6 +83,8 @@ export async function getOccurrences({
       search,
       taxonId,
       eventId,
+      basisOfRecord,
+      status,
     });
 
     const formattedData = (res.data || []).map(formatOccurrence);

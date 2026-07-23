@@ -92,7 +92,7 @@ export function ClassesClient({ data, count }: { data: Class[]; count: number })
         </Table>
       </div>
 
-      <PaginationButtons totalCount={count} />
+      <PaginationButtons totalCount={count} itemLabel="Clases" />
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
         <SheetContent className="overflow-y-auto min-w-[35vw] p-6">

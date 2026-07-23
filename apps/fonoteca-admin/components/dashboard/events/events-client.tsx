@@ -113,9 +113,7 @@ export function EventsClient({ data, count }: { data: Event[]; count: number }) 
         </Table>
       </div>
 
-      <div className="flex items-center justify-end">
-        <PaginationButtons totalCount={count} pageSize={10} />
-      </div>
+      <PaginationButtons totalCount={count} itemLabel="Eventos" />
     </div>
   );
 }

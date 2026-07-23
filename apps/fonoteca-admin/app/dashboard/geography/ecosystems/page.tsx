@@ -15,13 +15,14 @@ export default async function EcosystemsPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
   const regionId = typeof params.region_id === "string" ? params.region_id : "";
 
   const [{ data: ecosystems, count, error }, { data: regions }] = await Promise.all([
     getEcosystems({
       page,
-      limit: 10,
+      limit,
       search,
       region_id: regionId,
     }),
@@ -52,7 +53,7 @@ export default async function EcosystemsPage({
 
         <EcosystemsClient data={ecosystems} />
 
-        <PaginationButtons totalCount={count} pageSize={10} />
+        <PaginationButtons totalCount={count} itemLabel="Ecosistemas" />
       </div>
     </LayoutWrapper>
   );

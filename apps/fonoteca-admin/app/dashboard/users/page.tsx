@@ -16,8 +16,8 @@ export default async function SystemUsersPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
-  const limit = 10;
 
   const usersRes = await getSystemUsers({ page, limit, search })
 

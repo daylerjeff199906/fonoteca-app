@@ -13,11 +13,12 @@ export default async function LocationsPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
 
   const { data: locations, count, error } = await getLocations({
     page,
-    limit: 10,
+    limit,
     search,
   });
 
@@ -42,7 +43,7 @@ export default async function LocationsPage({
 
       <LocationsClient data={locations} />
 
-      <PaginationButtons totalCount={count} pageSize={10} />
+      <PaginationButtons totalCount={count} itemLabel="Ubicaciones" />
       </div>
     </LayoutWrapper>
   );

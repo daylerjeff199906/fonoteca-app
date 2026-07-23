@@ -111,7 +111,7 @@ export function OrdersClient({ data, count, classes }: { data: Order[]; count: n
         </Table>
       </div>
 
-      <PaginationButtons totalCount={count} />
+      <PaginationButtons totalCount={count} itemLabel="Órdenes" />
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
         <SheetContent className="overflow-y-auto min-w-[35vw] p-6">

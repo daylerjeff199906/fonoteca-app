@@ -8,11 +8,12 @@ export default async function AudioRequestsPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const status = typeof params.status === "string" ? params.status : "";
 
   const { data: requests, count, error } = await getAudioRequestsList({
     page,
-    limit: 10,
+    limit,
     status,
   });
 

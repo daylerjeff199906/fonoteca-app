@@ -583,35 +583,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {!isShowingAll ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 px-3 gap-2 text-xs"
-              onClick={toggleShowAll}
-            >
-              <LayoutList className="h-4 w-4" />
-              Ver todos
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-9 px-3 gap-2 text-xs"
-              onClick={toggleShowAll}
-            >
-              <LayoutList className="h-4 w-4" />
-              Paginar vista
-            </Button>
-          )}
-          {isShowingAll && (
-            <span className="text-xs text-muted-foreground italic">
-              Mostrando {data.length} de {count} registros
-            </span>
-          )}
-        </div>
-        {!isShowingAll && <PaginationButtons totalCount={count} pageSize={10} />}
+         <PaginationButtons totalCount={count} itemLabel="Especies" />
       </div>
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>

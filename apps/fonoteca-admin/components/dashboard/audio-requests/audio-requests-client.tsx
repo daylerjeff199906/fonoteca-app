@@ -262,8 +262,7 @@ export function AudioRequestsClient({
           </Table>
         </div>
 
-        {/* Pagination */}
-        <PaginationButtons totalCount={initialCount} pageSize={10} />
+        <PaginationButtons totalCount={initialCount} itemLabel="Solicitudes" />
 
         {/* Detailed Modal view */}
         <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

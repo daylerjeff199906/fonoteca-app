@@ -25,11 +25,12 @@ export default async function MultimediaPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const type = typeof params.type === "string" ? params.type : "";
 
   const { data: multimedia, count, error } = await getMultimediaList({
     page,
-    limit: 10,
+    limit,
     type,
   });
 
@@ -101,7 +102,7 @@ export default async function MultimediaPage({
         </Table>
       </div>
 
-      <PaginationButtons totalCount={count} pageSize={10} />
+      <PaginationButtons totalCount={count} itemLabel="Archivos" />
       </div>
     </LayoutWrapper>
   );
