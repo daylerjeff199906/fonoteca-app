@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
-import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, uploadToFileService } from "@/actions/multimedia";
+import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia } from "@/actions/multimedia";
+import { uploadFile } from "@/lib/file-service.client";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showToast } from "@/lib/toast";
@@ -114,39 +115,6 @@ const sanitizeFilename = (name: string) => {
     .replace(/[^a-z0-9.]/g, "_")    // Keep alphanumeric and dot
     .replace(/_{2,}/g, "_")         // Dedup underscores
     .replace(/^_|_$/g, "");         // Trim underscores
-};
-
-const uploadFileViaApi = async (formData: FormData): Promise<{ success: boolean; url?: string; originalUrl?: string; file?: any; error?: string }> => {
-  try {
-    if (!formData.has("duplicate_policy")) {
-      formData.append("duplicate_policy", "reuse");
-    }
-    if (!formData.has("process_image")) {
-      formData.append("process_image", "true");
-    }
-    if (!formData.has("process_audio")) {
-      formData.append("process_audio", "true");
-    }
-
-    const res = await fetch("/api/files/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      return { success: false, error: data?.detail || data?.message || `Error ${res.status} al procesar el archivo` };
-    }
-
-    return {
-      success: true,
-      url: data.processed?.url ?? data.url,
-      originalUrl: data.url,
-      file: data,
-    };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Error de conexión al subir el archivo" };
-  }
 };
 
 export function MultimediaSection({ occurrenceId, location }: { occurrenceId: string, location?: string }) {
@@ -291,27 +259,21 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
 
         setUploadProgress(prev => ({ ...prev, [fileId]: 10 }));
 
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("duplicate_policy", "reuse");
-        formData.append("process_image", "true");
-        formData.append("process_audio", "true");
-        formData.append(
-          "metadata",
-          JSON.stringify({
+        const uploadedFile = await uploadFile({
+          file,
+          duplicatePolicy: "reuse",
+          processImage: file.type.startsWith("image/"),
+          processAudio: file.type.startsWith("audio/"),
+          metadata: {
             occurrence_id: occurrenceId,
             source: "occurrence_multimedia_batch",
-          })
-        );
-
-        const uploadResp = await uploadFileViaApi(formData);
-        if (!uploadResp.success || !uploadResp.url) {
-          showToast.error("Error de subida", uploadResp.error || `Error al subir ${file.name}`);
-          continue;
-        }
+          },
+        });
 
         setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-        const publicUrl = uploadResp.url;
+        // Mantiene la lógica de persistencia: el backend recibe el identificador
+        // (URL segura de variante si ya existe) y crea el vínculo con la ocurrencia.
+        const publicUrl = uploadedFile.processed?.url ?? uploadedFile.url;
 
         const payload = {
           occurrence_id: occurrenceId,
@@ -545,27 +507,19 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         return false;
       }
 
-      // 1. Upload File via Files API
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("duplicate_policy", "reuse");
-      formData.append("process_image", "true");
-      formData.append(
-        "metadata",
-        JSON.stringify({
+      // 1. La carga usa el proxy interno autenticado con Bearer.
+      const uploadedFile = await uploadFile({
+        file,
+        duplicatePolicy: "reuse",
+        processImage: true,
+        metadata: {
           occurrence_id: occurrenceId,
           tag: "spectrogram",
-        })
-      );
-
-      const uploadResp = await uploadFileViaApi(formData);
-      if (!uploadResp.success || !uploadResp.url) {
-        showToast.error("Error de Preparación", uploadResp.error || `Error al subir ${file.name}.`);
-        return false;
-      }
+        },
+      });
 
       setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-      const publicUrl = uploadResp.url;
+      const publicUrl = uploadedFile.processed?.url ?? uploadedFile.url;
 
       const createResp = await createMultimedia({
         occurrence_id: occurrenceId,

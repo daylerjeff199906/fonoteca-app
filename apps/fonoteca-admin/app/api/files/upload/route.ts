@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { uploadFileToFileService } from "@/lib/file-service";
+import { FileServiceError, uploadFileToFileService } from "@/lib/file-service";
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const result = await uploadFileToFileService(formData);
+    // El multipart se reenvía intacto; el servicio espera el campo `file`.
+    const result = await uploadFileToFileService(await request.formData());
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     console.error("Error in /api/files/upload proxy:", error);
     return NextResponse.json(
       { detail: error.message || "Error al procesar la carga del archivo" },
-      { status: 500 }
+      { status: error instanceof FileServiceError ? error.status : 500 }
     );
   }
 }

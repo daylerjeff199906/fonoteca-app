@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFileImageVariant } from "@/lib/file-service";
+import { FileServiceError, getFileImageVariant } from "@/lib/file-service";
 
 export async function GET(
   request: NextRequest,
@@ -21,7 +21,7 @@ export async function GET(
     console.error("Error in /api/files/[fileId]/image GET proxy:", error);
     return NextResponse.json(
       { detail: error.message || "Error al generar variante de imagen" },
-      { status: 500 }
+      { status: error instanceof FileServiceError ? error.status : 500 }
     );
   }
 }

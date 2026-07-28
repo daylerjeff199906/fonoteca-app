@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { classSchema, ClassInput } from "@/lib/validations/fonoteca";
 import { createClass, updateClass } from "@/actions/classes";
-import { uploadToR2, deleteFileFromR2 } from "@/actions/multimedia";
+import { uploadFile } from "@/lib/file-service.client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -56,32 +56,25 @@ export function ClassForm({
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
       const className = watch("name") || "unnamed";
-      formData.append("duplicate_policy", "reuse");
-      formData.append("process_image", "true");
-      formData.append(
-        "metadata",
-        JSON.stringify({
+      const uploadedFile = await uploadFile({
+        file,
+        duplicatePolicy: "reuse",
+        processImage: true,
+        metadata: {
           class_name: className,
           source: "class_form",
-        })
-      );
-
-      const res = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
+        },
       });
+      const uploadedUrl = uploadedFile.processed?.url ?? uploadedFile.url;
 
-      const data = await res.json();
-      if (res.ok && data.url) {
-        setValue("image_url", data.url);
+      if (uploadedUrl) {
+        setValue("image_url", uploadedUrl);
 
         // If we are editing, update the DB immediately
         if (id) {
           const currentData = watch();
-          const updateResp = await updateClass(id, { ...currentData, image_url: data.url });
+          const updateResp = await updateClass(id, { ...currentData, image_url: uploadedUrl });
           if (updateResp.success) {
             showToast.success("Imagen actualizada", "La imagen y los datos de la clase se guardaron correctamente.");
           } else {
@@ -90,8 +83,6 @@ export function ClassForm({
         } else {
           showToast.success("Imagen subida", "La imagen se adjuntará al guardar la clase.");
         }
-      } else {
-        showToast.error("No se pudo subir la imagen", data.detail || "El servidor no pudo procesar el archivo.");
       }
     } catch (err) {
       showToast.error("No se pudo subir la imagen", "Ocurrió un error inesperado durante la subida.");

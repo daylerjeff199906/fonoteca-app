@@ -1,8 +1,20 @@
 import "server-only";
 
-const FILE_SERVICE_URL = (process.env.FILE_SERVICE_URL || "http://localhost:8000").replace(/\/$/, "");
-const FILE_SERVICE_PROJECT_ID = process.env.FILE_SERVICE_PROJECT_ID || "fonoteca";
-const FILE_SERVICE_API_KEY = process.env.FILE_SERVICE_API_KEY || "";
+// En Windows, `localhost` puede resolver a ::1 y alcanzar otro servicio de
+// WSL/Docker. Normalizamos solo el destino local; las URLs de producción no
+// se modifican.
+const configuredFileServiceUrl = (process.env.FILE_SERVICE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+const FILE_SERVICE_URL = configuredFileServiceUrl === "http://localhost:8000"
+  ? "http://127.0.0.1:8000"
+  : configuredFileServiceUrl;
+const FILE_SERVICE_TOKEN = process.env.FILE_SERVICE_TOKEN || "";
+
+export class FileServiceError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "FileServiceError";
+  }
+}
 
 export interface FileServiceResource {
   id: string;
@@ -44,14 +56,18 @@ export interface FileServiceUploadMultipleResult {
 }
 
 function getHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {};
-  if (FILE_SERVICE_PROJECT_ID) {
-    headers["X-Project-Id"] = FILE_SERVICE_PROJECT_ID;
+  if (!FILE_SERVICE_TOKEN) {
+    throw new FileServiceError("FILE_SERVICE_TOKEN no está configurado en el servidor", 500);
   }
-  if (FILE_SERVICE_API_KEY) {
-    headers["X-Api-Key"] = FILE_SERVICE_API_KEY;
-  }
-  return headers;
+  return { Authorization: `Bearer ${FILE_SERVICE_TOKEN}` };
+}
+
+function responseError(payload: any, status: number, fallback: string): FileServiceError {
+  const detail = payload?.detail ?? payload?.message ?? payload?.error;
+  const message = typeof detail === "string" ? detail : Array.isArray(detail)
+    ? detail.map((item) => `${Array.isArray(item?.loc) ? item.loc.join(".") + ": " : ""}${item?.msg ?? String(item)}`).join(", ")
+    : fallback;
+  return new FileServiceError(message, status);
 }
 
 /**
@@ -67,8 +83,7 @@ export async function uploadFileToFileService(formData: FormData): Promise<FileS
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const errorMsg = payload?.detail || payload?.message || `Error ${response.status} en la carga de archivo`;
-    throw new Error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
+    throw responseError(payload, response.status, `Error ${response.status} en la carga de archivo`);
   }
 
   return payload as FileServiceResource;
@@ -87,8 +102,7 @@ export async function uploadMultipleFilesToFileService(formData: FormData): Prom
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const errorMsg = payload?.detail || payload?.message || `Error ${response.status} en la carga múltiple`;
-    throw new Error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
+    throw responseError(payload, response.status, `Error ${response.status} en la carga múltiple`);
   }
 
   return payload as FileServiceUploadMultipleResult;
@@ -117,8 +131,7 @@ export async function getFileImageVariant(
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const errorMsg = payload?.detail || payload?.message || `Error ${response.status} al obtener variante de imagen`;
-    throw new Error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
+    throw responseError(payload, response.status, `Error ${response.status} al obtener variante de imagen`);
   }
 
   return payload as FileServiceImageVariant;
@@ -138,8 +151,7 @@ export async function deleteFileFromFileService(fileId: string): Promise<{ succe
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const errorMsg = payload?.detail || payload?.message || `Error ${response.status} al eliminar archivo`;
-    throw new Error(typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg));
+    throw responseError(payload, response.status, `Error ${response.status} al eliminar archivo`);
   }
 
   return { success: true };
