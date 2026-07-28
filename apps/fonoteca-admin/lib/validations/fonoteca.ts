@@ -155,6 +155,11 @@ export const multimediaSchema = z.object({
   event_id: z.string().uuid().optional().nullable(),
   occurrence_id: z.string().uuid().optional().nullable(),
   identifier: z.string().min(1, "Identifier is required"),
+  // Referencias inmutables del servicio de archivos. `identifier` conserva la
+  // URL de visualización, mientras que file_id se usa exclusivamente al borrar.
+  file_id: z.string().uuid().optional().nullable(),
+  file_key: z.string().optional().nullable(),
+  file_metadata: z.record(z.any()).optional().nullable(),
   originalFilename: z.string().optional().nullable(),
   type: z.enum([MEDIA_TYPE.SOUND, MEDIA_TYPE.STILL, MEDIA_TYPE.VIDEO, MEDIA_TYPE.TEXT]).default(MEDIA_TYPE.SOUND),
   format: z.string().default("audio/wav"),

@@ -262,6 +262,9 @@ export interface Multimedia {
   event_id: string | null;
   occurrence_id: string | null;
   identifier: string;
+  file_id?: string | null;
+  file_key?: string | null;
+  file_metadata?: Record<string, any> | null;
   originalFilename: string | null;
   type: MediaType;
   format: string;

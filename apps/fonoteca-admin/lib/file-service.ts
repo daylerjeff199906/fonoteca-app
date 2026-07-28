@@ -141,10 +141,11 @@ export async function getFileImageVariant(
  * Elimina un archivo registrado en Files API Service
  */
 export async function deleteFileFromFileService(fileId: string): Promise<{ success: boolean; message?: string }> {
-  // Extract UUID if fileId is a full path or key or URL
-  const cleanId = fileId.includes("/") ? fileId.split("/").pop() || fileId : fileId;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(fileId)) {
+    throw new FileServiceError("Se requiere el UUID del archivo para eliminarlo", 400);
+  }
 
-  const response = await fetch(`${FILE_SERVICE_URL}/api/files/${cleanId}`, {
+  const response = await fetch(`${FILE_SERVICE_URL}/api/files/${fileId}`, {
     method: "DELETE",
     headers: getHeaders(),
   });

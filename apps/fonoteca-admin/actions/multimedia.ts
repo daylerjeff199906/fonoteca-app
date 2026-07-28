@@ -7,11 +7,14 @@ import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
 import { uploadFileToFileService, deleteFileFromFileService } from "@/lib/file-service";
 
 function toBackendMultimedia(input: Record<string, any>) {
-  const { occurrence_id, event_id, creator_id, created_by_id, guano_metadata, order_index, parent_multimedia_id, record_status, is_public, duration_seconds, file_size_bytes, vocalization_type, background_species, ...rest } = input;
+  const { occurrence_id, event_id, file_id, file_key, file_metadata, creator_id, created_by_id, guano_metadata, order_index, parent_multimedia_id, record_status, is_public, duration_seconds, file_size_bytes, vocalization_type, background_species, ...rest } = input;
   return {
     ...rest,
     ...(occurrence_id !== undefined ? { occurrenceId: occurrence_id } : {}),
     ...(event_id !== undefined ? { eventId: event_id } : {}),
+    ...(file_id !== undefined ? { fileId: file_id } : {}),
+    ...(file_key !== undefined ? { fileKey: file_key } : {}),
+    ...(file_metadata !== undefined ? { fileMetadata: file_metadata } : {}),
     ...(creator_id !== undefined ? { creatorId: creator_id } : {}),
     ...(created_by_id !== undefined ? { createdById: created_by_id } : {}),
     ...(guano_metadata !== undefined ? { guanoMetadata: guano_metadata } : {}),
@@ -31,6 +34,9 @@ function fromBackendMultimedia(item: any) {
     ...item,
     occurrence_id: item.occurrence_id ?? item.occurrenceId ?? null,
     event_id: item.event_id ?? item.eventId ?? null,
+    file_id: item.file_id ?? item.fileId ?? null,
+    file_key: item.file_key ?? item.fileKey ?? null,
+    file_metadata: item.file_metadata ?? item.fileMetadata ?? null,
     creator_id: item.creator_id ?? item.creatorId ?? null,
     created_by_id: item.created_by_id ?? item.createdById ?? null,
     guano_metadata: item.guano_metadata ?? item.guanoMetadata ?? {},
@@ -150,17 +156,20 @@ export async function deleteMultimedia(id: string) {
       // Continue if item not found
     }
 
-    // 2. Delete from database
-    await mutateCrud("multimedia", "DELETE", undefined, id);
-
-    // 3. Delete from Files API if identifier exists
-    if (item && item.identifier) {
+    // 2. El Files API recibe exclusivamente su UUID, nunca una URL firmada,
+    // nombre de archivo o key. Si falla, conservamos el registro para reintentar.
+    const fileId = item?.file_id ?? item?.fileId ?? null;
+    if (fileId) {
       try {
-        await deleteFileFromFileService(item.identifier);
+        await deleteFileFromFileService(fileId);
       } catch (fileErr) {
         console.error("Failed to delete file from Files API:", fileErr);
+        return { error: fileErr instanceof Error ? fileErr.message : "No se pudo eliminar el archivo del servicio multimedia" };
       }
     }
+
+    // 3. Elimina el vínculo y los metadatos del backend de dominio.
+    await mutateCrud("multimedia", "DELETE", undefined, id);
 
     revalidatePath("/dashboard/multimedia");
     return { success: true };
@@ -223,13 +232,13 @@ export async function uploadToR2(formData: FormData) {
   return uploadToFileService(formData);
 }
 
-export async function deleteFileFromFile(urlOrId: string): Promise<{ success: boolean; error?: string }> {
-  if (!urlOrId) {
-    return { success: false, error: "No URL or File ID provided" };
+export async function deleteFileFromFile(fileId: string): Promise<{ success: boolean; error?: string }> {
+  if (!fileId) {
+    return { success: false, error: "Se requiere el UUID del archivo" };
   }
 
   try {
-    await deleteFileFromFileService(urlOrId);
+    await deleteFileFromFileService(fileId);
     return { success: true };
   } catch (err: any) {
     console.error("Files API delete error:", err);
@@ -238,6 +247,6 @@ export async function deleteFileFromFile(urlOrId: string): Promise<{ success: bo
 }
 
 // Keep deleteFileFromR2 alias for backward compatibility with existing components
-export async function deleteFileFromR2(urlOrId: string) {
-  return deleteFileFromFile(urlOrId);
+export async function deleteFileFromR2(fileId: string) {
+  return deleteFileFromFile(fileId);
 }

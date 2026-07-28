@@ -278,6 +278,9 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         const payload = {
           occurrence_id: occurrenceId,
           identifier: publicUrl,
+          file_id: uploadedFile.id,
+          file_key: uploadedFile.key,
+          file_metadata: uploadedFile.metadata,
           originalFilename: file.name,
           type: type as any,
           format: file.type,
@@ -524,6 +527,9 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       const createResp = await createMultimedia({
         occurrence_id: occurrenceId,
         identifier: publicUrl,
+        file_id: uploadedFile.id,
+        file_key: uploadedFile.key,
+        file_metadata: uploadedFile.metadata,
         originalFilename: file.name,
         type: MEDIA_TYPE.STILL,
         format: file.type,
@@ -673,7 +679,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       showToast.success("Archivo Eliminado", isAudioChild ? "El espectrograma fue eliminado correctamente." : "El archivo multimedia fue eliminado con éxito.");
       loadMultimedia();
     } else {
-      showToast.error("Error", "No se pudo eliminar el archivo.");
+      showToast.error("No se pudo eliminar el archivo", resp.error || "No se pudo completar la eliminación.");
     }
   };
 
