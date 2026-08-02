@@ -49,7 +49,15 @@ function formatOccurrence(item: any): Occurrence {
     collection,
     event: item.events || item.event,
     ecosystem: item.ecosystems || item.ecosystem,
-    multimedia: item.multimedia || [],
+    // La API principal puede devolver el campo en camelCase dentro de la
+    // relación. Normalizamos aquí para que las vistas puedan pedir la
+    // miniatura al File Service usando siempre `file_id`.
+    multimedia: (item.multimedia || []).map((media: any) => ({
+      ...media,
+      file_id: media.file_id ?? media.fileId ?? null,
+      file_key: media.file_key ?? media.fileKey ?? null,
+      processing_status: media.processing_status ?? media.processingStatus ?? null,
+    })),
     dateIdentified: item.dateIdentified ?? (item.dateidentified ? new Date(item.dateidentified).toISOString().split('T')[0] : null),
     occurrence_date: item.occurrence_date ? new Date(item.occurrence_date).toISOString().split('T')[0] : null,
     individualCount: item.individualCount ?? item.individualcount ?? 1,

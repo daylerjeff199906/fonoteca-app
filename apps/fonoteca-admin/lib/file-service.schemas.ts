@@ -17,6 +17,12 @@ export const processedFileSchema = z.object({
   height: z.number().int().positive().optional(),
 });
 
+export const fileProcessingJobSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["queued", "processing", "completed", "failed"]),
+  kind: z.string(),
+});
+
 export const fileServiceResponseSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string(),
@@ -29,6 +35,7 @@ export const fileServiceResponseSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).default({}),
   duplicate: z.boolean(),
   processed: processedFileSchema.optional(),
+  jobs: z.array(fileProcessingJobSchema).optional(),
 });
 
 export type UploadedFile = z.infer<typeof fileServiceResponseSchema>;

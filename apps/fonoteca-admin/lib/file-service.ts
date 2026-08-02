@@ -36,6 +36,7 @@ export interface FileServiceResource {
     width?: number;
     height?: number;
   };
+  jobs?: Array<{ id: string; status: string; kind: string }>;
   metadata?: Record<string, any>;
   duplicate: boolean;
 }
@@ -60,6 +61,15 @@ function getHeaders(): Record<string, string> {
     throw new FileServiceError("FILE_SERVICE_TOKEN no está configurado en el servidor", 500);
   }
   return { Authorization: `Bearer ${FILE_SERVICE_TOKEN}` };
+}
+
+export interface FileServiceThumbnail {
+  id: string;
+  cached: boolean;
+  url?: string;
+  key?: string;
+  content_type?: string;
+  job?: { id: string; status: string; kind: string };
 }
 
 function responseError(payload: any, status: number, fallback: string): FileServiceError {
@@ -135,6 +145,20 @@ export async function getFileImageVariant(
   }
 
   return payload as FileServiceImageVariant;
+}
+
+/** Solicita la variante WebP de card; 202 indica que el worker la está creando. */
+export async function getFileThumbnail(fileId: string): Promise<{ status: 200 | 202; data: FileServiceThumbnail }> {
+  const response = await fetch(`${FILE_SERVICE_URL}/api/files/${fileId}/thumbnail?w=320&h=240&q=80`, {
+    method: "GET",
+    headers: getHeaders(),
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => null);
+  if (response.status !== 200 && response.status !== 202) {
+    throw responseError(payload, response.status, `Error ${response.status} al obtener miniatura`);
+  }
+  return { status: response.status as 200 | 202, data: payload as FileServiceThumbnail };
 }
 
 /**

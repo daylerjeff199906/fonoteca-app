@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { getOptimizedMediaUrl } from "@/utils/multimedia";
+import { MediaImage } from "@/components/dashboard/media-image";
 
 interface MultimediaViewerProps {
   items: Multimedia[];
@@ -15,9 +16,10 @@ interface MultimediaViewerProps {
   location?: string;
   onUpdate?: (item: Multimedia) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  previewUrls?: Record<string, string>;
 }
 
-export function MultimediaViewer({ items, initialIndex, isOpen, onClose, location, onUpdate, onDelete }: MultimediaViewerProps) {
+export function MultimediaViewer({ items, initialIndex, isOpen, onClose, location, onUpdate, onDelete, previewUrls = {} }: MultimediaViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   useEffect(() => {
@@ -62,17 +64,19 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
         {/* Image/Audio Container */}
         <div className="flex-1 flex items-center justify-center p-4 md:p-12 relative overflow-hidden group">
           {currentItem.type === MEDIA_TYPE.STILL ? (
-            <img
-              src={getOptimizedMediaUrl(currentItem.identifier, false)}
+            <MediaImage
+              src={previewUrls[currentItem.id]}
               alt={currentItem.title || "Viewer"}
               className="max-h-full max-w-full object-contain shadow-2xl transition-all duration-500"
+              containerClassName="h-full w-full"
+              processing={!previewUrls[currentItem.id] && ((currentItem as any).processing_status ?? (currentItem as any).processingStatus) !== "completed" && Boolean((currentItem as any).processing_status ?? (currentItem as any).processingStatus)}
             />
           ) : (
             <div className="w-full max-w-4xl px-4 flex flex-col items-center gap-6">
                <div className="h-40 w-40 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse">
                   <FileText className="h-16 w-16 text-primary" />
                </div>
-               <audio src={getOptimizedMediaUrl(currentItem.identifier, true)} controls className="w-full max-w-2xl" />
+               <audio src={previewUrls[currentItem.id] || getOptimizedMediaUrl(currentItem.identifier, true)} controls className="w-full max-w-2xl" />
             </div>
           )}
 
@@ -111,7 +115,13 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
                   idx === currentIndex ? "border-primary scale-110 shadow-lg z-10" : "border-transparent opacity-40 hover:opacity-80"
                 )}
               >
-                <img src={getOptimizedMediaUrl(item.identifier, item.type === MEDIA_TYPE.SOUND)} className="h-full w-full object-cover" />
+                <MediaImage
+                  src={previewUrls[item.id] || (item.type === MEDIA_TYPE.SOUND ? getOptimizedMediaUrl(item.identifier, true) : undefined)}
+                  alt={item.title || "Multimedia"}
+                  className="object-cover"
+                  containerClassName="h-full w-full"
+                  processing={!previewUrls[item.id] && ((item as any).processing_status ?? (item as any).processingStatus) !== "completed" && Boolean((item as any).processing_status ?? (item as any).processingStatus)}
+                />
               </button>
             ))}
           </div>

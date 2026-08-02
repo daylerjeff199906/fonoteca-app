@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import {
   Plus, Edit, Eye, Filter, X, Check, Download,
-  ChevronDown, LayoutList, Music, Image as ImageIcon, Trash2
+  ChevronDown, LayoutList, Music, Trash2
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { deleteOccurrence, deleteOccurrences, getAllOccurrencesForExport, updateOccurrenceStatus } from "@/actions/occurrences";
@@ -38,7 +38,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { showToast } from "@/lib/toast";
-import { getDriveThumbnailUrl, getOptimizedMediaUrl } from "@/utils/multimedia";
+import { getMultimediaPreviews } from "@/actions/multimedia";
+import { MediaImage } from "@/components/dashboard/media-image";
 import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
 export function OccurrencesClient({
@@ -55,10 +56,28 @@ export function OccurrencesClient({
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [, setIsExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setSelectedIds([]); // Reset selection on page/filter change
   }, [data, searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const loadPreviews = async () => {
+      const multimedia = data.flatMap((occurrence) => occurrence.multimedia ?? []);
+      const previews = await getMultimediaPreviews(multimedia);
+      if (cancelled) return;
+      setPreviewUrls(Object.fromEntries(previews.data.map((preview) => [preview.multimediaId, preview.url])) as Record<string, string>);
+      if (previews.pending) retry = setTimeout(() => void loadPreviews(), 3000);
+    };
+    void loadPreviews();
+    return () => {
+      cancelled = true;
+      if (retry) clearTimeout(retry);
+    };
+  }, [data]);
 
   const currentLimit = searchParams.get("limit") || "10";
   const isShowingAll = currentLimit === "1000";
@@ -393,7 +412,7 @@ export function OccurrencesClient({
               data.map((oc) => {
                 const stillImage = oc.multimedia?.find(m => m.type === 'Still');
                 const hasSound = oc.multimedia?.some(m => m.type === 'Sound');
-                const thumbUrl = stillImage ? getOptimizedMediaUrl(stillImage.identifier, false) : null;
+                const thumbUrl = stillImage ? previewUrls[stillImage.id] : undefined;
 
                 return (
                   <TableRow key={oc.id} className={cn(selectedIds.includes(oc.id) && "bg-primary/5")}>
@@ -410,15 +429,13 @@ export function OccurrencesClient({
                         className="flex items-center gap-1.5 min-w-[60px] group hover:bg-primary/5 p-1 rounded-lg transition-all border border-transparent hover:border-primary/20"
                         title="Gestionar Multimedia"
                       >
-                        {thumbUrl ? (
-                          <div className="h-8 w-8 rounded-md overflow-hidden border bg-muted shrink-0 shadow-sm">
-                            <img src={thumbUrl} className="h-full w-full object-cover" alt="Thumb" />
-                          </div>
-                        ) : (
-                          <div className="h-8 w-8 rounded-md border bg-muted/30 flex items-center justify-center shrink-0">
-                            <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
-                          </div>
-                        )}
+                        <MediaImage
+                          src={thumbUrl}
+                          alt={stillImage?.title || "Miniatura de ocurrencia"}
+                          className="object-cover"
+                          containerClassName="h-8 w-8 rounded-md border shrink-0 shadow-sm"
+                          processing={Boolean(stillImage && !thumbUrl)}
+                        />
                         {hasSound && (
                           <div className="p-1.5 rounded-full bg-blue-50 text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors shadow-sm">
                             <Music className="h-3 w-3" />

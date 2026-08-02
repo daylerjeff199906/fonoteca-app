@@ -265,6 +265,9 @@ export interface Multimedia {
   file_id?: string | null;
   file_key?: string | null;
   file_metadata?: Record<string, any> | null;
+  processing_job_id?: string | null;
+  processing_status?: "queued" | "processing" | "completed" | "failed" | "deleted" | null;
+  processed_key?: string | null;
   originalFilename: string | null;
   type: MediaType;
   format: string;
