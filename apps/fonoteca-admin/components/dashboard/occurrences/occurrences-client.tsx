@@ -475,17 +475,19 @@ export function OccurrencesClient({
                           </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel className="text-xs">Cambiar Estado</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "draft")} className="text-xs">
-                            Borrador (Draft)
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "published")} className="text-xs">
-                            Publicado (Published)
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "inactive")} className="text-xs">
-                            Inactivo (Inactive)
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel className="text-xs">Cambiar Estado</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "draft")} className="text-xs">
+                              Borrador (Draft)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "published")} className="text-xs">
+                              Publicado (Published)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "inactive")} className="text-xs">
+                              Inactivo (Inactive)
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

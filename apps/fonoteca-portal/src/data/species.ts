@@ -1,4 +1,4 @@
-// --- Database Interfaces (Supabase schema-aligned) ---
+// --- Contratos del backend público ---
 
 export interface DbMultimedia {
     id: string;
@@ -277,7 +277,7 @@ export const formatMediaUrl = (identifier: string, isAudio: boolean = false) => 
     return identifier;
 };
 
-import { fetchApi } from "../lib/api";
+import { fetchPublicApi } from "../lib/api";
 
 export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise<{ species: Species[], totalCount: number }> {
     const {
@@ -304,7 +304,7 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
         if (family && family !== 'All') queryParams.set("family", family);
         if (genus && genus !== 'All') queryParams.set("genus", genus);
 
-        const response = await fetchApi<{ data: DbOccurrence[]; meta?: { totalItems: number }; count?: number }>(
+        const response = await fetchPublicApi<{ data: DbOccurrence[]; meta?: { totalItems: number }; count?: number }>(
             `/occurrences?${queryParams.toString()}`
         );
 
@@ -472,7 +472,7 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
 
 export async function getSpeciesById(id: string): Promise<Species | undefined> {
     try {
-        const occurrence = await fetchApi<DbOccurrence>(`/occurrences/${id}`);
+        const occurrence = await fetchPublicApi<DbOccurrence>(`/occurrences/${id}`);
         if (!occurrence) return undefined;
 
     const taxon = occurrence.taxa;
@@ -627,7 +627,7 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
 // Helper to fetch unique filter values
 export async function getFilterMetaData() {
     try {
-        const response = await fetchApi<{ data: any[] }>("/occurrences?limit=100");
+        const response = await fetchPublicApi<{ data: any[] }>("/occurrences?limit=100");
         const occurrences = response.data || [];
 
     const taxa = occurrences?.map(o => o.taxa).filter(Boolean) || [];

@@ -8,6 +8,16 @@ const getBaseUrl = (): string => {
   return "http://127.0.0.1:3000/api/v1";
 };
 
+/**
+ * El portal solo debe consumir recursos expuestos públicamente por el backend.
+ * Mantener este prefijo centralizado evita volver a consultar Supabase o, por
+ * error, rutas administrativas que requieren autenticación.
+ */
+export function getPublicEndpoint(endpoint: string): string {
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  return cleanEndpoint.startsWith("/public/") ? cleanEndpoint : `/public${cleanEndpoint}`;
+}
+
 export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = getBaseUrl().replace(/\/$/, "");
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -29,4 +39,8 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
   }
 
   return response.json() as Promise<T>;
+}
+
+export function fetchPublicApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  return fetchApi<T>(getPublicEndpoint(endpoint), options);
 }

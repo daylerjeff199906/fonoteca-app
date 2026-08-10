@@ -154,7 +154,7 @@ const SidebarSection: React.FC<{ title: string; children: React.ReactNode }> = (
     </div>
 );
 
-// Removed QueryProvider - using direct state management with Supabase
+// Estado local; los datos provienen del backend público.
 
 export const SpeciesExplorer: React.FC<SpeciesExplorerProps> = (props) => {
     return (

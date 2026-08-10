@@ -1,4 +1,4 @@
-import { fetchApi } from "../lib/api";
+import { fetchPublicApi } from "../lib/api";
 
 interface PaginatedResponse {
   meta?: {
@@ -9,11 +9,11 @@ interface PaginatedResponse {
 export async function getRealStats() {
   try {
     const [multimediaRes, taxaRes, familiesRes, ordersRes, classesRes] = await Promise.allSettled([
-      fetchApi<PaginatedResponse>("/multimedia?limit=1"),
-      fetchApi<PaginatedResponse>("/taxa?limit=1"),
-      fetchApi<PaginatedResponse>("/families?limit=1"),
-      fetchApi<PaginatedResponse>("/orders?limit=1"),
-      fetchApi<PaginatedResponse>("/classes?limit=1"),
+      fetchPublicApi<PaginatedResponse>("/multimedia?limit=1"),
+      fetchPublicApi<PaginatedResponse>("/taxonomy/taxa?limit=1"),
+      fetchPublicApi<PaginatedResponse>("/taxonomy/families?limit=1"),
+      fetchPublicApi<PaginatedResponse>("/taxonomy/orders?limit=1"),
+      fetchPublicApi<PaginatedResponse>("/taxonomy/classes?limit=1"),
     ]);
 
     const getValue = (res: PromiseSettledResult<PaginatedResponse>): number => {
@@ -38,8 +38,8 @@ export async function getRealStats() {
 
 export async function getSpeciesByClass() {
   try {
-    const classes = await fetchApi<any[]>("/classes");
-    if (!Array.isArray(classes)) return [];
+    const response = await fetchPublicApi<{ data?: any[] }>("/taxonomy/classes?limit=100");
+    const classes = response.data ?? [];
 
     return classes.map((cls) => ({
       id: cls.name,
