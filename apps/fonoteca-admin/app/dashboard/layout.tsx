@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <PageHeaderProvider>
         <SidebarProvider>
           <SessionRefresher />
-          <AppSidebar userData={{ name: user.name, email: user.email, avatar: user.avatar, role: user.role.toUpperCase() }} />
+          <AppSidebar userData={{ name: user.name, email: user.email, avatar: user.avatar, role: user.roles.join(", ") || "SIN ROLES" }} />
           <SidebarInset className="max-h-svh overflow-auto">
             <SiteHeader />
             <main className="flex-1 p-4 lg:p-6"><div className="container mx-auto space-y-6">{children}</div></main>

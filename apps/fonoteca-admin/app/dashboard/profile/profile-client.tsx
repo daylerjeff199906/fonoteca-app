@@ -163,8 +163,8 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
               <p className="font-medium">{user?.email || "No definido"}</p>
             </div>
             <div className="space-y-1">
-              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Rol Principal</Label>
-              <p className="font-medium">{user?.role || "USER"}</p>
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Roles asignados</Label>
+              <p className="font-medium">{user?.roles?.join(", ") || "Sin roles"}</p>
             </div>
           </div>
         </section>

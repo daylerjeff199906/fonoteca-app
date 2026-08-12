@@ -38,7 +38,7 @@ export default async function SystemUsersPage({
     <div className="space-y-6">
       <PageHeader
         title="Usuarios"
-        description="Administra las cuentas de usuario a nivel de sistema, así como sus roles principales."
+        description="Administra las cuentas de usuario y sus roles asignados."
       />
 
       <SystemUsersClient

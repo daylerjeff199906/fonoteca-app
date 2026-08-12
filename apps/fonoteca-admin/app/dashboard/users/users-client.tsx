@@ -77,8 +77,8 @@ interface SystemUser {
   id: string
   email: string
   name: string
-  role: string
   created_at: string
+  roles?: Array<{ code: string; name: string }>
   user_roles?: UserRole[]
 }
 
@@ -89,10 +89,17 @@ interface SystemUsersClientProps {
 
 // Available standard roles to assign
 const AVAILABLE_ROLES = [
+  { code: "SUPERADMIN", name: "Superadministrador" },
   { code: "ADMIN", name: "Administrador" },
   { code: "EDITOR", name: "Editor" },
-  { code: "USER", name: "Usuario" }
+  { code: "VIEWER", name: "Visualizador" }
 ]
+
+function assignedRoleCodes(user?: SystemUser | null) {
+  return user?.roles?.map((role) => role.code)
+    ?? user?.user_roles?.map((entry) => entry.roles?.code).filter((code): code is string => Boolean(code))
+    ?? []
+}
 
 export function SystemUsersClient({
   initialUsers,
@@ -118,17 +125,17 @@ export function SystemUsersClient({
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "USER"
+    roles: ["VIEWER"] as string[]
   })
 
   const openCreate = () => {
-    setFormData({ name: "", email: "", role: "USER" })
+    setFormData({ name: "", email: "", roles: ["VIEWER"] })
     setIsCreateDialogOpen(true)
   }
 
   const openEdit = (user: SystemUser) => {
     setSelectedUser(user)
-    setFormData({ name: user.name, email: user.email, role: user.role })
+    setFormData({ name: user.name, email: user.email, roles: assignedRoleCodes(user) })
     setIsEditDialogOpen(true)
   }
 
@@ -139,6 +146,10 @@ export function SystemUsersClient({
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.roles.length) {
+      showToast.error("Selecciona un rol", "Cada usuario debe tener al menos un rol asignado.")
+      return
+    }
     setIsSaving(true)
 
     try {
@@ -249,15 +260,14 @@ export function SystemUsersClient({
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="font-bold">Usuario</TableHead>
-              <TableHead className="font-bold">Rol Principal</TableHead>
-              <TableHead className="font-bold">Roles Adicionales</TableHead>
+              <TableHead className="font-bold">Roles asignados</TableHead>
               <TableHead className="text-right font-bold">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {initialUsers.length > 0 ? (
               initialUsers.map((user) => {
-                const additionalRoles = user.user_roles?.map(ur => ur.roles?.code).filter(Boolean) || []
+                const assignedRoles = assignedRoleCodes(user)
 
                 return (
                   <TableRow key={user.id}>
@@ -279,14 +289,9 @@ export function SystemUsersClient({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] font-semibold border-primary/20 text-primary">
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex flex-wrap gap-1.5">
-                        {additionalRoles.length > 0 ? (
-                          additionalRoles.map((role, idx) => (
+                        {assignedRoles.length > 0 ? (
+                          assignedRoles.map((role, idx) => (
                             <Badge
                               key={idx}
                               variant="secondary"
@@ -399,17 +404,16 @@ export function SystemUsersClient({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="role">Rol Principal</Label>
-              <select
-                id="role"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="USER">Usuario</option>
-                <option value="EDITOR">Editor</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
+              <Label>Roles asignados</Label>
+              <div className="grid gap-2 rounded-md border p-3">
+                {AVAILABLE_ROLES.map((role) => {
+                  const selected = formData.roles.includes(role.code)
+                  return <label key={role.code} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={selected} onCheckedChange={(checked) => setFormData({ ...formData, roles: checked ? [...formData.roles, role.code] : formData.roles.filter((code) => code !== role.code) })} />
+                    {role.name}
+                  </label>
+                })}
+              </div>
             </div>
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => {
@@ -469,9 +473,9 @@ export function SystemUsersClient({
       <Sheet open={isRolesSheetOpen} onOpenChange={setIsRolesSheetOpen}>
         <SheetContent className="sm:max-w-md py-0 px-4">
           <SheetHeader className="space-y-1 mt-6">
-            <SheetTitle>Roles Adicionales</SheetTitle>
+            <SheetTitle>Roles asignados</SheetTitle>
             <SheetDescription>
-              Gestiona los roles adicionales de <strong>{activeUser?.name}</strong>.
+              Gestiona los roles de <strong>{activeUser?.name}</strong>.
             </SheetDescription>
           </SheetHeader>
 
@@ -480,8 +484,7 @@ export function SystemUsersClient({
               <div className="grid gap-4">
                 {AVAILABLE_ROLES.map((role) => {
                   // user_roles has { roles: { code, ... } }
-                  const userRoles = activeUser?.user_roles || []
-                  const isAssigned = userRoles.some(ur => ur.roles?.code === role.code)
+                  const isAssigned = assignedRoleCodes(activeUser).includes(role.code)
                   const isLoading = loadingRoles[role.code] || false
 
                   return (

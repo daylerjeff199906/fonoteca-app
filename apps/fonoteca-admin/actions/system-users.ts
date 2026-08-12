@@ -10,6 +10,16 @@ function apiUrl(path: string) {
   return new URL(path.replace(/^\//, ""), `${API_URL.replace(/\/$/, "")}/`).toString();
 }
 
+function errorMessage(payload: unknown, fallback: string) {
+  if (!payload || typeof payload !== "object") return fallback;
+  const value = payload as { message?: unknown; error?: { message?: unknown } };
+  return typeof value.error?.message === "string"
+    ? value.error.message
+    : typeof value.message === "string"
+      ? value.message
+      : fallback;
+}
+
 export async function getSystemUsers(params?: { page?: number; limit?: number; search?: string }) {
   try {
     const searchParams = new URLSearchParams();
@@ -42,7 +52,7 @@ export async function getSystemUser(id: string) {
   }
 }
 
-export async function createSystemUser(data: { email: string; name: string; role?: string }) {
+export async function createSystemUser(data: { email: string; name: string; roles: string[] }) {
   try {
     const res = await fetchWithSession(apiUrl("/users"), {
       method: "POST",
@@ -50,7 +60,7 @@ export async function createSystemUser(data: { email: string; name: string; role
       body: JSON.stringify(data),
     })
     const payload = await res.json()
-    if (!res.ok) throw new Error(payload.message || "Error al crear usuario.")
+    if (!res.ok) throw new Error(errorMessage(payload, "Error al crear usuario."))
 
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
@@ -59,7 +69,7 @@ export async function createSystemUser(data: { email: string; name: string; role
   }
 }
 
-export async function updateSystemUser(id: string, data: { email?: string; name?: string; role?: string }) {
+export async function updateSystemUser(id: string, data: { email?: string; name?: string; roles?: string[] }) {
   try {
     const res = await fetchWithSession(apiUrl(`/users/${id}`), {
       method: "PUT",
@@ -67,7 +77,7 @@ export async function updateSystemUser(id: string, data: { email?: string; name?
       body: JSON.stringify(data),
     })
     const payload = await res.json()
-    if (!res.ok) throw new Error(payload.message || "Error al actualizar usuario.")
+    if (!res.ok) throw new Error(errorMessage(payload, "Error al actualizar usuario."))
 
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
@@ -83,7 +93,7 @@ export async function deleteSystemUser(id: string) {
     })
     if (!res.ok) {
       const payload = await res.json().catch(() => ({}))
-      throw new Error(payload.message || "Error al eliminar usuario.")
+      throw new Error(errorMessage(payload, "Error al eliminar usuario."))
     }
 
     revalidatePath("/dashboard/users")
@@ -101,7 +111,7 @@ export async function assignSystemRoles(id: string, roles: string[]) {
       body: JSON.stringify({ roles }),
     })
     const payload = await res.json()
-    if (!res.ok) throw new Error(payload.message || "Error al asignar roles.")
+    if (!res.ok) throw new Error(errorMessage(payload, "Error al asignar roles."))
 
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
@@ -118,7 +128,7 @@ export async function revokeSystemRoles(id: string, roles: string[]) {
       body: JSON.stringify({ roles }),
     })
     const payload = await res.json()
-    if (!res.ok) throw new Error(payload.message || "Error al revocar roles.")
+    if (!res.ok) throw new Error(errorMessage(payload, "Error al revocar roles."))
 
     revalidatePath("/dashboard/users")
     return { success: true, data: payload }
@@ -133,7 +143,7 @@ export async function resetSystemPassword(id: string) {
       method: "POST",
     })
     const payload = await res.json()
-    if (!res.ok) throw new Error(payload.message || "Error al resetear contraseña.")
+    if (!res.ok) throw new Error(errorMessage(payload, "Error al resetear contraseña."))
 
     return { success: true, data: payload }
   } catch (error: any) {
@@ -149,7 +159,7 @@ export async function changeOwnPassword(data: { oldPassword: string; newPassword
       body: JSON.stringify(data),
     })
     const payload = await res.json()
-    if (!res.ok) throw new Error(payload.message || "Error al cambiar contraseña.")
+    if (!res.ok) throw new Error(errorMessage(payload, "Error al cambiar contraseña."))
 
     return { success: true, message: payload.message }
   } catch (error: any) {
