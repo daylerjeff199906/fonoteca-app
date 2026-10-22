@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { MultimediaInput, multimediaSchema } from "@/lib/validations/fonoteca";
 import { Multimedia } from "@/types/fonoteca";
 import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
+import { assertMediaWrite } from "@/lib/backend/media-access";
 import { FileServiceError, uploadFileToFileService, deleteFileFromFileService, getFileThumbnail } from "@/lib/file-service";
 
 export type MultimediaPreview = {
@@ -112,6 +113,9 @@ function fromBackendMultimedia(item: any) {
     processing_job_id: item.processing_job_id ?? item.processingJobId ?? null,
     processing_status: item.processing_status ?? item.processingStatus ?? null,
     processed_key: item.processed_key ?? item.processedKey ?? null,
+    thumbnail_url: item.thumbnail_url ?? item.thumbnailUrl ?? null,
+    display_url: item.display_url ?? item.displayUrl ?? null,
+    audio_url: item.audio_url ?? item.audioUrl ?? null,
     creator_id: item.creator_id ?? item.creatorId ?? null,
     created_by_id: item.created_by_id ?? item.createdById ?? null,
     guano_metadata: item.guano_metadata ?? item.guanoMetadata ?? {},
@@ -129,16 +133,19 @@ export async function getMultimediaList({
   limit = 10,
   occurrence_id = "",
   type = "",
+  search = "",
 }: {
   page?: number;
   limit?: number;
   occurrence_id?: string;
   type?: string;
+  search?: string;
 }) {
   try {
     const params: Record<string, string | number | undefined> = { page, limit };
     if (occurrence_id) params.occurrenceId = occurrence_id;
     if (type) params.type = type;
+    if (search) params.search = search;
 
     const result = await getCrudPage<any>("multimedia", params);
     const formattedData = (result.data || []).map((rawItem: any) => {
@@ -198,7 +205,7 @@ export async function createMultimedia(input: MultimediaInput) {
     const data = await mutateCrud<any>("multimedia", "POST", toBackendMultimedia(payload));
     revalidatePath("/dashboard/multimedia");
     if (payload.occurrence_id) revalidatePath(`/dashboard/occurrences/${payload.occurrence_id}`);
-    if (payload.event_id) revalidatePath(`/dashboard/collections/events/${payload.event_id}/occurrences`);
+    if (payload.event_id) revalidatePath(`/dashboard/monitoring/register/events/${payload.event_id}/occurrences`);
     return { success: true, data: fromBackendMultimedia(data) as Multimedia };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Error al crear multimedia" };
@@ -224,6 +231,7 @@ export async function updateMultimedia(id: string, input: MultimediaInput) {
 
 export async function deleteMultimedia(id: string) {
   try {
+    await assertMediaWrite();
     // 1. Fetch item to check identifier
     let item: any = null;
     try {
@@ -277,6 +285,7 @@ export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_i
 
 export async function uploadToFileService(formData: FormData): Promise<{ success: boolean; url?: string; originalUrl?: string; file?: any; error?: string }> {
   try {
+    await assertMediaWrite();
     if (!formData.has("duplicate_policy")) {
       formData.append("duplicate_policy", "reuse");
     }
@@ -314,6 +323,7 @@ export async function deleteFileFromFile(fileId: string): Promise<{ success: boo
   }
 
   try {
+    await assertMediaWrite();
     await deleteFileFromFileService(fileId);
     return { success: true };
   } catch (err: any) {

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteFileFromFileService, FileServiceError } from "@/lib/file-service";
+import { requireMediaWrite } from "@/lib/backend/media-access";
 
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
+  const denied = await requireMediaWrite();
+  if (denied) return denied;
+
   try {
     const { fileId } = await params;
     await deleteFileFromFileService(fileId);

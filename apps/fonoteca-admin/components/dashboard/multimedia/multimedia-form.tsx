@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { multimediaSchema, MultimediaInput } from "@/lib/validations/fonoteca";
@@ -18,6 +18,7 @@ import Link from "next/link";
 import { Occurrence, MEDIA_TYPE, MEDIA_TAG } from "@/types/fonoteca";
 import { FileAudio, FileText, Settings2, Info, Check, Globe, Shield, Music, ImageIcon, Film, Loader2, ChevronDown, X, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MediaDropzone, type UploadedMedia } from "@/components/dashboard/multimedia/media-dropzone";
 import {
   Popover,
   PopoverContent,
@@ -40,8 +41,11 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
   const [isUserLoading, setIsUserLoading] = useState(false);
   const debouncedCreatorSearch = useDebounce(creatorSearch, 400);
   const [openCreator, setOpenCreator] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const uploadedRef = useRef<UploadedMedia | null>(null);
+  const savedRef = useRef(false);
 
-  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<MultimediaInput>({
+  const { register, handleSubmit, reset, watch, control, setValue, getValues, formState: { errors } } = useForm<MultimediaInput>({
     resolver: zodResolver(multimediaSchema) as any,
     defaultValues: {
       type: "Sound",
@@ -58,18 +62,72 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
 
   const mediaType = watch("type");
 
-  // Auto-set tag and format when type changes
+  // La etiqueta sigue al tipo; el formato lo fija el archivo cargado.
   useEffect(() => {
-    if (!id) { // Only for new records
-      if (mediaType === MEDIA_TYPE.SOUND) {
-        reset((prev) => ({ ...prev, tag: MEDIA_TAG.MAIN_AUDIO, format: "audio/wav" }));
-      } else if (mediaType === MEDIA_TYPE.STILL) {
-        reset((prev) => ({ ...prev, tag: MEDIA_TAG.GALLERY, format: "image/jpeg" }));
-      } else if (mediaType === MEDIA_TYPE.VIDEO) {
-        reset((prev) => ({ ...prev, tag: MEDIA_TAG.GALLERY, format: "video/mp4" }));
-      }
+    if (!id) setValue("tag", mediaType === MEDIA_TYPE.SOUND ? MEDIA_TAG.MAIN_AUDIO : MEDIA_TAG.GALLERY);
+  }, [mediaType, id, setValue]);
+
+  const clearUploadedFields = useCallback(() => {
+    setValue("identifier", "");
+    setValue("file_id", null);
+    setValue("file_key", null);
+    setValue("file_metadata", null);
+    setValue("processing_job_id", null);
+    setValue("processing_status", null);
+    setValue("thumbnail_url", null);
+    setValue("display_url", null);
+    setValue("audio_url", null);
+    setValue("originalFilename", "");
+    setValue("file_size_bytes", null);
+    setValue("duration_seconds", null);
+  }, [setValue]);
+
+  const removeUploaded = useCallback((media: UploadedMedia, keepalive = false) => {
+    // Si el servicio reutilizó un archivo existente, otro registro podría estar usándolo: no se borra.
+    if (media.uploaded.duplicate) return;
+    void fetch(`/api/files/${media.uploaded.id}`, { method: "DELETE", keepalive }).catch(() => undefined);
+  }, []);
+
+  const handleUploaded = useCallback((media: UploadedMedia) => {
+    const { file, uploaded, kind } = media;
+    uploadedRef.current = media;
+    setValue("type", kind === "audio" ? MEDIA_TYPE.SOUND : MEDIA_TYPE.STILL, { shouldValidate: true });
+    setValue("identifier", uploaded.assets?.original_url ?? uploaded.url, { shouldValidate: true });
+    setValue("file_id", uploaded.id);
+    setValue("file_key", uploaded.key);
+    setValue("file_metadata", uploaded.metadata);
+    setValue("processing_job_id", uploaded.jobs?.[0]?.id ?? null);
+    setValue("processing_status", (uploaded.jobs?.[0]?.status as any) ?? null);
+    setValue("thumbnail_url", uploaded.assets?.thumbnail_url ?? null);
+    setValue("display_url", uploaded.assets?.display_url ?? null);
+    setValue("audio_url", uploaded.assets?.audio_url ?? null);
+    setValue("originalFilename", file.name);
+    setValue("format", uploaded.content_type || file.type);
+    setValue("file_size_bytes", file.size);
+    if (!getValues("title")) setValue("title", file.name.replace(/\.[^.]+$/, ""));
+
+    if (kind === "audio") {
+      // La duración se lee del propio archivo; si el navegador no puede, el campo queda vacío.
+      const url = URL.createObjectURL(file);
+      const probe = new Audio(url);
+      probe.onloadedmetadata = () => {
+        if (Number.isFinite(probe.duration)) setValue("duration_seconds", Math.round(probe.duration * 100) / 100);
+        URL.revokeObjectURL(url);
+      };
+      probe.onerror = () => URL.revokeObjectURL(url);
     }
-  }, [mediaType, id, reset]);
+  }, [setValue, getValues]);
+
+  const handleRemoved = useCallback((media: UploadedMedia) => {
+    uploadedRef.current = null;
+    clearUploadedFields();
+    removeUploaded(media);
+  }, [clearUploadedFields, removeUploaded]);
+
+  // Si se abandona la pantalla sin guardar, el archivo recién subido queda huérfano: se elimina.
+  useEffect(() => () => {
+    if (uploadedRef.current && !savedRef.current) removeUploaded(uploadedRef.current, true);
+  }, [removeUploaded]);
 
   useEffect(() => {
     getOccurrences({ limit: 100 }).then(resp => setOccurrences(resp.data));
@@ -101,6 +159,10 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
   }, [debouncedCreatorSearch]);
 
   const onSubmit = async (data: MultimediaInput) => {
+    if (!id && uploadBusy) {
+      showToast.error("Carga en curso", "Espere a que termine la carga del archivo antes de guardar.");
+      return;
+    }
     setLoading(true);
     let resp;
     if (id) {
@@ -111,6 +173,7 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
     setLoading(false);
 
     if (resp.success) {
+      savedRef.current = true;
       showToast.success("Operación Exitosa", id ? "Multimedia actualizada correctamente." : "Multimedia registrada correctamente.");
       if (redirectUrl && resp.data?.id) {
         const finalUrl = redirectUrl.replace('[id]', resp.data.id);
@@ -156,15 +219,27 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             {errors.occurrence_id && <p className="text-[10px] text-red-500 mt-1">{errors.occurrence_id.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Identificador / URL del Archivo *</label>
-            <Input {...register("identifier")} placeholder="https://..." className="h-9" />
-            {errors.identifier && <p className="text-[10px] text-red-500 mt-1">{errors.identifier.message}</p>}
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase">Archivo *</span>
+            {id ? (
+              <div className="space-y-1">
+                <Input {...register("identifier")} readOnly className="h-9 bg-muted/40" aria-label="Ubicación del archivo" />
+                <p className="text-[10px] text-muted-foreground">El archivo de un registro existente no se reemplaza desde aquí; registre un archivo nuevo si necesita otro.</p>
+              </div>
+            ) : (
+              <MediaDropzone
+                onUploaded={handleUploaded}
+                onRemoved={handleRemoved}
+                onBusyChange={setUploadBusy}
+                disabled={loading}
+              />
+            )}
+            {errors.identifier && <p className="text-[10px] text-red-500 mt-1">{id ? errors.identifier.message : "Seleccione y suba un archivo de audio o imagen."}</p>}
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-muted-foreground uppercase">Nombre de Archivo Original</label>
-            <Input {...register("originalFilename")} placeholder="recording_001.wav" className="h-9" />
+            <Input {...register("originalFilename")} readOnly={!id} placeholder="Se completa al subir el archivo" className="h-9" />
           </div>
 
           <input type="hidden" {...register("tag")} />
@@ -261,8 +336,8 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
           <input type="hidden" {...register("type")} />
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase">Formato (MIME Type) *</label>
-            <Input {...register("format")} placeholder="audio/wav, image/jpeg..." className="h-9" />
+            <label className="text-xs font-semibold text-muted-foreground uppercase">Formato (tipo MIME) *</label>
+            <Input {...register("format")} readOnly={!id} placeholder="Se completa al subir el archivo" className="h-9" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -417,8 +492,8 @@ export function MultimediaForm({ id, redirectUrl, defaultOccurrenceId }: { id?: 
             Cancelar
           </Link>
         </Button>
-        <Button type="submit" disabled={loading} className="min-w-[140px]">
-          {loading ? "Guardando..." : id ? "Actualizar Multimedia" : "Registrar Multimedia"}
+        <Button type="submit" disabled={loading || uploadBusy} className="min-w-[140px]">
+          {loading ? "Guardando..." : uploadBusy ? "Subiendo archivo..." : id ? "Actualizar Multimedia" : "Registrar Multimedia"}
         </Button>
       </FormFooter>
     </form>

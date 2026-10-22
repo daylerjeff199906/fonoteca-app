@@ -33,3 +33,49 @@ export async function uploadFile(input: unknown): Promise<UploadedFile> {
 
   return fileServiceResponseSchema.parse(payload);
 }
+
+/**
+ * Igual que uploadFile, pero informa el avance de la subida (fetch no lo permite).
+ * El navegador solo habla con el proxy interno, que valida sesión, rol y contenido.
+ */
+export function uploadFileWithProgress(
+  input: unknown,
+  onProgress: (percent: number) => void,
+  signal?: AbortSignal,
+): Promise<UploadedFile> {
+  const data = uploadInputSchema.parse(input);
+  const form = new FormData();
+  form.append("file", data.file);
+  form.append("process_image", String(data.processImage));
+  form.append("process_audio", String(data.processAudio));
+  form.append("duplicate_policy", data.duplicatePolicy);
+  form.append("metadata", JSON.stringify(data.metadata));
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/files/upload");
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+    };
+    xhr.onerror = () => reject(new Error("Se perdió la conexión durante la carga. Revise su red e inténtelo nuevamente."));
+    xhr.onabort = () => reject(new Error("La carga fue cancelada."));
+    xhr.onload = () => {
+      let payload: unknown = null;
+      try { payload = JSON.parse(xhr.responseText); } catch { /* respuesta sin JSON */ }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        const fallback = xhr.status === 401 ? "Su sesión expiró. Inicie sesión nuevamente."
+          : xhr.status === 403 ? "Su rol no tiene permiso para subir archivos."
+          : "No se pudo subir el archivo";
+        return reject(new Error(errorMessage(payload, fallback)));
+      }
+      try {
+        onProgress(100);
+        resolve(fileServiceResponseSchema.parse(payload));
+      } catch {
+        reject(new Error("El servicio de archivos devolvió una respuesta inesperada."));
+      }
+    };
+    signal?.addEventListener("abort", () => xhr.abort());
+    xhr.send(form);
+  });
+}

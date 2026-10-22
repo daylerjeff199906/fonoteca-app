@@ -268,6 +268,9 @@ export interface Multimedia {
   processing_job_id?: string | null;
   processing_status?: "queued" | "processing" | "completed" | "failed" | "deleted" | null;
   processed_key?: string | null;
+  thumbnail_url?: string | null;
+  display_url?: string | null;
+  audio_url?: string | null;
   originalFilename: string | null;
   type: MediaType;
   format: string;
