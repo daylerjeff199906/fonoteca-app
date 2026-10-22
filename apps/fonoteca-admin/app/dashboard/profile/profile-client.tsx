@@ -11,8 +11,11 @@ import { showToast } from "@/lib/toast"
 import { BackendUser } from "@/lib/backend/auth"
 import { setupMfaAction, enableMfaAction } from "@/actions/auth"
 import { QRCodeSVG } from "qrcode.react"
+import { ROLE_INFO, effectiveRole, effectiveRoleLabel } from "@/lib/roles"
+import type { summarizePermissions } from "@/lib/permission-labels"
 
-export function ProfileClient({ user }: { user: BackendUser | null }) {
+export function ProfileClient({ user, permissionSummary }: { user: BackendUser | null; permissionSummary: ReturnType<typeof summarizePermissions> }) {
+  const top = effectiveRole(user?.roles ?? [])
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -75,7 +78,7 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
     try {
       const res = await changeOwnPassword({ oldPassword, newPassword })
       if (res.success) {
-        showToast.success("Contraseña actualizada", "Tu contraseña ha sido cambiada exitosamente.")
+        showToast.success("Contraseña actualizada", "Su contraseña se cambió correctamente.")
         setOldPassword("")
         setNewPassword("")
         setConfirmPassword("")
@@ -150,7 +153,7 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
         <section id="datos-personales" className="space-y-6 scroll-mt-28">
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Datos Personales</h2>
-            <p className="text-sm text-muted-foreground mt-1">Información básica de tu cuenta en el sistema.</p>
+            <p className="text-sm text-muted-foreground mt-1">Información básica de su cuenta en el sistema.</p>
           </div>
           
           <div className="grid gap-6 sm:grid-cols-2">
@@ -163,8 +166,19 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
               <p className="font-medium">{user?.email || "No definido"}</p>
             </div>
             <div className="space-y-1">
-              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Roles asignados</Label>
-              <p className="font-medium">{user?.roles?.join(", ") || "Sin roles"}</p>
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Rol</Label>
+              <p className="font-medium">{effectiveRoleLabel(user?.roles ?? [])}</p>
+              {top && <p className="text-xs text-muted-foreground">{ROLE_INFO[top].description}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-muted-foreground text-xs uppercase tracking-wider">Qué puede hacer</Label>
+              {permissionSummary.labels.length > 0 ? (
+                <ul className="list-disc pl-4 text-sm">
+                  {permissionSummary.labels.map((label) => <li key={label}>{label}</li>)}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">Los permisos de su rol se aplican automáticamente.</p>
+              )}
             </div>
           </div>
         </section>
@@ -175,7 +189,7 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
         <section id="seguridad" className="space-y-6 scroll-mt-28">
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Seguridad y Contraseña</h2>
-            <p className="text-sm text-muted-foreground mt-1">Actualiza tu contraseña usando una combinación segura de al menos 12 caracteres.</p>
+            <p className="text-sm text-muted-foreground mt-1">Actualice su contraseña usando una combinación segura de al menos 12 caracteres.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
@@ -224,7 +238,7 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
         <section id="mfa" className="space-y-6 scroll-mt-28">
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Autenticación de Dos Factores (MFA)</h2>
-            <p className="text-sm text-muted-foreground mt-1">Añade una capa extra de seguridad a tu cuenta configurando un autenticador (TOTP).</p>
+            <p className="text-sm text-muted-foreground mt-1">Añada una capa adicional de seguridad a su cuenta configurando un autenticador (TOTP).</p>
           </div>
           
           <div className="max-w-2xl">
@@ -238,7 +252,7 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
             {mfaSuccess && (
               <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-400">
                 <p className="font-semibold text-sm">¡Autenticación de dos factores activada correctamente!</p>
-                <p className="text-xs mt-1">A partir de ahora, se te pedirá un código de tu aplicación autenticadora al iniciar sesión.</p>
+                <p className="text-xs mt-1">A partir de ahora, se le pedirá un código de su aplicación autenticadora al iniciar sesión.</p>
               </div>
             )}
 
@@ -252,11 +266,11 @@ export function ProfileClient({ user }: { user: BackendUser | null }) {
                     <div>
                       <h4 className="font-semibold text-sm">1. Escanea el código QR</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Abre tu aplicación autenticadora (ej. Google Authenticator, Authy) y escanea el código QR de la izquierda.
+                        Abra su aplicación autenticadora (ej. Google Authenticator, Authy) y escanee el código QR de la izquierda.
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-sm">2. Ingresa el código de 6 dígitos</h4>
+                      <h4 className="font-semibold text-sm">2. Ingrese el código de 6 dígitos</h4>
                       <p className="text-xs text-muted-foreground mt-1">
                         Introduce el código generado por la aplicación para verificar y activar el MFA.
                       </p>

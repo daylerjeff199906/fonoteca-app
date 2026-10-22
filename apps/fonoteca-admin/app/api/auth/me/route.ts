@@ -6,5 +6,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ message: "Sesión no válida o expirada." }, { status: 401 });
   }
-  return NextResponse.json({ user });
+  // Los permisos internos no viajan al navegador; la interfaz solo necesita identidad y roles.
+  const { permissions: _permissions, ...publicUser } = user;
+  return NextResponse.json({ user: publicUser });
 }

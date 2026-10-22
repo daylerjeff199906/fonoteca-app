@@ -70,40 +70,6 @@ export async function getAvailableRoles() {
   }
 }
 
-export async function assignUserRole(userId: string, roleId: string, _moduleId: string) {
-  try {
-    const res = await fetchWithSession(apiUrl(`/users/${userId}/roles`), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roleId })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Error al asignar rol");
-    }
-    revalidatePath("/dashboard/users");
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
-export async function removeUserRole(userId: string, roleId: string, _moduleId: string) {
-  try {
-    const res = await fetchWithSession(apiUrl(`/users/${userId}/roles/${roleId}`), {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Error al remover rol");
-    }
-    revalidatePath("/dashboard/users");
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
 export async function searchProfiles(search: string = "") {
   try {
     const result = await getCrudPage<any>("users", { page: 1, limit: 20, search });
