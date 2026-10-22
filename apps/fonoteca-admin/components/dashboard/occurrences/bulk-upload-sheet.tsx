@@ -112,7 +112,7 @@ export function BulkUploadSheet() {
         <SheetHeader>
           <SheetTitle>Carga Masiva de Ocurrencias</SheetTitle>
           <SheetDescription>
-            Sube un archivo **JSON** o **CSV** para registrar múltiples ocurrencias a la vez. El archivo debe contener los encabezados correctos.
+            Suba un archivo **JSON** o **CSV** para registrar múltiples ocurrencias a la vez. El archivo debe contener los encabezados correctos.
           </SheetDescription>
         </SheetHeader>
 

@@ -70,7 +70,7 @@ export function NavProjects({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Trash2Icon className="text-muted-foreground" />
-                  <span>Delete Project</span>
+                  <span>Eliminar proyecto</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

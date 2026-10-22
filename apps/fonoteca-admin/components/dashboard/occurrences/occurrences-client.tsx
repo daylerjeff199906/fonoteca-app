@@ -1,5 +1,7 @@
 "use client"
 
+import { recordStatusLabel } from "@/config/glossary";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState, useEffect } from "react";
 import { Occurrence, Taxon } from "@/types/fonoteca";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -199,7 +201,7 @@ export function OccurrencesClient({
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} registros de monitoreo?`)) return;
+    if (!confirm(`¿Está seguro de eliminar ${selectedIds.length} registros de monitoreo?`)) return;
 
     // Note: showToast doesn't support .loading directly, I'll use standard toast for long ops if needed
     // but for now I'll just show the result.
@@ -385,7 +387,7 @@ export function OccurrencesClient({
         </SheetContent>
       </Sheet>
 
-      <div className="rounded-md border">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -470,22 +472,22 @@ export function OccurrencesClient({
                         <DropdownMenuTrigger
                           render={<Button variant="ghost" className="h-6 p-1 cursor-pointer" />}
                         >
-                          <Badge variant={oc.record_status === "published" ? "default" : "secondary"} className="capitalize text-[10px] h-5 px-1.5 cursor-pointer">
-                            {oc.record_status || "draft"}
+                          <Badge variant={oc.record_status === "published" ? "default" : "secondary"} className="text-[10px] h-5 px-1.5 cursor-pointer">
+                            {recordStatusLabel(oc.record_status || "draft")}
                           </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuGroup>
-                            <DropdownMenuLabel className="text-xs">Cambiar Estado</DropdownMenuLabel>
+                            <DropdownMenuLabel className="text-xs">Cambiar estado</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "draft")} className="text-xs">
-                              Borrador (Draft)
+                              Borrador
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "published")} className="text-xs">
-                              Publicado (Published)
+                              Publicado
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "inactive")} className="text-xs">
-                              Inactivo (Inactive)
+                              Inactivo
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                         </DropdownMenuContent>
@@ -510,15 +512,11 @@ export function OccurrencesClient({
                 );
               })
             ) : (
-              <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
-                  No se encontraron resultados.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={10} title="No se encontraron resultados." description="Ajuste la búsqueda o los filtros." action={{ label: "Registrar ocurrencia", href: "/dashboard/occurrences/create", icon: <Plus className="h-4 w-4" /> }} />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
       <PaginationButtons totalCount={count} itemLabel="Ocurrencias" />
     </div>

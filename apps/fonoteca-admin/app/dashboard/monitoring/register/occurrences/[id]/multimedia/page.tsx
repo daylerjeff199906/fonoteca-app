@@ -2,7 +2,6 @@ import { getOccurrence } from "@/actions/occurrences";
 import { getMultimediaList } from "@/actions/multimedia";
 import { MultimediaForm } from "@/components/dashboard/multimedia/multimedia-form";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
-import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus, Check, Play, Image as ImageIcon } from "lucide-react";
@@ -31,23 +30,14 @@ export default async function OccurrenceMultimediaPage({
   const isFromEvent = !!occurrence.event_id;
 
   return (
-    <LayoutWrapper sectionTitle={`Último Paso: Multimedia de Ocurrencia`}>
+    <LayoutWrapper>
       <div className="space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: "Monitoreo", href: "/dashboard/occurrences" },
-            { label: "Registrar Colección", href: "/dashboard/collections/new" },
-            ...(isFromEvent ? [{ label: "Ocurrencias", href: `/dashboard/collections/events/${occurrence.event_id}/occurrences` }] : []),
-            { label: "Añadir Multimedia", href: `/dashboard/collections/occurrences/${id}/multimedia`, active: true },
-          ]}
-        />
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Columna Izquierda: Formulario para añadir Multimedia */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-sm font-medium text-primary">
-                Paso Final: Registra todos los archivos multimedia (audios, imágenes, videos) asociados a la ocurrencia <strong>{occurrence.occurrenceID || "Sin ID"}</strong>. Al terminar de subir uno, aparecerá en la lista de la derecha. Puedes registrar tantos como necesites.
+                Paso Final: Registre todos los archivos multimedia (audios, imágenes, videos) asociados a la ocurrencia <strong>{occurrence.occurrenceID || "Sin ID"}</strong>. Al terminar de subir uno, aparecerá en la lista de la derecha. Puede registrar tantos como necesite.
               </p>
             </div>
 
@@ -58,14 +48,14 @@ export default async function OccurrenceMultimediaPage({
                   Nuevo Archivo Multimedia
                 </CardTitle>
                 <CardDescription>
-                  Sube el archivo y completa sus metadatos (licencia, formato, autor).
+                  Suba el archivo y complete sus metadatos (licencia, formato, autor).
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <MultimediaForm 
                   defaultOccurrenceId={id} 
                   // Stay on the same page after creating, to allow adding more media.
-                  redirectUrl={`/dashboard/collections/occurrences/${id}/multimedia`}
+                  redirectUrl={`/dashboard/monitoring/register/occurrences/${id}/multimedia`}
                 />
               </CardContent>
             </Card>
@@ -106,7 +96,7 @@ export default async function OccurrenceMultimediaPage({
                 {/* Botón de Finalización */}
                 <div className="pt-4 mt-2 border-t border-muted/20">
                   <Button asChild className="w-full gap-2">
-                    <Link href={isFromEvent ? `/dashboard/collections/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
+                    <Link href={isFromEvent ? `/dashboard/monitoring/register/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
                       <Check className="h-4 w-4" />
                       Terminar y volver
                     </Link>

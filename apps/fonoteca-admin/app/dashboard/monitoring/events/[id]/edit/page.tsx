@@ -9,7 +9,7 @@ export default async function EditEventPage({
   const { id } = await params;
 
   return (
-    <LayoutWrapper sectionTitle="Editar Evento">
+    <LayoutWrapper>
       <EventForm id={id} />
     </LayoutWrapper>
   );

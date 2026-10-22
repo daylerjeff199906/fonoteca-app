@@ -5,5 +5,5 @@ import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
   if (await getCurrentUser()) redirect("/dashboard");
-  return <AuthShell title="Iniciar sesión" description="Ingresa tu correo electrónico y contraseña para acceder a tu cuenta."><LoginForm /></AuthShell>;
+  return <AuthShell title="Iniciar sesión" description="Ingrese su correo electrónico y contraseña para acceder a su cuenta."><LoginForm /></AuthShell>;
 }

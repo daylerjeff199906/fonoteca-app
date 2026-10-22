@@ -179,7 +179,7 @@ export function TaxonForm({
 
           {/* Sección: Información Científica */}
           <FormSection title="Información Científica" icon={FlaskConical}>
-            <p className="text-[10px] text-muted-foreground mb-4">Define la taxonomía principal del taxón.</p>
+            <p className="text-[10px] text-muted-foreground mb-4">Defina la taxonomía principal del taxón.</p>
 
             <div className="rounded-md border bg-card overflow-hidden">
               <FormField
@@ -309,7 +309,7 @@ export function TaxonForm({
                                 Añadir Nuevo Género
                               </Button>
                               <Link
-                                href="/dashboard/taxonomy/genera"
+                                href="/dashboard/taxa/genera"
                                 className="text-[9px] text-muted-foreground hover:text-primary px-2 py-1 flex items-center gap-1 transition-colors"
                                 target="_blank"
                               >

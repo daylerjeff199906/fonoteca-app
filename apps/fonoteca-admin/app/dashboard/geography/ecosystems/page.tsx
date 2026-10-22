@@ -1,3 +1,4 @@
+import { routeLabel } from "@/config/route-labels";
 import { getEcosystems } from "@/actions/ecosystems";
 import { getNaturalRegions } from "@/actions/natural-regions";
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons";
@@ -30,10 +31,10 @@ export default async function EcosystemsPage({
   ]);
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <PageHeader
-          title="Hábitats"
+          title={routeLabel("/dashboard/geography/ecosystems")}
           description="Catálogo detallado de hábitats y sus características."
           action={{
             label: "Añadir Hábitat",

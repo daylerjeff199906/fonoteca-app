@@ -14,6 +14,7 @@ import { FormFooter } from "@/components/panel-admin/form-footer";
 import { ImageIcon, Upload, Link as LinkIcon, X, Loader2, Info, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TAXON_KINGDOM, TAXON_PHYLUM } from "@/types/fonoteca";
+import { expectedPhylumForClass } from "@/lib/taxonomy-hierarchy";
 
 export function ClassForm({
   id,
@@ -31,7 +32,7 @@ export function ClassForm({
     resolver: zodResolver(classSchema) as any,
     defaultValues: defaultValues || {
       kingdom: TAXON_KINGDOM.ANIMALIA,
-      phylum: TAXON_PHYLUM.CHORDATA,
+      phylum: "",
       name: "",
       label_name: "",
       icon: "",
@@ -40,6 +41,13 @@ export function ClassForm({
   });
 
   const imageUrl = watch("image_url");
+  const className = watch("name");
+
+  // Al escribir una clase conocida, el filo se completa con el que le corresponde.
+  useEffect(() => {
+    const expected = expectedPhylumForClass(className);
+    if (expected) setValue("phylum", expected);
+  }, [className, setValue]);
 
   useEffect(() => {
     if (defaultValues) {
@@ -94,7 +102,7 @@ export function ClassForm({
   const removeImage = async () => {
     if (!imageUrl) return;
 
-    const confirmDelete = confirm("¿Estás seguro de eliminar esta imagen del servidor permanentemente?");
+    const confirmDelete = confirm("¿Está seguro de eliminar esta imagen del servidor permanentemente?");
     if (!confirmDelete) return;
 
     setUploading(true);
@@ -252,7 +260,7 @@ export function ClassForm({
                           type="file" 
                           className="absolute inset-0 opacity-0 cursor-pointer" 
                           onChange={handleFileUpload}
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp"
                           disabled={uploading}
                         />
                       </>

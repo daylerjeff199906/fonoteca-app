@@ -1,5 +1,7 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Order } from "@/types/fonoteca";
@@ -41,7 +43,7 @@ export function OrdersClient({ data, count, classes }: { data: Order[]; count: n
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Órdenes Taxonómicos"
+        title={routeLabel("/dashboard/taxa/orders")}
         description="Gestiona los órdenes registrados en el catálogo"
       />
 
@@ -53,7 +55,7 @@ export function OrdersClient({ data, count, classes }: { data: Order[]; count: n
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -64,11 +66,7 @@ export function OrdersClient({ data, count, classes }: { data: Order[]; count: n
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                  No se encontraron órdenes.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={3} title="No se encontraron órdenes." description="Ajuste la búsqueda o los filtros."  />
             ) : (
               data.map((item) => {
                 const className =
@@ -109,7 +107,7 @@ export function OrdersClient({ data, count, classes }: { data: Order[]; count: n
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
       <PaginationButtons totalCount={count} itemLabel="Órdenes" />
 

@@ -42,7 +42,10 @@ export function PaginationButtons({
   const startItem = totalCount === 0 ? 0 : (currentPage - 1) * currentLimit + 1;
   const endItem = Math.min(currentPage * currentLimit, totalCount);
 
-  const isPaginationDisabled = disabled || totalCount <= 0;
+  // Sin resultados no hay nada que paginar: el estado vacío de la tabla ya lo comunica.
+  if (totalCount <= 0) return null;
+
+  const isPaginationDisabled = disabled;
   const isNavDisabled = isPaginationDisabled || totalPages <= 1;
 
   const setPage = (page: number) => {
@@ -87,7 +90,7 @@ export function PaginationButtons({
           onValueChange={setLimit}
           disabled={isPaginationDisabled}
         >
-          <SelectTrigger className="h-8 w-[72px] text-xs bg-background border-muted/80 shadow-xs focus:ring-1 focus:ring-amber-500/30">
+          <SelectTrigger className="h-9 w-[76px] text-xs bg-background border-muted/80 shadow-xs focus:ring-1 focus:ring-amber-500/30">
             <SelectValue placeholder={String(currentLimit)} />
           </SelectTrigger>
           <SelectContent align="start">

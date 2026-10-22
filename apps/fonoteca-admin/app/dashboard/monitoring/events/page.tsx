@@ -23,7 +23,7 @@ export default async function EventsPage({
   }
 
   return (
-    <LayoutWrapper sectionTitle="Eventos de Muestreo">
+    <LayoutWrapper>
       <EventsClient data={data} count={count} />
     </LayoutWrapper>
   );

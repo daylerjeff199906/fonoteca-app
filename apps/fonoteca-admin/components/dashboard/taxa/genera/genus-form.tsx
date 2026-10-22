@@ -36,7 +36,7 @@ export function GenusForm({
       if (res.data) setFamilies(res.data);
       if (res.error) showToast.error("No se pudieron cargar las familias", res.error);
       setIsLoadingFamilies(false);
-    }).catch(() => { showToast.error("No se pudieron cargar las familias", "Verifica tu conexión e inténtalo nuevamente."); setIsLoadingFamilies(false); });
+    }).catch(() => { showToast.error("No se pudieron cargar las familias", "Verifique su conexión e inténtelo nuevamente."); setIsLoadingFamilies(false); });
   }, []);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 
 export default function NewEventPage() {
   return (
-    <LayoutWrapper sectionTitle="Registrar Evento">
+    <LayoutWrapper>
       <EventForm />
     </LayoutWrapper>
   );

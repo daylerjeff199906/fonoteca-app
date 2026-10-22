@@ -1,3 +1,4 @@
+import { routeLabel } from "@/config/route-labels";
 import { getLocations } from "@/actions/locations";
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -23,10 +24,10 @@ export default async function LocationsPage({
   });
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <PageHeader
-          title="Ubicaciones"
+          title={routeLabel("/dashboard/locations")}
           description="Gestión de lugares para las ocurrencias monitoreadas."
           action={{
             label: "Registrar Ubicación",

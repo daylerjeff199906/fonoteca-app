@@ -10,7 +10,7 @@ export default async function EditLocationPage({
   const { id } = await params;
 
   return (
-    <LayoutWrapper sectionTitle="Editar Ubicación">
+    <LayoutWrapper>
       <LocationForm id={id} />
     </LayoutWrapper>
   );

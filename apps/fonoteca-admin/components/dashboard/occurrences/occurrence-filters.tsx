@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Taxon } from "@/types/fonoteca";
 import { Label } from "@/components/ui/label";
+import { ScientificName } from "@/components/ui/scientific-name";
 
 export function OccurrenceFilters({ taxa }: { taxa: Taxon[] }) {
   const router = useRouter();
@@ -46,7 +47,7 @@ export function OccurrenceFilters({ taxa }: { taxa: Taxon[] }) {
             <SelectItem value="all">Todos los Taxones</SelectItem>
             {taxa.map((t) => (
               <SelectItem key={t.id} value={t.id}>
-                {t.scientificName}
+                <ScientificName>{t.scientificName}</ScientificName>
               </SelectItem>
             ))}
           </SelectContent>

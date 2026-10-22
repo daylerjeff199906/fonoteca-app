@@ -34,8 +34,8 @@ export function AppSidebar({ userData, ...props }: AppSidebarProps) {
             <img src="/brands/logo-iiap.webp" alt="IIAP" className="size-6 object-contain" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-bold text-white uppercase tracking-tighter">IIAP Platform</span>
-            <span className="truncate text-[10px] text-[#718e9a] font-medium uppercase">Admin Console</span>
+            <span className="truncate font-bold text-white uppercase tracking-tighter">Plataforma IIAP</span>
+            <span className="truncate text-[10px] text-[#718e9a] font-medium uppercase">Consola administrativa</span>
           </div>
         </div>
       </SidebarHeader>

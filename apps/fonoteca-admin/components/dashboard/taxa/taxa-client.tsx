@@ -1,5 +1,8 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
+import { taxonRankLabel } from "@/config/glossary";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState, useEffect } from "react";
 import { Taxon } from "@/types/fonoteca";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -182,7 +185,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} taxones?`)) return;
+    if (!confirm(`¿Está seguro de eliminar ${selectedIds.length} taxones?`)) return;
 
     showToast.info("Eliminando registros", `Se eliminarán ${selectedIds.length} taxones.`);
     try {
@@ -249,7 +252,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Catálogo de Taxones"
+        title={routeLabel("/dashboard/taxa")}
         description="Gestión de familias, géneros y especies."
         action={{
           label: "Registrar Taxón",
@@ -507,7 +510,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
         </SheetContent>
       </Sheet>
 
-      <div className="rounded-md border">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -554,8 +557,8 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
                     <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
                     <TableCell>{kingdomName}</TableCell>
                     <TableCell>{familyName}</TableCell>
-                    <TableCell>{genusName}</TableCell>
-                    <TableCell>{taxon.taxonRank}</TableCell>
+                    <TableCell className={genusName === "-" ? undefined : "italic"}>{genusName}</TableCell>
+                    <TableCell>{taxonRankLabel(taxon.taxonRank)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(taxon.id)} title="Editar">
@@ -572,15 +575,11 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
                 );
               })
             ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No se encontraron resultados.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={7} title="No se encontraron resultados." description="Ajuste la búsqueda o los filtros."  />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
       <div className="flex items-center justify-between">
          <PaginationButtons totalCount={count} itemLabel="Especies" />

@@ -1,5 +1,7 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Genus } from "@/types/fonoteca";
@@ -41,7 +43,7 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Géneros Taxonómicos" 
+        title={routeLabel("/dashboard/taxa/genera")} 
         description="Gestiona los géneros registrados en el catálogo"
       />
 
@@ -53,7 +55,7 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -64,11 +66,7 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                  No se encontraron géneros.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={3} title="No se encontraron géneros." description="Ajuste la búsqueda o los filtros."  />
             ) : (
               data.map((genus) => {
                 const familyName =
@@ -88,7 +86,7 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
 
                 return (
                   <TableRow key={genus.id}>
-                    <TableCell className="font-semibold">{genus.name}</TableCell>
+                    <TableCell className="font-semibold italic">{genus.name}</TableCell>
                     <TableCell>{familyName}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -109,7 +107,7 @@ export function GeneraClient({ data, count, families }: { data: Genus[]; count: 
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
       <PaginationButtons totalCount={count} itemLabel="Géneros" />
 

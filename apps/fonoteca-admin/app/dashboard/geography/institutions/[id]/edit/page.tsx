@@ -9,7 +9,7 @@ export default async function EditInstitutionPage({
   const { id } = await params;
 
   return (
-    <LayoutWrapper sectionTitle="Editar Institución">
+    <LayoutWrapper>
       <div className="w-full">
         <InstitutionForm id={id} />
       </div>

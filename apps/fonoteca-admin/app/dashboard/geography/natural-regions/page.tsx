@@ -21,7 +21,7 @@ export default async function NaturalRegionsPage({
   });
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <SearchInput placeholder="Buscar por nombre..." />

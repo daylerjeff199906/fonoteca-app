@@ -1,27 +1,18 @@
-import { OccurrenceForm } from "@/components/dashboard/occurrences/occurrence-form";
+import { EventForm } from "@/components/dashboard/events/event-form";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
-import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Milestone } from "lucide-react";
 
-export default function NewCollectionOccurrencePage() {
+export default function NewCollectionEventPage() {
   return (
-    <LayoutWrapper sectionTitle="Paso 1: Registrar Ocurrencia">
+    <LayoutWrapper>
       <div className="space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: "Monitoreo", href: "/dashboard/occurrences" },
-            { label: "Registrar Colección", href: "/dashboard/collections/new" },
-            { label: "Crear Ocurrencia", href: "/dashboard/collections/occurrences/new", active: true },
-          ]}
-        />
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Columna Izquierda: Formulario de Registro */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-sm font-medium text-primary">
-                Paso 1 de 2: Registra los detalles de la ocurrencia. Al guardar, pasarás automáticamente a la sección para añadirle archivos multimedia.
+                Paso 1 de 3: Registre primero el evento de muestreo. Al guardar, pasará a la ventana para añadir las ocurrencias de este evento.
               </p>
             </div>
 
@@ -29,14 +20,14 @@ export default function NewCollectionOccurrencePage() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Plus className="h-5 w-5 text-primary" />
-                  Datos de la Ocurrencia
+                  Datos del Evento de Muestreo
                 </CardTitle>
                 <CardDescription>
-                  Llena los datos principales de la observación o espécimen colectado.
+                  Complete la información general de la expedición o salida de campo.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <OccurrenceForm redirectUrl="/dashboard/collections/occurrences/[id]/multimedia" />
+                <EventForm redirectUrl="/dashboard/monitoring/register/events/[id]/occurrences" />
               </CardContent>
             </Card>
           </div>
@@ -57,8 +48,8 @@ export default function NewCollectionOccurrencePage() {
                       1
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-primary">Registrar Ocurrencia</p>
-                      <p className="text-xs text-muted-foreground">Llena los datos taxonómicos, espaciales e información de recolección.</p>
+                      <p className="text-sm font-bold text-primary">Registrar Evento</p>
+                      <p className="text-xs text-muted-foreground">Defina el marco temporal, espacial y del equipo del muestreo.</p>
                     </div>
                   </div>
 
@@ -67,8 +58,18 @@ export default function NewCollectionOccurrencePage() {
                       2
                     </div>
                     <div>
+                      <p className="text-sm font-semibold">Registrar Ocurrencias</p>
+                      <p className="text-xs text-muted-foreground">Añada especímenes u observaciones avistados en el evento.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 opacity-60">
+                    <div className="h-6 w-6 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">
+                      3
+                    </div>
+                    <div>
                       <p className="text-sm font-semibold">Añadir Multimedia</p>
-                      <p className="text-xs text-muted-foreground">Adjunta archivos de audio, fotos o videos a la ocurrencia.</p>
+                      <p className="text-xs text-muted-foreground">Adjunte archivos de audio, fotos o videos a cada ocurrencia.</p>
                     </div>
                   </div>
                 </div>

@@ -22,7 +22,7 @@ export default async function OrdersPage({
   }), getAllClasses()]);
 
   return (
-    <LayoutWrapper sectionTitle="Taxonomía - Órdenes">
+    <LayoutWrapper>
       <OrdersClient data={data} count={count} classes={classes.data || []} />
     </LayoutWrapper>
   );

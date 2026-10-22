@@ -18,35 +18,20 @@ import { Plus, Edit, Building2, MapPin, Trash2, PowerOff, Power } from "lucide-r
 import Link from "next/link";
 import { deleteInstitution, deactivateInstitution, multipleDeleteInstitutions } from "@/actions/institutions";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
+import { BulkActionBar, DataTableCard, TableEmptyRow, useRowSelection } from "@/components/panel-admin/data-table";
 import { MultipleDeleteConfirmDialog } from "@/components/dashboard/multiple-delete-confirm-dialog";
 
 export function InstitutionsClient({ data }: { data: Institution[] }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { selectedIds, clear: clearSelection, toggle: toggleSelect, toggleAll: toggleSelectAll } = useRowSelection(data.map((item) => item.id!));
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null);
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === data.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(data.map((item) => item.id!));
-    }
-  };
-
-  const toggleSelect = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
 
   const handleMultipleDelete = async () => {
     if (selectedIds.length === 0) return;
     
     setIsDeleting(true);
     await multipleDeleteInstitutions(selectedIds);
-    setSelectedIds([]);
+    clearSelection();
     setIsDeleting(false);
   };
 
@@ -59,20 +44,16 @@ export function InstitutionsClient({ data }: { data: Institution[] }) {
 
   return (
     <div className="space-y-4">
-      {selectedIds.length > 0 && (
-        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md border border-muted">
-          <span className="text-sm font-medium">{selectedIds.length} seleccionados</span>
+      <BulkActionBar count={selectedIds.length} onClear={clearSelection}>
           <MultipleDeleteConfirmDialog 
             onConfirm={handleMultipleDelete} 
             selectedCount={selectedIds.length} 
             itemNamePlural="instituciones" 
             isDeleting={isDeleting} 
           />
-          <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>Cancelar</Button>
-        </div>
-      )}
+        </BulkActionBar>
 
-      <div className="rounded-md border bg-card shadow-sm">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -158,15 +139,11 @@ export function InstitutionsClient({ data }: { data: Institution[] }) {
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-sm">
-                  No se encontraron instituciones registradas.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={7} title="No se encontraron instituciones registradas." description="Ajuste la búsqueda o los filtros, o registre un elemento nuevo." action={{ label: "Añadir institución", href: "/dashboard/geography/institutions/create", icon: <Plus className="h-4 w-4" /> }} />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
     </div>
   );
 }

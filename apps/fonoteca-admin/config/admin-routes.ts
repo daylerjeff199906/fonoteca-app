@@ -1,4 +1,5 @@
 import { LucideIcon, LayoutDashboard, Layers, Map, ClipboardList, AudioLines } from "lucide-react"
+import { SECTIONS, routeLabel } from "@/config/route-labels"
 
 export interface AdminRouteItem {
   title: string
@@ -13,109 +14,109 @@ export interface AdminRouteItem {
 export const getAdminRoutes = (locale?: string): AdminRouteItem[] => {
   return [
     {
-      title: "Inicio",
+      title: routeLabel("/dashboard"),
       url: `/dashboard`,
       icon: LayoutDashboard,
     },
     {
-      title: "Taxonomía",
+      title: SECTIONS.taxonomy.label,
       url: "#",
       icon: Layers,
       items: [
         {
-          title: "Clases",
+          title: routeLabel("/dashboard/taxa/classes"),
           url: `/dashboard/taxa/classes`,
         },
         {
-          title: "Órdenes",
+          title: routeLabel("/dashboard/taxa/orders"),
           url: `/dashboard/taxa/orders`,
         },
         {
-          title: "Familias",
+          title: routeLabel("/dashboard/taxa/families"),
           url: `/dashboard/taxa/families`,
         },
         {
-          title: "Géneros",
+          title: routeLabel("/dashboard/taxa/genera"),
           url: `/dashboard/taxa/genera`,
         },
         {
-          title: "Catálogo de Especies",
+          title: routeLabel("/dashboard/taxa"),
           url: `/dashboard/taxa`,
         },
       ],
     },
     {
-      title: "Geografía",
+      title: SECTIONS.geography.label,
       url: "#",
       icon: Map,
       items: [
         {
-          title: "Instituciones",
+          title: routeLabel("/dashboard/geography/institutions"),
           url: `/dashboard/geography/institutions`,
         },
         {
-          title: "Regiones Naturales",
+          title: routeLabel("/dashboard/geography/natural-regions"),
           url: `/dashboard/geography/natural-regions`,
         },
         {
-          title: "Hábitats",
+          title: routeLabel("/dashboard/geography/ecosystems"),
           url: `/dashboard/geography/ecosystems`,
         },
         {
-          title: "Ubicaciones",
+          title: routeLabel("/dashboard/locations"),
           url: `/dashboard/locations`,
         },
       ],
     },
     {
-      title: "Monitoreo",
+      title: SECTIONS.monitoring.label,
       url: "#",
       icon: ClipboardList,
       items: [
         {
-          title: "Registrar Colección",
-          url: `/dashboard/collections/new`,
+          title: routeLabel("/dashboard/monitoring/register"),
+          url: `/dashboard/monitoring/register`,
         },
         {
-          title: "Lista de Ocurrencias",
+          title: routeLabel("/dashboard/occurrences"),
           url: `/dashboard/occurrences`,
         },
         {
-          title: "Eventos de Muestreo",
-          url: `/dashboard/events`,
+          title: routeLabel("/dashboard/monitoring/events"),
+          url: `/dashboard/monitoring/events`,
         },
       ],
     },
     {
-      title: "Mediateca",
+      title: SECTIONS.library.label,
       url: "#",
       icon: AudioLines,
       items: [
         {
-          title: "Archivos Multimedia",
+          title: routeLabel("/dashboard/multimedia"),
           url: `/dashboard/multimedia`,
         },
         {
-          title: "Solicitudes de Audios",
+          title: routeLabel("/dashboard/audio-requests"),
           url: `/dashboard/audio-requests`,
         },
       ],
     },
     {
-      title: "Configuración",
+      title: SECTIONS.settings.label,
       url: "#",
       icon: ClipboardList,
       items: [
         {
-          title: "Operaciones Masivas",
+          title: routeLabel("/dashboard/bulk"),
           url: `/dashboard/bulk`,
         },
         {
-          title: "Usuarios",
+          title: routeLabel("/dashboard/users"),
           url: `/dashboard/users`,
         },
         {
-          title: "Mi Perfil",
+          title: routeLabel("/dashboard/profile"),
           url: `/dashboard/profile`,
         },
       ],

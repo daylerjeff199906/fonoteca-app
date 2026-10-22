@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 
 export const metadata: Metadata = {
-  title: "Fonoteca Admin - Platform",
+  title: "Fonoteca - Panel administrativo",
   description: "Panel administrativo para la fonoteca de especies",
 };
 

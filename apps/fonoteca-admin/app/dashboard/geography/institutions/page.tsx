@@ -1,3 +1,4 @@
+import { routeLabel } from "@/config/route-labels";
 import { getInstitutions } from "@/actions/institutions";
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -23,10 +24,10 @@ export default async function InstitutionsPage({
   });
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <PageHeader
-          title="Instituciones"
+          title={routeLabel("/dashboard/geography/institutions")}
           description="Gestión de instituciones, centros de investigación y fonotecas."
           action={{
             label: "Registrar Institución",

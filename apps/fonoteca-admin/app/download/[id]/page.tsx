@@ -30,11 +30,11 @@ export default async function DownloadPage({
   try {
     request = await getCrudItem<any>("audio-requests", id);
   } catch {
-    return <ErrorState title="Enlace no válido" description="No se ha encontrado ninguna solicitud vinculada a este identificador. Por favor, verifica el enlace recibido en tu correo electrónico." />;
+    return <ErrorState title="Enlace no válido" description="No se ha encontrado ninguna solicitud vinculada a este identificador. Por favor, verifique el enlace recibido en su correo electrónico." />;
   }
 
   if (!request) {
-    return <ErrorState title="Enlace no válido" description="No se ha encontrado ninguna solicitud vinculada a este identificador. Por favor, verifica el enlace recibido en tu correo electrónico." />;
+    return <ErrorState title="Enlace no válido" description="No se ha encontrado ninguna solicitud vinculada a este identificador. Por favor, verifique el enlace recibido en su correo electrónico." />;
   }
 
   const isApproved = request.request_status === "approved";

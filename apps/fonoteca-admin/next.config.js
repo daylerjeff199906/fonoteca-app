@@ -1,3 +1,5 @@
+import { legacyRedirects } from "./config/legacy-redirects.js";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@repo/ui"],
@@ -5,6 +7,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "100mb",
     },
+  },
+  async redirects() {
+    return legacyRedirects.map((route) => ({ ...route, permanent: false }));
   },
 };
 

@@ -2,9 +2,9 @@ import { getEvent } from "@/actions/events";
 import { getOccurrences } from "@/actions/occurrences";
 import { OccurrenceForm } from "@/components/dashboard/occurrences/occurrence-form";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
-import { Breadcrumbs } from "@/components/panel-admin/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Plus, ArrowRight, FileAudio, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -25,26 +25,18 @@ export default async function EventOccurrencesPage({
   const occurrences = occurrencesRes.data || [];
 
   if (!event) {
-    return <div className="p-8 text-center">Evento no encontrado.</div>;
+    notFound();
   }
 
   return (
-    <LayoutWrapper sectionTitle={`Paso 2: Ocurrencias del Evento ${event.eventID}`}>
+    <LayoutWrapper sectionTitle={`Paso 2: Ocurrencias del evento ${event.eventID}`}>
       <div className="space-y-6">
-        <Breadcrumbs
-          items={[
-            { label: "Monitoreo", href: "/dashboard/occurrences" },
-            { label: "Registrar Colección", href: "/dashboard/collections/new" },
-            { label: "Ocurrencias", href: `/dashboard/collections/events/${id}/occurrences`, active: true },
-          ]}
-        />
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Columna Izquierda: Formulario para añadir Ocurrencia */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-sm font-medium text-primary">
-                Paso 2 de 3: Registra todas las ocurrencias asociadas a la expedición <strong>{event.eventID}</strong>. Al terminar de registrar una, aparecerá en la lista de la derecha.
+                Paso 2 de 3: Registre todas las ocurrencias asociadas a la expedición <strong>{event.eventID}</strong>. Al terminar de registrar una, aparecerá en la lista de la derecha.
               </p>
             </div>
 
@@ -55,13 +47,13 @@ export default async function EventOccurrencesPage({
                   Nueva Ocurrencia para este Evento
                 </CardTitle>
                 <CardDescription>
-                  Llena los datos para añadir una nueva observación/espécimen.
+                  Llene los datos para añadir una nueva observación/espécimen.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <OccurrenceForm
                   defaultEventId={id}
-                  redirectUrl={`/dashboard/collections/events/${id}/occurrences`}
+                  redirectUrl={`/dashboard/monitoring/register/events/${id}/occurrences`}
                 />
               </CardContent>
             </Card>

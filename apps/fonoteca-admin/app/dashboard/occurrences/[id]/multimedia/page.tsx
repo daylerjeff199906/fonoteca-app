@@ -23,15 +23,15 @@ export default async function OccurrenceMultimediaPage({
   const isFromEvent = !!occurrence.event_id;
 
   return (
-    <LayoutWrapper sectionTitle={`Último Paso: Multimedia de Ocurrencia`}>
+    <LayoutWrapper>
       <div className="space-y-6">
         <div className="space-y-6">
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between">
             <p className="text-sm font-medium text-primary">
-              Paso Final: Registra los archivos multimedia (audios, imágenes, videos) asociados a la ocurrencia <strong>{occurrence.occurrenceID || "Sin ID"}</strong>.
+              Paso Final: Registre los archivos multimedia (audios, imágenes, videos) asociados a la ocurrencia <strong>{occurrence.occurrenceID || "Sin ID"}</strong>.
             </p>
             <Button asChild variant="outline" size="sm" className="gap-2 border-primary/20 hover:bg-primary/5">
-              <Link href={isFromEvent ? `/dashboard/collections/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
+              <Link href={isFromEvent ? `/dashboard/monitoring/register/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
                 <Check className="h-4 w-4 text-emerald-500" />
                 Finalizar Registro
               </Link>
@@ -47,12 +47,12 @@ export default async function OccurrenceMultimediaPage({
 
           <FormFooter>
             <Button asChild variant="outline">
-              <Link href={isFromEvent ? `/dashboard/collections/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
+              <Link href={isFromEvent ? `/dashboard/monitoring/register/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
                 Volver
               </Link>
             </Button>
             <Button asChild size="lg" className="gap-2 px-8">
-              <Link href={isFromEvent ? `/dashboard/collections/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
+              <Link href={isFromEvent ? `/dashboard/monitoring/register/events/${occurrence.event_id}/occurrences` : `/dashboard/occurrences`}>
                 <Check className="h-5 w-5" />
                 Terminar y Volver al Listado
               </Link>

@@ -63,7 +63,7 @@ export async function createEvent(input: EventInput) {
 
   try {
     const data = await mutateCrud<any>("events", "POST", parsed.data);
-    revalidatePath("/dashboard/events");
+    revalidatePath("/dashboard/monitoring/events");
     return { success: true, data: formatEvent(data) };
   } catch (error: any) {
     return { error: error.message || "Error al crear evento." };
@@ -78,8 +78,8 @@ export async function updateEvent(id: string, input: EventInput) {
 
   try {
     const data = await mutateCrud<any>("events", "PATCH", parsed.data, id);
-    revalidatePath("/dashboard/events");
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath("/dashboard/monitoring/events");
+    revalidatePath(`/dashboard/monitoring/events/${id}`);
     return { success: true, data: formatEvent(data) };
   } catch (error: any) {
     return { error: error.message || "Error al actualizar evento." };
@@ -89,8 +89,8 @@ export async function updateEvent(id: string, input: EventInput) {
 export async function updateEventStatus(id: string, status: string) {
   try {
     const data = await mutateCrud<any>("events", "PATCH", { record_status: status }, id);
-    revalidatePath("/dashboard/events");
-    revalidatePath(`/dashboard/events/${id}`);
+    revalidatePath("/dashboard/monitoring/events");
+    revalidatePath(`/dashboard/monitoring/events/${id}`);
     return { success: true, data: formatEvent(data) };
   } catch (error: any) {
     return { error: error.message || "Error al actualizar el estado del evento." };
@@ -100,7 +100,7 @@ export async function updateEventStatus(id: string, status: string) {
 export async function deleteEvent(id: string) {
   try {
     await mutateCrud("events", "DELETE", undefined, id);
-    revalidatePath("/dashboard/events");
+    revalidatePath("/dashboard/monitoring/events");
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Error al eliminar el evento." };
