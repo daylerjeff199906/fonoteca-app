@@ -901,7 +901,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                         <table className="w-full text-left text-xs">
                                             <tbody className="divide-y divide-gray-800/50">
                                                 {[
-                                                    { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName },
+                                                    { label: lang === 'es' ? 'Especie' : 'Species', value: species.scientificName, italic: true },
                                                     { label: lang === 'es' ? 'Autor' : 'Author', value: species.databaseDetails?.identifiedBy || 'Desconocido' },
                                                     { label: lang === 'es' ? 'Fecha' : 'Date', value: species.databaseDetails?.occurrence_date },
                                                     { label: lang === 'es' ? 'Localidad' : 'Locality', value: species.location },
@@ -910,7 +910,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                                                 ].filter(item => item.value).map((item, i) => (
                                                     <tr key={i} className="hover:bg-[#1a1a1a] transition-colors">
                                                         <td className="px-3 py-2 text-gray-500 font-medium w-1/3 border-r border-gray-800/50">{item.label}</td>
-                                                        <td className="px-3 py-2 text-gray-300 font-medium break-all">{item.value}</td>
+                                                        <td className={`px-3 py-2 text-gray-300 font-medium break-all${item.italic ? ' italic' : ''}`}>{item.value}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
