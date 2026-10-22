@@ -30,7 +30,7 @@ test("toda tabla administrativa usa el contenedor y el estado vacío compartidos
   assert.deepEqual(offenders, []);
 });
 
-test("las tablas no crean scroll vertical interno", () => {
+test("el contenedor de la tabla no añade un segundo scroll vertical", () => {
   const offenders = withTable
     .filter((s) => /<Table[\s>][\s\S]*?<\/Table>/.test(s.text))
     .filter((s) => /<DataTableCard[^>]*(overflow-y|max-h-|h-\[)/.test(s.text))
@@ -54,4 +54,10 @@ test("la paginación se oculta cuando no hay resultados", () => {
 test("el contenedor del dashboard no limita el ancho con .container", () => {
   const layout = readFileSync(join(root, "app/dashboard/layout.tsx"), "utf8");
   assert.doesNotMatch(layout, /className="container /);
+});
+
+test("la tabla base tiene altura mínima y máxima, desplazamiento interno y cabecera fija", () => {
+  const table = readFileSync(join(root, "components/ui/table.tsx"), "utf8");
+  assert.match(table, /min-h-\[[^\]]+\][^"]*max-h-\[[^\]]+\][^"]*overflow-auto/);
+  assert.match(table, /sticky top-0/);
 });

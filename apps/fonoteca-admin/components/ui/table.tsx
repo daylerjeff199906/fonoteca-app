@@ -5,7 +5,9 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-x-auto">
+  // Altura acotada: si hay más filas de las que caben, la tabla se desplaza por dentro y la
+  // cabecera queda fija. Las tablas cortas conservan una altura mínima.
+  <div className="relative w-full min-h-[16rem] max-h-[calc(100svh-20rem)] overflow-auto">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
@@ -69,7 +71,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "sticky top-0 z-10 h-12 bg-muted px-4 text-left align-middle font-medium text-muted-foreground shadow-[inset_0_-1px_0_var(--border)] [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}
