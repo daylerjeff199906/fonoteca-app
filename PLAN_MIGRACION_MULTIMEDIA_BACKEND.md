@@ -13,6 +13,7 @@ Lo que está marcado como **(verificar)** no se pudo confirmar leyendo el códig
 | 1–4 Backend: tabla, almacenamiento, subida, cola, procesamiento, vínculo y borrado | Hecho y probado (60 pruebas del módulo, incluida una contra PostgreSQL real) |
 | 5 Admin usa `/media/files` y ya no tiene token de servicio | Hecho (61 pruebas del admin) |
 | 6 Importar lo existente | Hecho: `pnpm media:import`. Probado contra el bucket real en modo lectura |
+| Imagen Docker construida y verificada (ffmpeg y sharp en Alpine) | Hecho |
 | Prueba de extremo a extremo con MinIO real | Hecha: subida, worker, URLs públicas, duplicado, rechazo de contenido falso, vínculo, borrado |
 | 7 Despliegue y retiro del File Service | **Pendiente** (pasos abajo) |
 | 8 Originales privados | Fuera de esta rama |
@@ -36,7 +37,7 @@ Descubrimientos durante la implementación:
 
 ### Pendiente o conocido
 
-- La imagen Docker no se pudo construir en esta sesión (Docker no estaba en ejecución); `ffmpeg` y `sharp` en Alpine están sin verificar.
+- La imagen Docker del backend se construyó y se comprobó dentro de Alpine: `libvorbis` disponible, `sharp` 0.35 y conversión real a OGG y WebP. Falta solo desplegarla.
 - Si un multimedia cambia de archivo, el anterior queda sin borrar.
 - El worker corre dentro de la API (concurrencia 1). Si la medición en producción muestra contención, se separa con la misma imagen y `MEDIA_WORKER_ENABLED=false` en la API.
 
