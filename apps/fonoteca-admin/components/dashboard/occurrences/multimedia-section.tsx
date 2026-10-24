@@ -306,9 +306,9 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         });
 
         setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-        // Mantiene la lógica de persistencia: el backend recibe el identificador
-        // (URL segura de variante si ya existe) y crea el vínculo con la ocurrencia.
-        const publicUrl = uploadedFile.processed?.url ?? uploadedFile.url;
+        // Las URLs son públicas y permanentes de MinIO. El original se guarda
+        // en identifier y la tarjeta consume únicamente thumbnail_url.
+        const publicUrl = uploadedFile.assets?.original_url ?? uploadedFile.url;
 
         const payload = {
           occurrence_id: occurrenceId,
@@ -318,6 +318,9 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           file_metadata: uploadedFile.metadata,
           processing_job_id: uploadedFile.jobs?.[0]?.id ?? null,
           processing_status: uploadedFile.jobs?.[0]?.status ?? null,
+          thumbnail_url: uploadedFile.assets?.thumbnail_url ?? null,
+          display_url: uploadedFile.assets?.display_url ?? null,
+          audio_url: uploadedFile.assets?.audio_url ?? null,
           originalFilename: file.name,
           type: type as any,
           format: file.type,
@@ -559,7 +562,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       });
 
       setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-      const publicUrl = uploadedFile.processed?.url ?? uploadedFile.url;
+      const publicUrl = uploadedFile.assets?.original_url ?? uploadedFile.url;
 
       const createResp = await createMultimedia({
         occurrence_id: occurrenceId,
@@ -569,6 +572,8 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         file_metadata: uploadedFile.metadata,
         processing_job_id: uploadedFile.jobs?.[0]?.id ?? null,
         processing_status: uploadedFile.jobs?.[0]?.status ?? null,
+        thumbnail_url: uploadedFile.assets?.thumbnail_url ?? null,
+        display_url: uploadedFile.assets?.display_url ?? null,
         originalFilename: file.name,
         type: MEDIA_TYPE.STILL,
         format: file.type,
@@ -1276,8 +1281,8 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                         onChange={(e) => setUrlRecordStatus(e.target.value as any)}
                         className="w-full h-8 px-2 text-xs rounded-md border bg-background"
                       >
-                        <option value="draft">Borrador (Draft)</option>
-                        <option value="published">Publicado (Published)</option>
+                        <option value="draft">Borrador</option>
+                        <option value="published">Publicado</option>
                       </select>
                     </div>
                   </div>
@@ -1293,7 +1298,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         open={libSheetOpen}
         onOpenChange={setLibSheetOpen}
         title="Biblioteca de Archivos"
-        description="Selecciona un archivo existente en el sistema para vincularlo a esta ocurrencia."
+        description="Seleccione un archivo existente en el sistema para vincularlo a esta ocurrencia."
       >
         {libLoading ? (
           <div className="flex flex-col items-center justify-center p-12 space-y-3">
@@ -1608,7 +1613,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         open={uploadSheetOpen}
         onOpenChange={(open) => { if (!uploading) { setUploadSheetOpen(open); if (!open) setSelectedFiles([]); } }}
         title="Subida de Archivos"
-        description="Sube y gestiona multimedia para esta ocurrencia."
+        description="Suba y gestione multimedia para esta ocurrencia."
         footer={(
           <div className="flex items-center justify-between w-full">
             <div className="hidden sm:block">
@@ -1889,7 +1894,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle className="text-destructive">¿Está seguro?</AlertDialogTitle>
             <AlertDialogDescription className="text-sm font-medium">
               Esta acción no se puede deshacer. El archivo desaparecerá permanentemente del bucket y de la base de datos.
             </AlertDialogDescription>
