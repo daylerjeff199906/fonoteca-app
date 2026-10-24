@@ -6,6 +6,40 @@ Rama de trabajo (backend y admin): `feature/backend-media-processing`.
 
 Lo que está marcado como **(verificar)** no se pudo confirmar leyendo el código.
 
+## Estado de la rama
+
+| Fase | Estado |
+|---|---|
+| 1–4 Backend: tabla, almacenamiento, subida, cola, procesamiento, vínculo y borrado | Hecho y probado (60 pruebas del módulo, incluida una contra PostgreSQL real) |
+| 5 Admin usa `/media/files` y ya no tiene token de servicio | Hecho (61 pruebas del admin) |
+| 6 Importar lo existente | Hecho: `pnpm media:import`. Probado contra el bucket real en modo lectura |
+| Prueba de extremo a extremo con MinIO real | Hecha: subida, worker, URLs públicas, duplicado, rechazo de contenido falso, vínculo, borrado |
+| 7 Despliegue y retiro del File Service | **Pendiente** (pasos abajo) |
+| 8 Originales privados | Fuera de esta rama |
+
+Descubrimientos durante la implementación:
+
+- El `project_id` real de las claves es **`fonoteca-app`** (no `fonoteca`). El bucket tenía solo 11 archivos originales.
+- El adaptador de PostgreSQL de Prisma 7 desplaza las fechas de JavaScript según la zona horaria del servidor. Las fechas de la cola las pone el reloj de la base de datos.
+- `POST /multimedia` con `file_size_bytes` guardaba el registro y luego respondía 500 (no se puede serializar un `BigInt`). Corregido.
+- `audio-requests` también pedía al File Service la URL del original; ahora la arma con la clave guardada.
+- La imagen de una clase se guardaba como URL y su botón de borrar nunca coincidía con ella. Ahora se borra por el id que contiene la URL, y esas subidas no se consideran huérfanas.
+
+### Pasos de despliegue (Fase 7)
+
+1. Definir en el entorno del backend `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_PUBLIC_BASE_URL` y `MEDIA_PROJECT_ID=fonoteca-app` (ya copiados al `.env` local).
+2. Reconstruir la imagen del backend (instala `ffmpeg`). Las migraciones se aplican al arrancar.
+3. Ejecutar la importación: primero sin `--apply`, luego con él (`docker compose exec api node dist/src/media/cli/import-from-storage.js --apply`). Las imágenes sin miniatura quedan en cola y el worker las genera.
+4. Desplegar el admin y quitar `FILE_SERVICE_URL` y `FILE_SERVICE_TOKEN` de su entorno.
+5. Comprobar que el límite de cuerpo del proxy inverso supera `MEDIA_MAX_AUDIO_MB` (40 MB).
+6. Observar jobs en `failed` y tiempos durante 1–2 semanas; apagar el File Service (API, workers, RabbitMQ y su base) y rotar las credenciales de MinIO que compartía.
+
+### Pendiente o conocido
+
+- La imagen Docker no se pudo construir en esta sesión (Docker no estaba en ejecución); `ffmpeg` y `sharp` en Alpine están sin verificar.
+- Si un multimedia cambia de archivo, el anterior queda sin borrar.
+- El worker corre dentro de la API (concurrencia 1). Si la medición en producción muestra contención, se separa con la misma imagen y `MEDIA_WORKER_ENABLED=false` en la API.
+
 ## 0. Decisiones cerradas
 
 Fonoteca es el único consumidor del File Service, así que se retira por completo (Fase 7). Con eso quedan resueltas las preguntas abiertas y se ajusta el diseño original:
