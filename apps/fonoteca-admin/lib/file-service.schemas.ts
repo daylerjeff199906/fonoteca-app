@@ -7,6 +7,13 @@ export const uploadInputSchema = z.object({
   processImage: z.boolean().default(false),
   processAudio: z.boolean().default(false),
   duplicatePolicy: z.enum(["reuse", "reject", "new_copy"]).default("reuse"),
+  /** Carpeta lógica del archivo en el almacenamiento, por ejemplo "classes". */
+  resourceType: z.string().optional(),
+  /**
+   * Verdadero cuando un multimedia reclamará el archivo (por defecto). El backend borra a las 24 h los archivos
+   * pendientes que nadie reclama. Use falso para archivos que no pertenecen a un multimedia, como la imagen de una clase.
+   */
+  pending: z.boolean().default(true),
 });
 
 export const processedFileSchema = z.object({
@@ -16,6 +23,13 @@ export const processedFileSchema = z.object({
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
 });
+
+export const fileAssetsSchema = z.object({
+  original_url: z.string().url(),
+  thumbnail_url: z.string().url().optional(),
+  display_url: z.string().url().optional(),
+  audio_url: z.string().url().optional(),
+}).partial();
 
 export const fileProcessingJobSchema = z.object({
   id: z.string().uuid(),
@@ -34,6 +48,7 @@ export const fileServiceResponseSchema = z.object({
   url: z.string().url(),
   metadata: z.record(z.string(), z.unknown()).default({}),
   duplicate: z.boolean(),
+  assets: fileAssetsSchema.optional(),
   processed: processedFileSchema.optional(),
   jobs: z.array(fileProcessingJobSchema).optional(),
 });

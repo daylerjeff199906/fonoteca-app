@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MB, sniffMediaKind, validateMediaBytes, validateMediaMeta } from "../lib/media-rules.ts";
 import { canWriteMedia } from "../lib/media-permissions.ts";
+import { fileIdFromMediaUrl } from "../lib/media-url.ts";
 
 const read = (path) => readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), "utf8");
 const bytes = (...values) => Uint8Array.from([...values, ...new Array(16).fill(0)].slice(0, 16));
@@ -71,27 +72,45 @@ test("solo los roles con privilegio de escritura pueden subir archivos", () => {
   assert.equal(canWriteMedia({ roles: ["VIEWER"], permissions: ["*"] }), true);
 });
 
-test("toda ruta que usa el token del servicio de archivos exige sesión y rol", () => {
-  for (const route of [
-    "app/api/files/upload/route.ts",
-    "app/api/files/upload-multiple/route.ts",
-    "app/api/files/[fileId]/route.ts",
-    "app/api/r2/upload/route.ts",
-    "app/api/r2/delete/route.ts",
-  ]) {
+test("toda ruta que sube o borra archivos exige sesión y rol", () => {
+  for (const route of ["app/api/files/upload/route.ts", "app/api/files/[fileId]/route.ts"]) {
     assert.match(read(route), /requireMediaWrite\(\)/, route);
   }
-  for (const route of ["app/api/files/upload/route.ts", "app/api/files/upload-multiple/route.ts", "app/api/r2/upload/route.ts"]) {
-    assert.match(read(route), /validateUploadFiles\(/, route);
-  }
+  assert.match(read("app/api/files/upload/route.ts"), /validateUploadFiles\(/);
 });
 
-test("las acciones del servidor que tocan archivos exigen permiso de escritura", () => {
-  const actions = read("actions/multimedia.ts");
-  for (const fn of ["deleteMultimedia", "uploadToFileService", "deleteFileFromFile"]) {
-    const body = actions.slice(actions.indexOf(`function ${fn}(`));
-    assert.match(body.slice(0, 400), /assertMediaWrite\(\)/, fn);
+test("el panel ya no usa el servicio de archivos externo ni su token", () => {
+  for (const file of [
+    "lib/media-service.ts",
+    "app/api/files/upload/route.ts",
+    "app/api/files/[fileId]/route.ts",
+    "actions/multimedia.ts",
+    ".env.example",
+  ]) {
+    assert.doesNotMatch(read(file), /FILE_SERVICE|lib\/file-service"/, file);
   }
+  assert.match(read("lib/media-service.ts"), /fetchWithSession/);
+});
+
+test("la subida reenvía solo los campos que el backend entiende", () => {
+  const route = read("app/api/files/upload/route.ts");
+  assert.match(route, /FORWARDED_FIELDS = \["duplicate_policy", "metadata", "resource_type", "pending"\]/);
+  assert.doesNotMatch(route, /process_image|process_audio/);
+});
+
+test("borrar un multimedia deja que el backend elimine sus archivos", () => {
+  const actions = read("actions/multimedia.ts");
+  const body = actions.slice(actions.indexOf("function deleteMultimedia("));
+  assert.match(body.slice(0, 400), /assertMediaWrite\(\)/);
+  assert.match(body.slice(0, 600), /mutateCrud\("multimedia", "DELETE"/);
+});
+
+test("reconoce el archivo gestionado por el backend a partir de su URL pública", () => {
+  const id = "8d2f3c1e-6c8e-4a45-9e7b-0d7a4b9a3f11";
+  assert.equal(fileIdFromMediaUrl(`https://s3.example.org/fonoteca/files/fonoteca-app/classes/${id}/original/rana.jpg`), id);
+  assert.equal(fileIdFromMediaUrl(`https://s3.example.org/fonoteca/files/fonoteca-app/${id}/variants/display.webp`), id);
+  assert.equal(fileIdFromMediaUrl("https://drive.google.com/thumbnail?id=abc"), null);
+  assert.equal(fileIdFromMediaUrl(null), null);
 });
 
 test("el formulario de multimedia sube archivos y ya no pide una URL manual", () => {

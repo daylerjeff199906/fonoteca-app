@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { classSchema, ClassInput } from "@/lib/validations/fonoteca";
 import { createClass, updateClass } from "@/actions/classes";
 import { uploadFile } from "@/lib/file-service.client";
+import { fileIdFromMediaUrl } from "@/lib/media-url";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -69,12 +70,15 @@ export function ClassForm({
         file,
         duplicatePolicy: "reuse",
         processImage: true,
+        // La imagen se guarda en la clase por URL, no en un multimedia: el backend no debe borrarla por huérfana.
+        resourceType: "classes",
+        pending: false,
         metadata: {
           class_name: className,
           source: "class_form",
         },
       });
-      const uploadedUrl = uploadedFile.processed?.url ?? uploadedFile.url;
+      const uploadedUrl = uploadedFile.assets?.original_url ?? uploadedFile.url;
 
       if (uploadedUrl) {
         setValue("image_url", uploadedUrl);
@@ -107,11 +111,10 @@ export function ClassForm({
 
     setUploading(true);
     try {
-      if (imageUrl.includes("/api/files/")) {
-        const fileId = imageUrl.split("/api/files/").pop()?.split("?")[0]?.split("/")[0];
-        if (fileId) {
-          await fetch(`/api/files/${fileId}`, { method: "DELETE" });
-        }
+      const fileId = fileIdFromMediaUrl(imageUrl);
+      if (fileId) {
+        const response = await fetch(`/api/files/${fileId}`, { method: "DELETE" });
+        if (!response.ok) console.error("No se pudo eliminar el archivo de la imagen:", response.status);
       }
     } catch (err) {
       console.error("Error removing image file:", err);

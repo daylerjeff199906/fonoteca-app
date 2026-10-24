@@ -5,7 +5,7 @@ import { MultimediaInput, multimediaSchema } from "@/lib/validations/fonoteca";
 import { Multimedia } from "@/types/fonoteca";
 import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
 import { assertMediaWrite } from "@/lib/backend/media-access";
-import { FileServiceError, uploadFileToFileService, deleteFileFromFileService, getFileThumbnail } from "@/lib/file-service";
+import { getMediaFile, MediaServiceError } from "@/lib/media-service";
 
 export type MultimediaPreview = {
   multimediaId: string;
@@ -14,61 +14,44 @@ export type MultimediaPreview = {
   contentType?: string;
 };
 
-/** URLs firmadas frescas de las variantes optimizadas para el viewport actual. */
+/** Datos mínimos de un multimedia para resolver su vista previa. */
 type PreviewableMultimedia = Pick<Multimedia, "id" | "file_id" | "identifier" | "type"> & {
   /** Compatibilidad con relaciones aún entregadas por la API en camelCase. */
   fileId?: string | null;
+  thumbnail_url?: string | null;
   processing_status?: Multimedia["processing_status"];
   processingStatus?: Multimedia["processing_status"];
 };
 
+/**
+ * Miniaturas de las imágenes. Las URLs de MinIO son públicas y permanentes y las fija el backend cuando termina
+ * el procesamiento, así que solo se consulta el estado de los archivos que aún no tienen miniatura.
+ */
 export async function getMultimediaPreviews(items: PreviewableMultimedia[]) {
   const imageItems = items
     .map((item) => ({ ...item, resolvedFileId: item.file_id ?? item.fileId }))
     .filter((item) => item.type === "Still")
     .slice(0, 50);
-  const results = await Promise.allSettled(imageItems.map(async (item) => {
-    // Registros históricos pueden no tener file_id porque fueron creados
-    // antes de Files API. Conservamos su URL existente como respaldo.
-    if (!item.resolvedFileId) {
-      return { multimediaId: item.id, url: item.identifier, status: "legacy" } satisfies MultimediaPreview;
+  const results = await Promise.allSettled(imageItems.map(async (item): Promise<MultimediaPreview> => {
+    // Registros históricos sin archivo gestionado: se conserva su URL.
+    if (!item.resolvedFileId) return { multimediaId: item.id, url: item.identifier, status: "legacy" };
+    if (item.thumbnail_url && (item.processing_status ?? item.processingStatus) === "completed") {
+      return { multimediaId: item.id, url: item.thumbnail_url, status: "completed" };
     }
 
-    let thumbnail: Awaited<ReturnType<typeof getFileThumbnail>>;
+    let file: Awaited<ReturnType<typeof getMediaFile>>;
     try {
-      thumbnail = await getFileThumbnail(item.resolvedFileId);
+      file = await getMediaFile(item.resolvedFileId);
     } catch (error) {
-      // Un 404 significa que el archivo no está en el registro de este
-      // proyecto (por ejemplo, multimedia previa a la migración). No debe
-      // impedir que el administrador muestre la imagen ya guardada.
-      if (error instanceof FileServiceError && error.status === 404 && item.identifier) {
-        return { multimediaId: item.id, url: item.identifier, status: "legacy" } satisfies MultimediaPreview;
+      // 404: el archivo no está registrado en el backend (multimedia previa a la migración).
+      if (error instanceof MediaServiceError && error.status === 404 && item.identifier) {
+        return { multimediaId: item.id, url: item.identifier, status: "legacy" };
       }
       throw error;
     }
-    if (!thumbnail.data.url && thumbnail.status === 200) {
-      throw new Error("El File Service respondió una miniatura sin URL.");
-    }
-    // El worker termina fuera de la aplicación. Persistimos ese estado al ver
-    // la variante para que futuras visitas no mantengan el placeholder.
-    if (thumbnail.status === 200 && thumbnail.data.url &&
-        (item.processing_status ?? item.processingStatus) !== "completed") {
-      try {
-        await mutateCrud("multimedia", "PATCH", {
-          processingStatus: "completed",
-          ...(thumbnail.data.key ? { processedKey: thumbnail.data.key } : {}),
-        }, item.id);
-      } catch (error) {
-        // La URL sigue siendo utilizable aunque la sincronización del estado
-        // falle temporalmente; se intentará de nuevo en la siguiente carga.
-        console.warn("No se pudo actualizar el estado de la miniatura:", error);
-      }
-    }
-    return {
-      multimediaId: item.id,
-      url: thumbnail.data.url ?? "",
-      status: thumbnail.status === 202 ? "processing" : "completed",
-    } satisfies MultimediaPreview;
+    if (file.status === "failed") throw new Error("No se pudo procesar el archivo multimedia.");
+    const url = file.assets?.thumbnail_url ?? file.assets?.display_url ?? "";
+    return { multimediaId: item.id, url, status: file.status === "completed" && url ? "completed" : "processing" };
   }));
   const data = results.flatMap((result) => result.status === "fulfilled" && result.value.url ? [result.value] : []);
   const pending = results.some((result) => result.status === "fulfilled" && result.value.status === "processing");
@@ -232,27 +215,8 @@ export async function updateMultimedia(id: string, input: MultimediaInput) {
 export async function deleteMultimedia(id: string) {
   try {
     await assertMediaWrite();
-    // 1. Fetch item to check identifier
-    let item: any = null;
-    try {
-      item = await getCrudItem<any>("multimedia", id);
-    } catch {
-      // Continue if item not found
-    }
-
-    // 2. El Files API recibe exclusivamente su UUID, nunca una URL firmada,
-    // nombre de archivo o key. Si falla, conservamos el registro para reintentar.
-    const fileId = item?.file_id ?? item?.fileId ?? null;
-    if (fileId) {
-      try {
-        await deleteFileFromFileService(fileId);
-      } catch (fileErr) {
-        console.error("Failed to delete file from Files API:", fileErr);
-        return { error: fileErr instanceof Error ? fileErr.message : "No se pudo eliminar el archivo del servicio multimedia" };
-      }
-    }
-
-    // 3. Elimina el vínculo y los metadatos del backend de dominio.
+    // El backend borra el registro, sus hijos y los archivos que ningún otro multimedia usa; si el almacenamiento
+    // falla conserva el registro para poder reintentar.
     await mutateCrud("multimedia", "DELETE", undefined, id);
 
     revalidatePath("/dashboard/multimedia");
@@ -281,58 +245,4 @@ export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_i
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Error al actualizar índices" };
   }
-}
-
-export async function uploadToFileService(formData: FormData): Promise<{ success: boolean; url?: string; originalUrl?: string; file?: any; error?: string }> {
-  try {
-    await assertMediaWrite();
-    if (!formData.has("duplicate_policy")) {
-      formData.append("duplicate_policy", "reuse");
-    }
-    if (!formData.has("process_image")) {
-      formData.append("process_image", "true");
-    }
-    if (!formData.has("process_audio")) {
-      formData.append("process_audio", "true");
-    }
-
-    const result = await uploadFileToFileService(formData);
-    // Files API devuelve una URL prefirmada para la variante cuando procesa
-    // una imagen. No se debe reconstruir ni modificar: ruta y query forman
-    // parte de la firma S3/MinIO.
-    return {
-      success: true,
-      url: result.processed?.url ?? result.url,
-      originalUrl: result.url,
-      file: result,
-    };
-  } catch (err: any) {
-    console.error("Files API upload error:", err);
-    return { success: false, error: err.message || "Error al subir archivo" };
-  }
-}
-
-// Keep uploadToR2 alias for backward compatibility with existing components
-export async function uploadToR2(formData: FormData) {
-  return uploadToFileService(formData);
-}
-
-export async function deleteFileFromFile(fileId: string): Promise<{ success: boolean; error?: string }> {
-  if (!fileId) {
-    return { success: false, error: "Se requiere el UUID del archivo" };
-  }
-
-  try {
-    await assertMediaWrite();
-    await deleteFileFromFileService(fileId);
-    return { success: true };
-  } catch (err: any) {
-    console.error("Files API delete error:", err);
-    return { success: false, error: err.message || "Error al eliminar archivo" };
-  }
-}
-
-// Keep deleteFileFromR2 alias for backward compatibility with existing components
-export async function deleteFileFromR2(fileId: string) {
-  return deleteFileFromFile(fileId);
 }

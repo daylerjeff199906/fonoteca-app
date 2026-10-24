@@ -23,6 +23,8 @@ export async function uploadFile(input: unknown): Promise<UploadedFile> {
   form.append("process_image", String(data.processImage));
   form.append("process_audio", String(data.processAudio));
   form.append("duplicate_policy", data.duplicatePolicy);
+  form.append("pending", String(data.pending));
+  if (data.resourceType) form.append("resource_type", data.resourceType);
   form.append("metadata", JSON.stringify(data.metadata));
 
   const response = await fetch("/api/files/upload", { method: "POST", body: form });
@@ -49,6 +51,8 @@ export function uploadFileWithProgress(
   form.append("process_image", String(data.processImage));
   form.append("process_audio", String(data.processAudio));
   form.append("duplicate_policy", data.duplicatePolicy);
+  form.append("pending", String(data.pending));
+  if (data.resourceType) form.append("resource_type", data.resourceType);
   form.append("metadata", JSON.stringify(data.metadata));
 
   return new Promise((resolve, reject) => {
