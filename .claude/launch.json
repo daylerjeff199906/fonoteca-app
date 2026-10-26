@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fonoteca-admin",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "apps/fonoteca-admin", "dev"],
+      "port": 3006
+    },
+    {
+      "name": "fonoteca-portal",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/fonoteca-portal/node_modules/astro/astro.js", "dev", "--root", "apps/fonoteca-portal", "--port", "4321"],
+      "port": 4321
+    }
+  ]
+}

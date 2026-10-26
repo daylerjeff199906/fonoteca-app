@@ -67,6 +67,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScientificName } from "@/components/ui/scientific-name";
 
 export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: string, redirectUrl?: string, defaultEventId?: string }) {
   const router = useRouter();
@@ -385,7 +386,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                       >
                         <span className="truncate">
                           {field.value
-                            ? selectedTaxon?.scientificName || "Seleccionar Taxón..."
+                            ? (selectedTaxon?.scientificName ? <ScientificName>{selectedTaxon.scientificName}</ScientificName> : "Seleccionar Taxón...")
                             : "Seleccionar Taxón..."}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -425,7 +426,7 @@ export function OccurrenceForm({ id, redirectUrl, defaultEventId }: { id?: strin
                                         <ChevronRight className="h-1.5 w-1.5 opacity-40" />
                                         <span>{t.genus?.family?.name}</span>
                                         <ChevronRight className="h-1.5 w-1.5 opacity-40" />
-                                        <span>{t.genus?.name}</span>
+                                        <span className="italic">{t.genus?.name}</span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <span className="font-semibold text-sm italic text-foreground leading-none">

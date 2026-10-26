@@ -22,7 +22,7 @@ export default async function FamiliesPage({
   }), getAllOrders()]);
 
   return (
-    <LayoutWrapper sectionTitle="Taxonomía - Familias">
+    <LayoutWrapper>
       <FamiliesClient data={data} count={count} orders={orders.data || []} />
     </LayoutWrapper>
   );

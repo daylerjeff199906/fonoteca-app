@@ -17,7 +17,6 @@ export interface BackendUser {
   id: string;
   email: string;
   name: string;
-  role: string;
   avatar: string | null;
   roles: string[];
   permissions: string[];
@@ -128,7 +127,6 @@ function normalizeUser(payload: unknown): BackendUser | null {
   const isAdmin =
     roles.some((value) => ["ADMIN", "SUPERADMIN", "SUPER_ADMIN", "ROLE_ADMIN"].includes(value)) ||
     permissions.includes("*");
-  const role = roles[0] ?? "USER";
   const expiresAt = (data.expires_at ?? data.expiresAt ?? source.expires_at ?? source.expiresAt) as
     | string
     | number
@@ -139,7 +137,6 @@ function normalizeUser(payload: unknown): BackendUser | null {
     id,
     email,
     name: name || email,
-    role,
     avatar: typeof source.avatar === "string" ? source.avatar : null,
     roles,
     permissions,
@@ -349,11 +346,11 @@ export async function verifyMfaLogin(mfaToken: string, code: string): Promise<Lo
 }
 
 // 7. POST /api/v1/auth/forgot-password
-export async function requestPasswordReset(email: string, resetUrl: string) {
+export async function requestPasswordReset(email: string) {
   await fetch(apiUrl(authPath("FORGOT_PASSWORD", "/auth/forgot-password")), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ email, reset_url: resetUrl }),
+    body: JSON.stringify({ email }),
     cache: "no-store",
   });
 }
@@ -401,7 +398,7 @@ export async function setupMfa(): Promise<{ secret: string; qrCodeUrl: string }>
   }
   const data = unwrap(payload);
   const secret = (data.secret ?? data.totp_secret ?? data.totpSecret) as string;
-  const qrCodeUrl = (data.qr_code ?? data.qrCode ?? data.totp_url ?? data.totpUrl ?? data.url) as string;
+  const qrCodeUrl = (data.otpauthUrl ?? data.otpauth_url ?? data.qr_code ?? data.qrCode ?? data.totp_url ?? data.totpUrl ?? data.url) as string;
   return { secret, qrCodeUrl };
 }
 

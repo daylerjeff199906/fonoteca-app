@@ -1,3 +1,4 @@
+import { routeLabel } from "@/config/route-labels";
 import { getInstitutions } from "@/actions/institutions";
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -13,19 +14,20 @@ export default async function InstitutionsPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
 
   const { data: institutions, count, error } = await getInstitutions({
     page,
-    limit: 10,
+    limit,
     search,
   });
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <PageHeader
-          title="Instituciones"
+          title={routeLabel("/dashboard/geography/institutions")}
           description="Gestión de instituciones, centros de investigación y fonotecas."
           action={{
             label: "Registrar Institución",
@@ -42,7 +44,7 @@ export default async function InstitutionsPage({
 
         <InstitutionsClient data={institutions} />
 
-        <PaginationButtons totalCount={count} pageSize={10} />
+        <PaginationButtons totalCount={count} itemLabel="Instituciones" />
       </div>
     </LayoutWrapper>
   );

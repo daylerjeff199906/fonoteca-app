@@ -3,7 +3,7 @@ import { BulkClient } from "@/components/dashboard/bulk/bulk-client";
 
 export default function BulkPage() {
   return (
-    <LayoutWrapper sectionTitle="Operaciones Masivas">
+    <LayoutWrapper>
       <BulkClient />
     </LayoutWrapper>
   );

@@ -36,7 +36,7 @@ export function FamilyForm({
       if (res.data) setOrders(res.data);
       if (res.error) showToast.error("No se pudieron cargar los órdenes", res.error);
       setIsLoadingOrders(false);
-    }).catch(() => { showToast.error("No se pudieron cargar los órdenes", "Verifica tu conexión e inténtalo nuevamente."); setIsLoadingOrders(false); });
+    }).catch(() => { showToast.error("No se pudieron cargar los órdenes", "Verifique su conexión e inténtelo nuevamente."); setIsLoadingOrders(false); });
   }, []);
 
   useEffect(() => {

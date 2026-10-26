@@ -2,6 +2,7 @@
 
 
 
+import { routeLabel } from "@/config/route-labels";
 import { Event } from "@/types/fonoteca";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -17,23 +18,24 @@ import {
 import { Plus, Edit, Calendar, MapPin, User, Trash2 } from "lucide-react";
 import { deleteEvent } from "@/actions/events";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/panel-admin/page-header";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
+import { recordStatusLabel } from "@/config/glossary";
 
 export function EventsClient({ data, count }: { data: Event[]; count: number }) {
-  const router = useRouter();
+  const hasSearch = Boolean(useSearchParams().get("search"));
 
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Eventos de Muestreo"
+        title={routeLabel("/dashboard/monitoring/events")}
         description="Gestión de expediciones y sesiones de grabación."
         action={{
           label: "Registrar Evento",
-          href: "/dashboard/events/new",
+          href: "/dashboard/monitoring/events/new",
           icon: <Plus className="h-4 w-4" />,
         }}
       />
@@ -44,7 +46,7 @@ export function EventsClient({ data, count }: { data: Event[]; count: number }) 
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -81,14 +83,14 @@ export function EventsClient({ data, count }: { data: Event[]; count: number }) 
                     {event.make} {event.model}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={event.record_status === "published" ? "default" : "secondary"} className="capitalize text-[10px] h-5 px-1.5">
-                      {event.record_status}
+                    <Badge variant={event.record_status === "published" ? "default" : "secondary"} className="text-[10px] h-5 px-1.5">
+                      {recordStatusLabel(event.record_status)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Editar">
-                        <Link href={`/dashboard/events/${event.id}/edit`}>
+                        <Link href={`/dashboard/monitoring/events/${event.id}/edit`}>
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -103,19 +105,18 @@ export function EventsClient({ data, count }: { data: Event[]; count: number }) 
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No se encontraron eventos.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow
+                colSpan={7}
+                title={hasSearch ? "No hay eventos que coincidan con la búsqueda" : "Aún no hay eventos de muestreo"}
+                description={hasSearch ? "Pruebe con otro término o limpie la búsqueda." : "Registre el primer evento para comenzar a cargar ocurrencias."}
+                action={hasSearch ? undefined : { label: "Registrar evento", href: "/dashboard/monitoring/events/new", icon: <Plus className="h-4 w-4" /> }}
+              />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
-      <div className="flex items-center justify-end">
-        <PaginationButtons totalCount={count} pageSize={10} />
-      </div>
+      <PaginationButtons totalCount={count} itemLabel="Eventos" />
     </div>
   );
 }

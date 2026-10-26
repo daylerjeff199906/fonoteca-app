@@ -4,7 +4,7 @@ import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 
 export default function CreateLocationPage() {
   return (
-    <LayoutWrapper sectionTitle="Gestión de Ubicaciones">
+    <LayoutWrapper>
       <LocationForm />
     </LayoutWrapper>
   );

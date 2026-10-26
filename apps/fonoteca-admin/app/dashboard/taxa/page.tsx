@@ -33,7 +33,7 @@ export default async function TaxaPage({
   }
 
   return (
-    <LayoutWrapper sectionTitle="Taxonomía">
+    <LayoutWrapper>
       <TaxaClient data={data} count={count} />
     </LayoutWrapper>
   );

@@ -13,40 +13,25 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
-import { Edit, Trees, MapIcon, Trash2, Power, PowerOff } from "lucide-react";
+import { Plus, Edit, Trees, MapIcon, Trash2, Power, PowerOff } from "lucide-react";
 import Link from "next/link";
 import { deleteEcosystem, deactivateEcosystem, multipleDeleteEcosystems } from "@/actions/ecosystems";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
+import { BulkActionBar, DataTableCard, TableEmptyRow, useRowSelection } from "@/components/panel-admin/data-table";
 import { MultipleDeleteConfirmDialog } from "@/components/dashboard/multiple-delete-confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 
 export function EcosystemsClient({ data }: { data: Ecosystem[] }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { selectedIds, clear: clearSelection, toggle: toggleSelect, toggleAll: toggleSelectAll } = useRowSelection(data.map((item) => item.id!));
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null);
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === data.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(data.map((item) => item.id!));
-    }
-  };
-
-  const toggleSelect = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
 
   const handleMultipleDelete = async () => {
     if (selectedIds.length === 0) return;
     
     setIsDeleting(true);
     await multipleDeleteEcosystems(selectedIds);
-    setSelectedIds([]);
+    clearSelection();
     setIsDeleting(false);
   };
 
@@ -58,20 +43,16 @@ export function EcosystemsClient({ data }: { data: Ecosystem[] }) {
 
   return (
     <div className="space-y-4">
-      {selectedIds.length > 0 && (
-        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md border border-muted">
-          <span className="text-sm font-medium">{selectedIds.length} seleccionados</span>
+      <BulkActionBar count={selectedIds.length} onClear={clearSelection}>
           <MultipleDeleteConfirmDialog 
             onConfirm={handleMultipleDelete} 
             selectedCount={selectedIds.length} 
             itemNamePlural="hábitats" 
             isDeleting={isDeleting} 
           />
-          <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>Cancelar</Button>
-        </div>
-      )}
+        </BulkActionBar>
 
-      <div className="rounded-md border bg-card shadow-sm">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -170,15 +151,11 @@ export function EcosystemsClient({ data }: { data: Ecosystem[] }) {
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-sm">
-                  No se encontraron hábitats.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={7} title="No se encontraron hábitats." description="Ajuste la búsqueda o los filtros, o registre un elemento nuevo." action={{ label: "Añadir hábitat", href: "/dashboard/geography/ecosystems/create", icon: <Plus className="h-4 w-4" /> }} />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
     </div>
   );
 }

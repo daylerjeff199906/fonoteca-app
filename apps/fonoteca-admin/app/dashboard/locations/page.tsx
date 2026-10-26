@@ -1,3 +1,4 @@
+import { routeLabel } from "@/config/route-labels";
 import { getLocations } from "@/actions/locations";
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -13,19 +14,20 @@ export default async function LocationsPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
 
   const { data: locations, count, error } = await getLocations({
     page,
-    limit: 10,
+    limit,
     search,
   });
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <PageHeader
-          title="Ubicaciones"
+          title={routeLabel("/dashboard/locations")}
           description="Gestión de lugares para las ocurrencias monitoreadas."
           action={{
             label: "Registrar Ubicación",
@@ -42,7 +44,7 @@ export default async function LocationsPage({
 
       <LocationsClient data={locations} />
 
-      <PaginationButtons totalCount={count} pageSize={10} />
+      <PaginationButtons totalCount={count} itemLabel="Ubicaciones" />
       </div>
     </LayoutWrapper>
   );

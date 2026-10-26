@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator"
 import { AppSwitcher } from "./app-switcher"
 import { useTeams } from "@/components/providers/teams-provider"
 import { usePageHeader } from "@/components/providers/page-header-provider"
+import { usePathname } from "next/navigation"
+import { getPageTitle } from "@/config/route-labels"
 
 interface SiteHeaderProps {
     sectionTitle?: string
@@ -13,9 +15,10 @@ interface SiteHeaderProps {
 export const SiteHeader = ({ sectionTitle: propSectionTitle }: SiteHeaderProps) => {
     const { teams } = useTeams()
     const { title } = usePageHeader()
-    
-    // Prioritize context title over prop title
-    const displayTitle = title || propSectionTitle
+    const pathname = usePathname()
+
+    // Título de la página (si depende de un dato) > prop > mapa central de rutas
+    const displayTitle = title || propSectionTitle || getPageTitle(pathname)
 
     return (
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear z-40 sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border pr-4">

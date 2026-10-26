@@ -22,7 +22,7 @@ export default async function GeneraPage({
   }), getFamilies()]);
 
   return (
-    <LayoutWrapper sectionTitle="Taxonomía - Géneros">
+    <LayoutWrapper>
       <GeneraClient data={data} count={count} families={families.data || []} />
     </LayoutWrapper>
   );

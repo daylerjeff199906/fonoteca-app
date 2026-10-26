@@ -36,7 +36,7 @@ export function OrderForm({
       if (res.data) setClasses(res.data);
       if (res.error) showToast.error("No se pudieron cargar las clases", res.error);
       setIsLoadingClasses(false);
-    }).catch(() => { showToast.error("No se pudieron cargar las clases", "Verifica tu conexión e inténtalo nuevamente."); setIsLoadingClasses(false); });
+    }).catch(() => { showToast.error("No se pudieron cargar las clases", "Verifique su conexión e inténtelo nuevamente."); setIsLoadingClasses(false); });
   }, []);
 
   useEffect(() => {

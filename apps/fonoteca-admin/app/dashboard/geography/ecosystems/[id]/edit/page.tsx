@@ -9,7 +9,7 @@ export default async function EditEcosystemPage({
   const { id } = await params;
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <EcosystemForm id={id} />
     </LayoutWrapper>
   );

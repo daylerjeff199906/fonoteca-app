@@ -1,5 +1,6 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
 import { useState } from "react";
 import { NaturalRegion } from "@/types/fonoteca";
 import {
@@ -16,6 +17,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Edit, Globe, Trash2, Power, PowerOff, Plus } from "lucide-react";
 import { deleteNaturalRegion, deactivateNaturalRegion, multipleDeleteNaturalRegions } from "@/actions/natural-regions";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
+import { BulkActionBar, DataTableCard, TableEmptyRow, useRowSelection } from "@/components/panel-admin/data-table";
 import { MultipleDeleteConfirmDialog } from "@/components/dashboard/multiple-delete-confirm-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +32,7 @@ import {
 import { NaturalRegionForm } from "@/components/dashboard/geography/natural-regions/natural-region-form";
 
 export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { selectedIds, clear: clearSelection, toggle: toggleSelect, toggleAll: toggleSelectAll } = useRowSelection(data.map((item) => item.id!));
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState<string | null>(null);
 
@@ -47,28 +49,12 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
     setSheetOpen(true);
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.length === data.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(data.map((item) => item.id!));
-    }
-  };
-
-  const toggleSelect = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
-    }
-  };
-
   const handleMultipleDelete = async () => {
     if (selectedIds.length === 0) return;
 
     setIsDeleting(true);
     await multipleDeleteNaturalRegions(selectedIds);
-    setSelectedIds([]);
+    clearSelection();
     setIsDeleting(false);
   };
 
@@ -81,7 +67,7 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
   return (
     <>
       <PageHeader
-        title="Regiones Naturales"
+        title={routeLabel("/dashboard/geography/natural-regions")}
         description="Nivel macro de ecosistemas y biomas."
         action={{
           label: "Añadir Región",
@@ -91,20 +77,16 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
       />
 
       <div className="space-y-4">
-        {selectedIds.length > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md border border-muted">
-            <span className="text-sm font-medium">{selectedIds.length} seleccionados</span>
-            <MultipleDeleteConfirmDialog
+        <BulkActionBar count={selectedIds.length} onClear={clearSelection}>
+          <MultipleDeleteConfirmDialog
               onConfirm={handleMultipleDelete}
               selectedCount={selectedIds.length}
               itemNamePlural="regiones naturales"
               isDeleting={isDeleting}
             />
-            <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>Cancelar</Button>
-          </div>
-        )}
+        </BulkActionBar>
 
-        <div className="rounded-md border bg-card shadow-sm">
+        <DataTableCard>
           <Table>
             <TableHeader>
               <TableRow>
@@ -185,15 +167,11 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground text-sm">
-                    No se encontraron regiones naturales.
-                  </TableCell>
-                </TableRow>
+                <TableEmptyRow colSpan={6} title="No se encontraron regiones naturales." description="Ajuste la búsqueda o los filtros." />
               )}
             </TableBody>
           </Table>
-        </div>
+        </DataTableCard>
       </div>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -201,7 +179,7 @@ export function NaturalRegionsClient({ data }: { data: NaturalRegion[] }) {
           <SheetHeader>
             <SheetTitle>{editId ? "Editar Región Natural" : "Registrar Región Natural"}</SheetTitle>
             <SheetDescription>
-              {editId ? "Actualiza los datos de la región seleccionada." : "Define una nueva región o ecosistema macro."}
+              {editId ? "Actualice los datos de la región seleccionada." : "Defina una nueva región o ecosistema macro."}
             </SheetDescription>
           </SheetHeader>
           <NaturalRegionForm

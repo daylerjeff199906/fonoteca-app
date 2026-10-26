@@ -6,7 +6,7 @@ export default async function Page() {
   const stats = await getDashboardStats();
 
   return (
-    <LayoutWrapper sectionTitle="Dashboard Overview">
+    <LayoutWrapper>
       <div className="w-full container mx-auto space-y-8 py-6 px-4">
         
         {/* Indicators */}

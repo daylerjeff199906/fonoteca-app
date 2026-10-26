@@ -1,5 +1,7 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import React, { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
@@ -159,10 +161,10 @@ export function AudioRequestsClient({
   };
 
   return (
-    <LayoutWrapper sectionTitle="Mediateca">
+    <LayoutWrapper>
       <div className="space-y-6">
         <PageHeader
-          title="Solicitudes de Audios"
+          title={routeLabel("/dashboard/audio-requests")}
           description="Gestión y curaduría de solicitudes científicas para la descarga de cantos y grabaciones acústicas."
         />
 
@@ -195,7 +197,7 @@ export function AudioRequestsClient({
         </div>
 
         {/* Main List Table */}
-        <div className="rounded-md border bg-card text-card-foreground">
+        <DataTableCard>
           <Table>
             <TableHeader>
               <TableRow>
@@ -252,18 +254,13 @@ export function AudioRequestsClient({
                   );
                 })
               ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground font-medium">
-                    No se encontraron solicitudes registradas.
-                  </TableCell>
-                </TableRow>
+                <TableEmptyRow colSpan={7} title="No se encontraron solicitudes registradas." description="Ajuste la búsqueda o los filtros."  />
               )}
             </TableBody>
           </Table>
-        </div>
+        </DataTableCard>
 
-        {/* Pagination */}
-        <PaginationButtons totalCount={initialCount} pageSize={10} />
+        <PaginationButtons totalCount={initialCount} itemLabel="Solicitudes" />
 
         {/* Detailed Modal view */}
         <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

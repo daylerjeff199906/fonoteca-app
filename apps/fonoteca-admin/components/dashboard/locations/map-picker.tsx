@@ -72,7 +72,7 @@ export default function MapPicker({ lat, lng, onChange }: MapPickerProps) {
         <LocationMarker lat={lat} lng={lng} onChange={onChange} />
       </MapContainer>
       <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm p-2 rounded text-[10px] z-[400] border shadow-sm pointer-events-none">
-        Haz clic en el mapa para fijar coordenadas
+        Haga clic en el mapa para fijar coordenadas
       </div>
     </div>
   )

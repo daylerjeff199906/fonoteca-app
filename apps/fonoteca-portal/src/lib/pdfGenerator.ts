@@ -111,7 +111,7 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
     // Helper to draw a key-value table
     const drawKeyValueTable = (
         title: string,
-        data: { label: string; value: any }[],
+        data: { label: string; value: any; italic?: boolean }[],
         col1Header: string,
         col2Header: string,
         col1Width: number
@@ -165,7 +165,7 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
             doc.setTextColor(70, 70, 70);
             doc.text(item.label, margin + 4, currentY + 5.5);
             
-            doc.setFont('helvetica', 'normal');
+            doc.setFont('helvetica', item.italic ? 'italic' : 'normal');
             doc.setTextColor(30, 30, 30);
             doc.text(valLines, margin + col1Width + 4, currentY + 5.5);
             
@@ -182,7 +182,7 @@ export const generateSpeciesPDF = (species: Species, lang: string) => {
         { label: lang === 'es' ? 'Clase' : 'Class', value: species.class_name || '' },
         { label: lang === 'es' ? 'Orden' : 'Order', value: species.order || '' },
         { label: lang === 'es' ? 'Familia' : 'Family', value: species.family || '' },
-        { label: lang === 'es' ? 'Género' : 'Genus', value: species.genus || '' },
+        { label: lang === 'es' ? 'Género' : 'Genus', value: species.genus || '', italic: true },
     ].filter(t => t.value);
 
     const taxonomyHeaders = lang === 'es' 

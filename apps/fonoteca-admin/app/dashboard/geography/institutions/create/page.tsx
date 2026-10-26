@@ -3,7 +3,7 @@ import { InstitutionForm } from "@/components/dashboard/geography/institutions/i
 
 export default function CreateInstitutionPage() {
   return (
-    <LayoutWrapper sectionTitle="Registrar Institución">
+    <LayoutWrapper>
       <div className="w-full">
         <InstitutionForm />
       </div>

@@ -11,16 +11,17 @@ export default async function NaturalRegionsPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 10;
   const search = typeof params.search === "string" ? params.search : "";
 
   const { data: regions, count, error } = await getNaturalRegions({
     page,
-    limit: 10,
+    limit,
     search,
   });
 
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <SearchInput placeholder="Buscar por nombre..." />
@@ -30,7 +31,7 @@ export default async function NaturalRegionsPage({
 
         <NaturalRegionsClient data={regions} />
 
-        <PaginationButtons totalCount={count} pageSize={10} />
+        <PaginationButtons totalCount={count} itemLabel="Regiones" />
       </div>
     </LayoutWrapper>
   );

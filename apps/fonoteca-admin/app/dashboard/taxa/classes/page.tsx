@@ -19,7 +19,7 @@ export default async function ClassesPage({
   });
 
   return (
-    <LayoutWrapper sectionTitle="Taxonomía - Clases">
+    <LayoutWrapper>
       <ClassesClient data={data} count={count} />
     </LayoutWrapper>
   );

@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
-import { createFonotecaClient } from "@/utils/supabase/fonoteca/client";
-import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia, getPresignedUrl } from "@/actions/multimedia";
+import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, getMultimediaPreviews, updateMultimedia } from "@/actions/multimedia";
+import { uploadFile } from "@/lib/file-service.client";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MediaImage } from "@/components/dashboard/media-image";
 import { showToast } from "@/lib/toast";
 import axios from "axios";
-import { R2_PUBLIC_URL } from "@/lib/r2";
 import { cn } from "@/lib/utils";
 import { multimediaSchema } from "@/lib/validations/fonoteca";
 import { searchProfiles } from "@/actions/users";
@@ -104,7 +104,8 @@ const getDriveThumbnailUrl = (url: string) => {
   if (match && match[1]) {
     return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
   }
-  return null;
+  // La URL puede ser prefirmada: se consume sin modificarla.
+  return url;
 };
 
 const sanitizeFilename = (name: string) => {
@@ -138,6 +139,10 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [itemToDelete, setItemToDelete] = useState<{ id: string, isChild: boolean } | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // URL States
   const [urlInput, setUrlInput] = useState("");
@@ -208,14 +213,43 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
     });
   }, [debouncedCreatorSearch]);
 
-  const supabase = createFonotecaClient();
-
   const loadMultimedia = async () => {
     setInitialLoading(true);
     const resp = await getMultimediaList({ occurrence_id: occurrenceId, limit: 100 });
     const sorted = (resp.data || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
     setItems(sorted);
+    const previews = await getMultimediaPreviews(sorted);
+    setPreviewUrls(Object.fromEntries(previews.data.map((preview) => [preview.multimediaId, preview.url])) as Record<string, string>);
+    if (previews.error) {
+      console.warn("No se pudieron obtener previews optimizados:", previews.error);
+      showToast.warning("Miniaturas no disponibles", previews.error);
+    }
+    if (previews.pending) {
+      setTimeout(() => void loadMultimedia(), 3000);
+    }
     setInitialLoading(false);
+  };
+
+  const toggleMediaSelection = (id: string) => {
+    setSelectedMediaIds((current) => {
+      const next = new Set(current);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedMediaIds];
+    if (ids.length === 0) return;
+    setBulkDeleting(true);
+    const results = await Promise.all(ids.map((id) => deleteMultimedia(id)));
+    const failed = results.flatMap((result, index) => result.success ? [] : [{ id: ids[index], error: result.error }]);
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+    setSelectedMediaIds(new Set(failed.map((item) => item.id)));
+    if (failed.length) showToast.error("Eliminación parcial", `${ids.length - failed.length} eliminados. ${failed[0].error || "Algunos archivos no se pudieron eliminar."}`);
+    else showToast.success("Multimedia eliminada", `${ids.length} archivo(s) y sus variantes fueron eliminados.`);
+    await loadMultimedia();
   };
 
   const loadLibrary = async () => {
@@ -251,7 +285,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         const fileExt = file.name.split('.').pop() || "";
         const cleanName = sanitizeFilename(file.name.replace(`.${fileExt}`, ""));
         const fileName = `${type.toLowerCase()}_${cleanName}_${Date.now()}.${fileExt}`;
-        const uploadPath = `occurrences/${occurrenceId}/${fileName}`;
 
         const sizeLimit = type === MEDIA_TYPE.SOUND ? 40 * 1024 * 1024 : 10 * 1024 * 1024; // Increased image limit to 10MB too
         if (file.size > sizeLimit) {
@@ -259,29 +292,35 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           continue;
         }
 
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        setUploadProgress(prev => ({ ...prev, [fileId]: 10 }));
 
-        const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
-        if (signResp.error || !signResp.url) {
-          showToast.error("Error de subida", `Error al preparar subida de ${file.name}`);
-          continue;
-        }
-
-        await axios.put(signResp.url, file, {
-          headers: { "Content-Type": file.type || "application/octet-stream" },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(prev => ({ ...prev, [fileId]: percent }));
-            }
-          }
+        const uploadedFile = await uploadFile({
+          file,
+          duplicatePolicy: "reuse",
+          processImage: file.type.startsWith("image/"),
+          processAudio: file.type.startsWith("audio/"),
+          metadata: {
+            occurrence_id: occurrenceId,
+            source: "occurrence_multimedia_batch",
+          },
         });
 
-        const publicUrl = `${R2_PUBLIC_URL}/${uploadPath}`;
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+        // Las URLs son públicas y permanentes de MinIO. El original se guarda
+        // en identifier y la tarjeta consume únicamente thumbnail_url.
+        const publicUrl = uploadedFile.assets?.original_url ?? uploadedFile.url;
 
         const payload = {
           occurrence_id: occurrenceId,
           identifier: publicUrl,
+          file_id: uploadedFile.id,
+          file_key: uploadedFile.key,
+          file_metadata: uploadedFile.metadata,
+          processing_job_id: uploadedFile.jobs?.[0]?.id ?? null,
+          processing_status: uploadedFile.jobs?.[0]?.status ?? null,
+          thumbnail_url: uploadedFile.assets?.thumbnail_url ?? null,
+          display_url: uploadedFile.assets?.display_url ?? null,
+          audio_url: uploadedFile.assets?.audio_url ?? null,
           originalFilename: file.name,
           type: type as any,
           format: file.type,
@@ -511,29 +550,30 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         return false;
       }
 
-      // 1. Get Presigned URL
-      const signResp = await getPresignedUrl(uploadPath, file.type || "application/octet-stream");
-      if (signResp.error || !signResp.url) {
-        showToast.error("Error de Preparación", `Error al preparar subida de ${file.name}.`);
-        return false;
-      }
-
-      // 2. Upload with Progress
-      await axios.put(signResp.url, file, {
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(prev => ({ ...prev, [fileId]: percent }));
-          }
-        }
+      // 1. La carga usa el proxy interno autenticado con Bearer.
+      const uploadedFile = await uploadFile({
+        file,
+        duplicatePolicy: "reuse",
+        processImage: true,
+        metadata: {
+          occurrence_id: occurrenceId,
+          tag: "spectrogram",
+        },
       });
 
-      const publicUrl = `${R2_PUBLIC_URL}/${uploadPath}`;
+      setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+      const publicUrl = uploadedFile.assets?.original_url ?? uploadedFile.url;
 
       const createResp = await createMultimedia({
         occurrence_id: occurrenceId,
         identifier: publicUrl,
+        file_id: uploadedFile.id,
+        file_key: uploadedFile.key,
+        file_metadata: uploadedFile.metadata,
+        processing_job_id: uploadedFile.jobs?.[0]?.id ?? null,
+        processing_status: uploadedFile.jobs?.[0]?.status ?? null,
+        thumbnail_url: uploadedFile.assets?.thumbnail_url ?? null,
+        display_url: uploadedFile.assets?.display_url ?? null,
         originalFilename: file.name,
         type: MEDIA_TYPE.STILL,
         format: file.type,
@@ -683,7 +723,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       showToast.success("Archivo Eliminado", isAudioChild ? "El espectrograma fue eliminado correctamente." : "El archivo multimedia fue eliminado con éxito.");
       loadMultimedia();
     } else {
-      showToast.error("Error", "No se pudo eliminar el archivo.");
+      showToast.error("No se pudo eliminar el archivo", resp.error || "No se pudo completar la eliminación.");
     }
   };
 
@@ -728,7 +768,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           </div>
           <h4 className="text-sm font-bold text-foreground">No hay audios registrados</h4>
           <p className="text-xs text-muted-foreground mt-1 mb-4">Aún no has subido grabaciones para esta ocurrencia</p>
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-sm text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
             <Upload className="h-3.5 w-3.5" />
             Comenzar a subir
           </div>
@@ -760,6 +800,13 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 onDrop={(e) => handleDrop(e, item)}
                 className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-2xl border bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-md transition-all duration-300"
               >
+                <input
+                  type="checkbox"
+                  aria-label={`Seleccionar ${item.title || "multimedia"}`}
+                  checked={selectedMediaIds.has(item.id)}
+                  onChange={() => toggleMediaSelection(item.id)}
+                  className="h-4 w-4 accent-primary"
+                />
                 {/* Drag Handle */}
                 <div className="hidden sm:flex p-1 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
                   <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -776,7 +823,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                   </div>
                   <div className="w-full sm:w-auto">
                     <audio
-                      src={getAudioUrl(item.identifier)}
+                      src={previewUrls[item.id] || getAudioUrl(item.identifier)}
                       controls
                       className="h-8 w-full sm:w-[180px] scale-90"
                       onPlay={(e) => {
@@ -820,7 +867,13 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                         setSliderOpen(true);
                       }}
                     >
-                      <img src={sp.identifier} className="h-full w-full object-cover" />
+                      <MediaImage
+                        src={previewUrls[sp.id]}
+                        alt={sp.title || "Espectrograma"}
+                        className="object-cover"
+                        containerClassName="h-full w-full"
+                        processing={!previewUrls[sp.id] && ((sp as any).processing_status ?? (sp as any).processingStatus) !== "completed" && Boolean((sp as any).processing_status ?? (sp as any).processingStatus)}
+                      />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
                         <Info className="h-3 w-3 text-white" />
                       </div>
@@ -910,7 +963,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
           </div>
           <h4 className="text-sm font-bold text-foreground">Galería vacía</h4>
           <p className="text-xs text-muted-foreground mt-1 mb-4">No hay fotografías o videos asociados</p>
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-sm text-xs font-bold shadow-lg shadow-primary/20 group-hover:bg-primary/90 transition-colors">
             <Plus className="h-3.5 w-3.5" />
             Añadir multimedia
           </div>
@@ -940,6 +993,14 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
               {/* Header Section */}
               <div className="flex items-center justify-between p-3 bg-white/40 border-b">
                 <div className="flex items-center gap-2 min-w-0">
+                  <input
+                    type="checkbox"
+                    aria-label={`Seleccionar ${item.title || "multimedia"}`}
+                    checked={selectedMediaIds.has(item.id)}
+                    onChange={() => toggleMediaSelection(item.id)}
+                    onClick={(event) => event.stopPropagation()}
+                    className="h-4 w-4 accent-primary"
+                  />
                   <div className="bg-blue-500 rounded p-1">
                     <FileImage className="h-3 w-3 text-white" />
                   </div>
@@ -983,10 +1044,12 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 setSliderIndex(list.indexOf(item));
                 setSliderOpen(true);
               }}>
-                <img
-                  src={getDriveThumbnailUrl(item.identifier) || item.identifier}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover/img:scale-110 "
+                <MediaImage
+                  src={previewUrls[item.id]}
                   alt={item.title || "Imagen"}
+                  className="object-cover transition-transform duration-500 group-hover/img:scale-110"
+                  containerClassName="h-full w-full"
+                  processing={!previewUrls[item.id] && ((item as any).processing_status ?? (item as any).processingStatus) !== "completed" && Boolean((item as any).processing_status ?? (item as any).processingStatus)}
                 />
                 {/* Tag Overlay Bottom Left */}
                 <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
@@ -1023,6 +1086,17 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         }
       }}
     >
+      {selectedMediaIds.size > 0 && (
+        <div className="sticky top-3 z-30 flex items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-background/95 p-3 shadow-lg backdrop-blur">
+          <span className="text-sm font-semibold">{selectedMediaIds.size} elemento(s) seleccionado(s)</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelectedMediaIds(new Set())}>Cancelar</Button>
+            <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Eliminar seleccionados
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-6">
         {initialLoading ? (
           <div className="space-y-8">
@@ -1097,7 +1171,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
               {getDriveEmbedUrl(urlInput) ? (
                 <iframe src={getDriveEmbedUrl(urlInput)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
               ) : activeUploadType === MEDIA_TYPE.STILL ? (
-                <img src={getAudioUrl(urlInput)} className="object-cover h-full w-full" alt="Preview Image" onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }} />
+                <MediaImage src={getAudioUrl(urlInput)} className="object-cover" containerClassName="h-full w-full" alt="Vista previa" />
               ) : (
                 <audio src={getAudioUrl(urlInput)} controls className="w-[90%] mt-auto mb-4" />
               )}
@@ -1207,8 +1281,8 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                         onChange={(e) => setUrlRecordStatus(e.target.value as any)}
                         className="w-full h-8 px-2 text-xs rounded-md border bg-background"
                       >
-                        <option value="draft">Borrador (Draft)</option>
-                        <option value="published">Publicado (Published)</option>
+                        <option value="draft">Borrador</option>
+                        <option value="published">Publicado</option>
                       </select>
                     </div>
                   </div>
@@ -1224,7 +1298,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         open={libSheetOpen}
         onOpenChange={setLibSheetOpen}
         title="Biblioteca de Archivos"
-        description="Selecciona un archivo existente en el sistema para vincularlo a esta ocurrencia."
+        description="Seleccione un archivo existente en el sistema para vincularlo a esta ocurrencia."
       >
         {libLoading ? (
           <div className="flex flex-col items-center justify-center p-12 space-y-3">
@@ -1284,11 +1358,11 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
               {getDriveEmbedUrl(editUrl) ? (
                 <iframe src={getDriveEmbedUrl(editUrl)!} className="absolute inset-0 w-full h-full" frameBorder="0" allowFullScreen />
               ) : editingItem?.type === MEDIA_TYPE.STILL ? (
-                <img
-                  src={getAudioUrl(editUrl)}
+                <MediaImage
+                  src={getDriveThumbnailUrl(editUrl) || editUrl}
                   className="max-h-full max-w-full object-contain"
-                  alt="Preview"
-                  onError={(e) => { (e.target as any).src = "https://placehold.co/600x400?text=Error+Loading+Image" }}
+                  containerClassName="h-full w-full"
+                  alt="Vista previa"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted/10 p-8">
@@ -1322,19 +1396,19 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                 <Popover open={openEditCreator} onOpenChange={setOpenEditCreator}>
                   <PopoverTrigger asChild>
                     <div className="relative group">
-                      <Input 
-                        placeholder="Nombre del autor..." 
-                        value={editCreator} 
+                      <Input
+                        placeholder="Nombre del autor..."
+                        value={editCreator}
                         onChange={(e) => {
                           setEditCreator(e.target.value);
                           setCreatorSearch(e.target.value);
                           if (!e.target.value) setEditCreatorId(null);
                         }}
                         onFocus={() => setOpenEditCreator(true)}
-                        className="text-xs h-8 bg-background pr-8" 
+                        className="text-xs h-8 bg-background pr-8"
                       />
                       {editCreator && (
-                        <button 
+                        <button
                           type="button"
                           onClick={() => { setEditCreator(""); setEditCreatorId(null); setCreatorSearch(""); }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1539,7 +1613,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         open={uploadSheetOpen}
         onOpenChange={(open) => { if (!uploading) { setUploadSheetOpen(open); if (!open) setSelectedFiles([]); } }}
         title="Subida de Archivos"
-        description="Sube y gestiona multimedia para esta ocurrencia."
+        description="Suba y gestione multimedia para esta ocurrencia."
         footer={(
           <div className="flex items-center justify-between w-full">
             <div className="hidden sm:block">
@@ -1820,7 +1894,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle className="text-destructive">¿Está seguro?</AlertDialogTitle>
             <AlertDialogDescription className="text-sm font-medium">
               Esta acción no se puede deshacer. El archivo desaparecerá permanentemente del bucket y de la base de datos.
             </AlertDialogDescription>
@@ -1842,10 +1916,28 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">¿Eliminar multimedia seleccionada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán {selectedMediaIds.size} elemento(s), sus variantes y sus referencias de base de datos. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" disabled={bulkDeleting} onClick={handleBulkDelete}>
+              {bulkDeleting ? "Eliminando..." : "Eliminar seleccionados"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* --- Premium Multimedia Viewer --- */}
       <MultimediaViewer
         isOpen={sliderOpen}
         items={sliderItems}
+        previewUrls={previewUrls}
         initialIndex={sliderIndex}
         onClose={() => setSliderOpen(false)}
         location={location}

@@ -73,7 +73,7 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
         const finalUrl = redirectUrl.replace('[id]', resp.data.id);
         router.push(finalUrl);
       } else {
-        router.push("/dashboard/events");
+        router.push("/dashboard/monitoring/events");
       }
     } else {
       showToast.error("Error", (typeof resp.error === "string" ? resp.error : "Hubo un problema al procesar el evento."));
@@ -229,7 +229,7 @@ export function EventForm({ id, redirectUrl }: { id?: string, redirectUrl?: stri
 
       <FormFooter>
         <Button variant="outline" asChild>
-          <Link href="/dashboard/events">Cancelar</Link>
+          <Link href="/dashboard/monitoring/events">Cancelar</Link>
         </Button>
         <Button type="submit" disabled={loading} className="min-w-[120px]">
           {loading ? "Guardando..." : id ? "Guardar Cambios" : "Registrar"}

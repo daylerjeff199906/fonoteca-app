@@ -4,7 +4,7 @@ import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper";
 
 export default function CreateOccurrencePage() {
   return (
-    <LayoutWrapper sectionTitle="Gestión de Ocurrencias">
+    <LayoutWrapper>
       <OccurrenceForm redirectUrl="/dashboard/occurrences/[id]" />
     </LayoutWrapper>
   );

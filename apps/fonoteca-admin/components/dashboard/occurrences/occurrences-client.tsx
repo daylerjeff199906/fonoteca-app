@@ -1,5 +1,7 @@
 "use client"
 
+import { recordStatusLabel } from "@/config/glossary";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState, useEffect } from "react";
 import { Occurrence, Taxon } from "@/types/fonoteca";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -15,10 +17,10 @@ import {
 } from "@/components/ui/table";
 import {
   Plus, Edit, Eye, Filter, X, Check, Download,
-  ChevronDown, LayoutList, Music, Image as ImageIcon, Trash2
+  ChevronDown, LayoutList, Music, Trash2
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { deleteOccurrence, deleteOccurrences, getAllOccurrencesForExport } from "@/actions/occurrences";
+import { deleteOccurrence, deleteOccurrences, getAllOccurrencesForExport, updateOccurrenceStatus } from "@/actions/occurrences";
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -38,7 +40,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { showToast } from "@/lib/toast";
-import { getDriveThumbnailUrl } from "@/utils/multimedia";
+import { getMultimediaPreviews } from "@/actions/multimedia";
+import { MediaImage } from "@/components/dashboard/media-image";
 import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
 export function OccurrencesClient({
@@ -55,10 +58,28 @@ export function OccurrencesClient({
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [, setIsExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setSelectedIds([]); // Reset selection on page/filter change
   }, [data, searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const loadPreviews = async () => {
+      const multimedia = data.flatMap((occurrence) => occurrence.multimedia ?? []);
+      const previews = await getMultimediaPreviews(multimedia);
+      if (cancelled) return;
+      setPreviewUrls(Object.fromEntries(previews.data.map((preview) => [preview.multimediaId, preview.url])) as Record<string, string>);
+      if (previews.pending) retry = setTimeout(() => void loadPreviews(), 3000);
+    };
+    void loadPreviews();
+    return () => {
+      cancelled = true;
+      if (retry) clearTimeout(retry);
+    };
+  }, [data]);
 
   const currentLimit = searchParams.get("limit") || "10";
   const isShowingAll = currentLimit === "1000";
@@ -128,11 +149,9 @@ export function OccurrencesClient({
         setIsExporting(true);
         const search = searchParams.get("search") || "";
         const taxonId = searchParams.get("taxonId") || "";
-        const hasImage = searchParams.get("hasImage") || "all";
-        const hasAudio = searchParams.get("hasAudio") || "all";
 
         const res = await getAllOccurrencesForExport({
-          search, taxonId, hasImage, hasAudio
+          search, taxonId
         });
         dataToExport = res.data;
       }
@@ -182,7 +201,7 @@ export function OccurrencesClient({
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} registros de monitoreo?`)) return;
+    if (!confirm(`¿Está seguro de eliminar ${selectedIds.length} registros de monitoreo?`)) return;
 
     // Note: showToast doesn't support .loading directly, I'll use standard toast for long ops if needed
     // but for now I'll just show the result.
@@ -196,9 +215,17 @@ export function OccurrencesClient({
     }
   };
 
+  const handleStatusChange = async (id: string, status: string) => {
+    const res = await updateOccurrenceStatus(id, status);
+    if (res.success) {
+      showToast.success("Estado Actualizado", `El estado ha cambiado a "${status}".`);
+      router.refresh();
+    } else {
+      showToast.error("Error", res.error || "No se pudo actualizar el estado.");
+    }
+  };
+
   const currentTaxonId = searchParams.get("taxonId") || "all";
-  const currentHasImage = searchParams.get("hasImage") || "all";
-  const currentHasAudio = searchParams.get("hasAudio") || "all";
 
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -221,8 +248,6 @@ export function OccurrencesClient({
       const taxon = taxa.find(t => t.id === currentTaxonId);
       filters.push({ key: "taxonId", label: `Taxón: ${taxon?.scientificName || currentTaxonId}` });
     }
-    if (currentHasImage !== "all") filters.push({ key: "hasImage", label: currentHasImage === "yes" ? "Con Imágenes" : "Sin Imágenes" });
-    if (currentHasAudio !== "all") filters.push({ key: "hasAudio", label: currentHasAudio === "yes" ? "Con Audio" : "Sin Audio" });
     return filters;
   };
 
@@ -355,45 +380,6 @@ export function OccurrencesClient({
                 </Command>
               </div>
             </div>
-
-            {/* RADIO GROUPS FOR MEDIA */}
-            <div className="space-y-4 border-t pt-6">
-              <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Presencia de Imágenes</Label>
-                <RadioGroup value={currentHasImage} onValueChange={(val: string) => handleFilterChange("hasImage", val)} className="flex flex-col gap-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="mi-all" />
-                    <Label htmlFor="mi-all" className="font-normal cursor-pointer">Todas</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="mi-yes" />
-                    <Label htmlFor="mi-yes" className="font-normal cursor-pointer">Con Imágenes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="mi-no" />
-                    <Label htmlFor="mi-no" className="font-normal cursor-pointer">Sin Imágenes</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-4 pt-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Presencia de Audio</Label>
-                <RadioGroup value={currentHasAudio} onValueChange={(val: string) => handleFilterChange("hasAudio", val)} className="flex flex-col gap-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="ma-all" />
-                    <Label htmlFor="ma-all" className="font-normal cursor-pointer">Todos</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="ma-yes" />
-                    <Label htmlFor="ma-yes" className="font-normal cursor-pointer">Con Audio</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="ma-no" />
-                    <Label htmlFor="ma-no" className="font-normal cursor-pointer">Sin Audio</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 border-t bg-background">
             <Button className="w-full h-10 shadow-sm font-semibold" onClick={() => setIsFilterSheetOpen(false)}>Ver Resultados</Button>
@@ -401,7 +387,7 @@ export function OccurrencesClient({
         </SheetContent>
       </Sheet>
 
-      <div className="rounded-md border">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -419,6 +405,7 @@ export function OccurrencesClient({
               <TableHead>Ubicación</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Registrado Por</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -427,7 +414,7 @@ export function OccurrencesClient({
               data.map((oc) => {
                 const stillImage = oc.multimedia?.find(m => m.type === 'Still');
                 const hasSound = oc.multimedia?.some(m => m.type === 'Sound');
-                const thumbUrl = stillImage ? (getDriveThumbnailUrl(stillImage.identifier) || stillImage.identifier) : null;
+                const thumbUrl = stillImage ? previewUrls[stillImage.id] : undefined;
 
                 return (
                   <TableRow key={oc.id} className={cn(selectedIds.includes(oc.id) && "bg-primary/5")}>
@@ -444,15 +431,13 @@ export function OccurrencesClient({
                         className="flex items-center gap-1.5 min-w-[60px] group hover:bg-primary/5 p-1 rounded-lg transition-all border border-transparent hover:border-primary/20"
                         title="Gestionar Multimedia"
                       >
-                        {thumbUrl ? (
-                          <div className="h-8 w-8 rounded-md overflow-hidden border bg-muted shrink-0 shadow-sm">
-                            <img src={thumbUrl} className="h-full w-full object-cover" alt="Thumb" />
-                          </div>
-                        ) : (
-                          <div className="h-8 w-8 rounded-md border bg-muted/30 flex items-center justify-center shrink-0">
-                            <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
-                          </div>
-                        )}
+                        <MediaImage
+                          src={thumbUrl}
+                          alt={stillImage?.title || "Miniatura de ocurrencia"}
+                          className="object-cover"
+                          containerClassName="h-8 w-8 rounded-md border shrink-0 shadow-sm"
+                          processing={Boolean(stillImage && !thumbUrl)}
+                        />
                         {hasSound && (
                           <div className="p-1.5 rounded-full bg-blue-50 text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors shadow-sm">
                             <Music className="h-3 w-3" />
@@ -483,6 +468,32 @@ export function OccurrencesClient({
                     </TableCell>
                     <TableCell>{oc.recordedBy}</TableCell>
                     <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={<Button variant="ghost" className="h-6 p-1 cursor-pointer" />}
+                        >
+                          <Badge variant={oc.record_status === "published" ? "default" : "secondary"} className="text-[10px] h-5 px-1.5 cursor-pointer">
+                            {recordStatusLabel(oc.record_status || "draft")}
+                          </Badge>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel className="text-xs">Cambiar estado</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "draft")} className="text-xs">
+                              Borrador
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "published")} className="text-xs">
+                              Publicado
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(oc.id, "inactive")} className="text-xs">
+                              Inactivo
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-1">
                         <Link href={`/dashboard/occurrences/${oc.id}`} className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")} title="Ver Detalles">
                           <Eye className="h-4 w-4" />
@@ -501,47 +512,13 @@ export function OccurrencesClient({
                 );
               })
             ) : (
-              <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
-                  No se encontraron resultados.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={10} title="No se encontraron resultados." description="Ajuste la búsqueda o los filtros." action={{ label: "Registrar ocurrencia", href: "/dashboard/occurrences/create", icon: <Plus className="h-4 w-4" /> }} />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {!isShowingAll ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 px-3 gap-2 text-xs"
-              onClick={toggleShowAll}
-            >
-              <LayoutList className="h-4 w-4" />
-              Ver todos
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-9 px-3 gap-2 text-xs"
-              onClick={toggleShowAll}
-            >
-              <LayoutList className="h-4 w-4" />
-              Paginar vista
-            </Button>
-          )}
-          {isShowingAll && (
-            <span className="text-xs text-muted-foreground italic">
-              Mostrando {data.length} de {count} registros
-            </span>
-          )}
-        </div>
-        {!isShowingAll && <PaginationButtons totalCount={count} pageSize={10} />}
-      </div>
+      <PaginationButtons totalCount={count} itemLabel="Ocurrencias" />
     </div>
   );
 }
