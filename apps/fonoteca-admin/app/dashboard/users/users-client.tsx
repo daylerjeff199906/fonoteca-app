@@ -1,7 +1,7 @@
-
 "use client"
 
-import { useState, useEffect } from "react"
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
+import { useState } from "react"
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Sheet,
   SheetContent,
@@ -22,17 +22,40 @@ import {
   SheetFooter
 } from "@/components/ui/sheet"
 import {
-  Search,
-  UserCog,
-  X,
+  KeyRound,
+  Edit,
   Plus,
   Loader2,
   Trash2,
+  ShieldHalf,
+  Copy,
+  Download,
 } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { SearchInput } from "@/components/dashboard/search-input"
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons"
-import { assignUserRole, removeUserRole, createUser, getAvailableUsersForModule, removeUserFromModule } from "@/actions/users"
+import {
+  createSystemUser,
+  updateSystemUser,
+  deleteSystemUser,
+  changeUserRole,
+  resetSystemPassword
+} from "@/actions/system-users"
+import {
+  ROLE_HIERARCHY,
+  ROLE_INFO,
+  assignableRoles,
+  canManageAccount,
+  canManageUsers,
+  effectiveRole,
+  effectiveRoleLabel,
+  redundantRoles,
+  roleLabel,
+  unknownRoles,
+  usersHelpText,
+  type RoleCode,
+} from "@/lib/roles"
+import { isLikelyTestAccount } from "@/lib/user-audit"
 import {
   Dialog,
   DialogContent,
@@ -40,7 +63,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -53,183 +75,185 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { showToast } from "@/lib/toast"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 
-interface Profile {
-  id: string
-  first_name: string | null
-  last_name: string | null
-  email: string | null
-  avatar_url: string | null
-}
-
-interface Role {
-  id: string
-  name: string
-  description: string | null
-}
-
 interface UserRole {
-  profile_id: string
-  role_id: string
-  roles: {
+  roles?: {
+    id: string
+    code: string
     name: string
-  } | null
+  }
 }
 
-interface UsersClientProps {
-  initialProfiles: Profile[]
-  initialRoles: Role[]
-  initialUserRoles: UserRole[]
-  moduleId: string
+interface SystemUser {
+  id: string
+  email: string
+  name: string
+  created_at: string
+  roles?: Array<{ code: string; name: string }>
+  user_roles?: UserRole[]
+}
+
+interface SystemUsersClientProps {
+  initialUsers: SystemUser[]
   totalCount: number
-  initialPermissions: { id: string, action: string }[]
+  /** Persona autenticada: define qué acciones se ofrecen. */
+  actor: { id: string; roles: string[] }
 }
 
-export function UsersClient({
-  initialProfiles,
-  initialRoles,
-  initialUserRoles,
-  moduleId,
-  totalCount,
-  initialPermissions
-}: UsersClientProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isCreatingUser, setIsCreatingUser] = useState(false)
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
-  const [availableUsers, setAvailableUsers] = useState<Profile[]>([])
-  const [isFetchingAvailable, setIsFetchingAvailable] = useState(false)
-  const [assignSearch, setAssignSearch] = useState("")
-  const [isRemoveAlertOpen, setIsRemoveAlertOpen] = useState(false)
-  const [userToRemove, setUserToRemove] = useState<Profile | null>(null)
-  const [loadingRoles, setLoadingRoles] = useState<Record<string, boolean>>({})
+function assignedRoleCodes(user?: SystemUser | null) {
+  return user?.roles?.map((role) => role.code)
+    ?? user?.user_roles?.map((entry) => entry.roles?.code).filter((code): code is string => Boolean(code))
+    ?? []
+}
 
-  const [newUser, setNewUser] = useState({
-    first_name: "",
-    last_name: "",
-    email: ""
+export function SystemUsersClient({
+  initialUsers,
+  totalCount,
+  actor,
+}: SystemUsersClientProps) {
+  const router = useRouter()
+  const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null)
+  const activeUser = selectedUser ? initialUsers.find(u => u.id === selectedUser.id) || selectedUser : null
+  const [generatedPassword, setGeneratedPassword] = useState<{ email: string, password: string } | null>(null)
+
+  // Dialogs state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isRolesSheetOpen, setIsRolesSheetOpen] = useState(false)
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false)
+  const [isResetAlertOpen, setIsResetAlertOpen] = useState(false)
+
+  // Loaders
+  const [isSaving, setIsSaving] = useState(false)
+  const [pendingRole, setPendingRole] = useState<RoleCode | null>(null)
+  const [isRoleConfirmOpen, setIsRoleConfirmOpen] = useState(false)
+  const [isChangingRole, setIsChangingRole] = useState(false)
+
+  const allowedRoles = assignableRoles(actor.roles)
+  const mayManageUsers = canManageUsers(actor.roles)
+  const checkTarget = (user: SystemUser) =>
+    canManageAccount({ actorId: actor.id, actorRoles: actor.roles, targetId: user.id, targetRoles: assignedRoleCodes(user) })
+
+  // Form states
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    roles: ["VIEWER"] as string[]
   })
 
-  // Get roles for a specific profile in this module
-  const getUserRoles = (profileId: string) => {
-    return initialUserRoles
-      .filter(ur => ur.profile_id === profileId)
-      .map(ur => ({
-        id: ur.role_id,
-        name: ur.roles?.name || "Desconocido"
-      }))
+  const openCreate = () => {
+    setFormData({ name: "", email: "", roles: [allowedRoles.includes("VIEWER") ? "VIEWER" : (allowedRoles[0] ?? "VIEWER")] })
+    setIsCreateDialogOpen(true)
   }
 
-  const handleEditRoles = (profile: Profile) => {
-    setSelectedUser(profile)
-    setIsSheetOpen(true)
+  const openEdit = (user: SystemUser) => {
+    setSelectedUser(user)
+    setFormData({ name: user.name, email: user.email, roles: assignedRoleCodes(user) })
+    setIsEditDialogOpen(true)
   }
 
-  const handleToggleRole = async (profileId: string, roleId: string, isAssigned: boolean) => {
-    const key = `${profileId}-${roleId}`
-    setLoadingRoles(prev => ({ ...prev, [key]: true }))
+  const openRoles = (user: SystemUser) => {
+    setSelectedUser(user)
+    setPendingRole(effectiveRole(assignedRoleCodes(user)))
+    setIsRolesSheetOpen(true)
+  }
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.roles.length) {
+      showToast.error("Seleccione un rol", "Cada usuario debe tener un rol asignado.")
+      return
+    }
+    setIsSaving(true)
 
     try {
-      if (isAssigned) {
-        const res = await removeUserRole(profileId, roleId, moduleId)
+      if (isEditDialogOpen && selectedUser) {
+        const res = await updateSystemUser(selectedUser.id, formData)
         if (res.success) {
-          showToast.success("Rol eliminado", "El rol ha sido revocado exitosamente.")
+          showToast.success("Usuario actualizado", "Los datos se han guardado exitosamente.")
+          setIsEditDialogOpen(false)
         } else {
-          showToast.error("Error", res.error || "No se pudo eliminar el rol.")
+          showToast.error("Error", res.error)
         }
       } else {
-        const res = await assignUserRole(profileId, roleId, moduleId)
+        const res = await createSystemUser(formData)
         if (res.success) {
-          showToast.success("Rol asignado", "El rol ha sido concedido exitosamente.")
+          showToast.success("Usuario creado", "Se ha enviado un correo con la contraseña temporal al usuario.")
+          setIsCreateDialogOpen(false)
+          if (res.data?.tempPassword) {
+            setGeneratedPassword({ email: formData.email, password: res.data.tempPassword })
+          }
         } else {
-          showToast.error("Error", res.error || "No se pudo asignar el rol.")
+          showToast.error("Error", res.error)
         }
       }
       router.refresh()
     } catch (error) {
-      showToast.error("Error", "Ocurrió un error inesperado al actualizar el rol.")
+      showToast.error("Error", "Ocurrió un error inesperado.")
     } finally {
-      setLoadingRoles(prev => ({ ...prev, [key]: false }))
+      setIsSaving(false)
     }
   }
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsCreatingUser(true)
-
+  const handleDelete = async () => {
+    if (!selectedUser) return
     try {
-      const res = await createUser(newUser)
+      const res = await deleteSystemUser(selectedUser.id)
       if (res.success) {
-        showToast.success("Usuario creado", "El perfil ha sido creado exitosamente.")
-        setIsCreateDialogOpen(false)
-        setNewUser({ first_name: "", last_name: "", email: "" })
+        showToast.success("Usuario eliminado", "El usuario ha sido borrado del sistema.")
+        setIsDeleteAlertOpen(false)
         router.refresh()
       } else {
-        showToast.error("Error", res.error || "No se pudo crear el usuario.")
-      }
-    } catch (error) {
-      showToast.error("Error", "Ocurrió un error inesperado al crear el usuario.")
-    } finally {
-      setIsCreatingUser(false)
-    }
-  }
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isAssignDialogOpen) {
-        fetchAvailableUsers(assignSearch)
-      }
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [assignSearch, isAssignDialogOpen])
-
-  const fetchAvailableUsers = async (query: string = "") => {
-    setIsFetchingAvailable(true)
-    try {
-      const res = await getAvailableUsersForModule(moduleId, query)
-      if (res.success) {
-        setAvailableUsers(res.data)
-      }
-    } catch (error) {
-      console.error("Error fetching available users:", error)
-    } finally {
-      setIsFetchingAvailable(false)
-    }
-  }
-
-  const handleOpenAssign = () => {
-    setIsAssignDialogOpen(true)
-    setAssignSearch("")
-  }
-
-  const handleRemoveFromModule = async (profileId: string) => {
-    try {
-      const res = await removeUserFromModule(profileId, moduleId)
-      if (res.success) {
-        showToast.success("Usuario eliminado", "El acceso al módulo ha sido revocado.")
-        setIsRemoveAlertOpen(false)
-        setUserToRemove(null)
-        router.refresh()
-      } else {
-        showToast.error("Error", res.error || "No se pudo eliminar el usuario del módulo.")
+        showToast.error("Error", res.error)
       }
     } catch (error) {
       showToast.error("Error", "Ocurrió un error inesperado.")
     }
   }
 
-  const confirmRemove = (profile: Profile) => {
-    setUserToRemove(profile)
-    setIsRemoveAlertOpen(true)
+  const handleResetPassword = async () => {
+    if (!selectedUser) return
+    try {
+      const res = await resetSystemPassword(selectedUser.id)
+      if (res.success) {
+        showToast.success("Contraseña restablecida", "Se ha enviado un correo con la nueva contraseña temporal al usuario.")
+        setIsResetAlertOpen(false)
+        if (res.data?.tempPassword) {
+          setGeneratedPassword({ email: selectedUser.email, password: res.data.tempPassword })
+        }
+      } else {
+        showToast.error("Error", res.error)
+      }
+    } catch (error) {
+      showToast.error("Error", "Ocurrió un error inesperado.")
+    }
+  }
+
+  const handleConfirmRoleChange = async () => {
+    if (!selectedUser || !pendingRole) return
+    setIsChangingRole(true)
+    try {
+      const res = await changeUserRole(selectedUser.id, pendingRole)
+      if (res.success) {
+        showToast.success(
+          res.unchanged ? "Sin cambios" : "Rol actualizado",
+          res.unchanged ? "La persona ya tenía ese rol." : `Ahora tiene el rol ${ROLE_INFO[pendingRole].name}. El cambio quedó registrado en la auditoría.`
+        )
+        setIsRoleConfirmOpen(false)
+        setIsRolesSheetOpen(false)
+        router.refresh()
+      } else {
+        showToast.error("No se pudo cambiar el rol", res.error)
+      }
+    } catch (error) {
+      showToast.error("Error", "Ocurrió un error inesperado al actualizar el rol.")
+    } finally {
+      setIsChangingRole(false)
+    }
   }
 
   return (
@@ -239,383 +263,348 @@ export function UsersClient({
           <SearchInput placeholder="Buscar por nombre o correo..." />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2 h-9" onClick={handleOpenAssign}>
-                <UserCog className="h-4 w-4" />
-                Asignar Existente
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Asignar Usuario a Fonoteca</DialogTitle>
-                <DialogDescription>
-                  Busca un usuario existente en la base de datos general para darle acceso a este módulo.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nombre o email..."
-                    className="pl-9"
-                    value={assignSearch}
-                    onChange={(e) => setAssignSearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="min-h-[350px] max-h-[400px] overflow-y-auto space-y-2 pr-2">
-                  {isFetchingAvailable ? (
-                    <div className="space-y-3 py-2">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
-                          <div className="flex items-center gap-3">
-                            <Skeleton className="h-8 w-8 rounded-full" />
-                            <div className="space-y-2">
-                              <Skeleton className="h-4 w-32" />
-                              <Skeleton className="h-3 w-24" />
-                            </div>
-                          </div>
-                          <Skeleton className="h-8 w-16" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : availableUsers.length > 0 ? (
-                    availableUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Avatar className="h-8 w-8 border">
-                            <AvatarImage src={user.avatar_url || ""} />
-                            <AvatarFallback className="text-[10px]">
-                              {user.first_name?.[0]}{user.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-sm truncate">{user.first_name} {user.last_name}</span>
-                            <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          className="h-8 text-xs px-4"
-                          onClick={() => {
-                            setIsAssignDialogOpen(false)
-                            handleEditRoles(user)
-                          }}
-                        >
-                          Elegir
-                        </Button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p className="text-sm italic">No se encontraron usuarios disponibles.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 h-9">
-                <Plus className="h-4 w-4" />
-                Crear Usuario
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Perfil</DialogTitle>
-                <DialogDescription>
-                  Ingresa los datos básicos para el nuevo perfil de usuario en la plataforma.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateUser} className="space-y-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="first_name" className="text-right">Nombre</Label>
-                  <Input
-                    id="first_name"
-                    value={newUser.first_name}
-                    onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="last_name" className="text-right">Apellido</Label>
-                  <Input
-                    id="last_name"
-                    value={newUser.last_name}
-                    onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="ghost" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={isCreatingUser}>
-                    {isCreatingUser && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Crear Perfil
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        {mayManageUsers && (
+          <Button className="gap-2 h-9" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            Crear usuario
+          </Button>
+        )}
       </div>
+      <p className="text-sm text-muted-foreground">{usersHelpText(actor.roles)}</p>
 
-      <div className="bg-card border">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="font-bold">Usuario</TableHead>
-              <TableHead className="font-bold">Roles en Fonoteca</TableHead>
+              <TableHead className="font-bold">Rol</TableHead>
               <TableHead className="text-right font-bold">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {initialProfiles.length > 0 ? (
-              initialProfiles.map((profile) => {
-                const userRoles = getUserRoles(profile.id)
-                const hasAccess = userRoles.length > 0
+            {initialUsers.length > 0 ? (
+              initialUsers.map((user) => {
+                const assignedRoles = assignedRoleCodes(user)
+                const top = effectiveRole(assignedRoles)
+                const manage = checkTarget(user)
 
                 return (
-                  <TableRow key={profile.id} className={cn(!hasAccess && "opacity-60")}>
+                  <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8 border">
-                          <AvatarImage src={profile.avatar_url || ""} />
-                          <AvatarFallback className="bg-primary/5 text-primary text-[10px]">
-                            {profile.first_name?.[0]}{profile.last_name?.[0]}
+                          <AvatarFallback className="bg-primary/5 text-primary text-xs">
+                            {user.name?.[0]?.toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col min-w-0">
                           <span className="font-semibold text-sm whitespace-nowrap">
-                            {profile.first_name} {profile.last_name}
+                            {user.name}
                           </span>
                           <span className="text-[10px] text-muted-foreground truncate">
-                            {profile.email}
+                            {user.email}
                           </span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1.5">
-                        {userRoles.length > 0 ? (
-                          userRoles.map((role) => (
-                            <Badge
-                              key={role.id}
-                              variant="secondary"
-                              className="text-[10px] py-0 px-1.5 font-semibold bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                            >
-                              {role.name}
-                            </Badge>
-                          ))
-                        ) : (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           <Badge
-                            variant="outline"
-                            className="text-[10px] text-muted-foreground border-dashed bg-muted/20"
+                            variant="secondary"
+                            title={top ? ROLE_INFO[top].description : undefined}
+                            className="text-[10px] py-0 px-1.5 font-semibold bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
                           >
-                            Sin acceso al módulo
+                            {effectiveRoleLabel(assignedRoles)}
                           </Badge>
+                          {unknownRoles(assignedRoles).map((code) => (
+                            <Badge key={code} variant="outline" className="text-[10px] py-0 px-1.5">{roleLabel(code)}</Badge>
+                          ))}
+                          {mayManageUsers && isLikelyTestAccount({ id: user.id, email: user.email, name: user.name, roles: assignedRoles }) && (
+                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-300 text-amber-700">Posible cuenta de prueba</Badge>
+                          )}
+                          {user.id === actor.id && <span className="text-[10px] text-muted-foreground">(usted)</span>}
+                        </div>
+                        {redundantRoles(assignedRoles).length > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Incluye los permisos de {redundantRoles(assignedRoles).map(roleLabel).join(" y ")}.
+                          </span>
                         )}
+                        {assignedRoles.length === 0 && <span className="text-xs text-muted-foreground italic">Sin rol asignado</span>}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant={hasAccess ? "ghost" : "default"}
-                          size="sm"
-                          className={cn(
-                            "h-8 gap-1.5 text-xs",
-                            !hasAccess && "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                          )}
-                          onClick={() => handleEditRoles(profile)}
-                        >
-                          {hasAccess ? (
-                            <>
-                              <UserCog className="h-3.5 w-3.5" />
-                              Gestionar
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-3.5 w-3.5" />
-                              Dar Acceso
-                            </>
-                          )}
-                        </Button>
-                        {hasAccess && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => confirmRemove(profile)}
-                            title="Eliminar del módulo"
-                          >
+                      {manage.allowed ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openRoles(user)} title="Gestionar rol" aria-label={`Gestionar rol de ${user.name}`}>
+                            <ShieldHalf className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedUser(user); setIsResetAlertOpen(true) }} title="Restablecer contraseña" aria-label={`Restablecer la contraseña de ${user.name}`}>
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(user)} title="Editar usuario" aria-label={`Editar a ${user.name}`}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedUser(user); setIsDeleteAlertOpen(true) }} title="Eliminar usuario" aria-label={`Eliminar a ${user.name}`}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground" title={manage.reason}>Solo lectura</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 )
               })
             ) : (
-              <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                  No se encontraron usuarios.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={4} title="No se encontraron usuarios." description="Ajuste la búsqueda o los filtros."  />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Mostrando <span className="font-medium">{initialProfiles.length}</span> de <span className="font-medium">{totalCount}</span> usuarios
-        </p>
-        <PaginationButtons totalCount={totalCount} pageSize={10} />
-      </div>
+      <PaginationButtons totalCount={totalCount} itemLabel="Usuarios" />
 
-      <AlertDialog open={isRemoveAlertOpen} onOpenChange={setIsRemoveAlertOpen}>
+      {/* CREATE / EDIT DIALOG */}
+      <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsCreateDialogOpen(false)
+          setIsEditDialogOpen(false)
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{isEditDialogOpen ? "Editar usuario" : "Crear nuevo usuario"}</DialogTitle>
+            <DialogDescription>
+              {isEditDialogOpen
+                ? "Modifique los datos básicos del usuario."
+                : "Se generará una contraseña temporal que será enviada al correo proporcionado."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveUser} className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nombre</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
+            {isEditDialogOpen ? (
+              <p className="text-xs text-muted-foreground">
+                Para cambiar el rol use «Gestionar rol» en la lista: el cambio pide confirmación y queda auditado.
+              </p>
+            ) : (
+              <fieldset className="grid gap-2">
+                <legend className="mb-1 text-sm font-medium">Rol</legend>
+                <div className="grid gap-2 rounded-md border p-3">
+                  {ROLE_HIERARCHY.filter((code) => allowedRoles.includes(code)).map((code) => (
+                    <label key={code} className="flex items-start gap-2 text-sm">
+                      <input
+                        type="radio"
+                        name="new-user-role"
+                        className="mt-1"
+                        checked={formData.roles[0] === code}
+                        onChange={() => setFormData({ ...formData, roles: [code] })}
+                      />
+                      <span>
+                        <span className="font-medium">{ROLE_INFO[code].name}</span>
+                        <span className="block text-xs text-muted-foreground">{ROLE_INFO[code].description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="ghost" onClick={() => {
+                setIsCreateDialogOpen(false)
+                setIsEditDialogOpen(false)
+              }}>Cancelar</Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditDialogOpen ? "Guardar cambios" : "Crear usuario"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* DELETE ALERT */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              ¿Quitar acceso al módulo?
-            </AlertDialogTitle>
+            <AlertDialogTitle className="text-destructive">Eliminar usuario</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de revocar todos los permisos de <strong>{userToRemove?.first_name} {userToRemove?.last_name}</strong> en el módulo de Fonoteca.
-              Esta acción no eliminará el perfil del usuario de la plataforma general.
+              Está a punto de eliminar permanentemente al usuario <strong>{selectedUser?.name}</strong>. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => userToRemove && handleRemoveFromModule(userToRemove.id)}
+              onClick={handleDelete}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Quitar Acceso
+              Sí, eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      {/* RESET PASSWORD ALERT */}
+      <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restablecer contraseña</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Seguro que desea restablecer la contraseña de <strong>{selectedUser?.name}</strong>?
+              Se generará una nueva contraseña temporal y será enviada a <strong>{selectedUser?.email}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword}>
+              Sí, restablecer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ROLE SHEET + CONFIRMATION */}
+      <Sheet open={isRolesSheetOpen} onOpenChange={setIsRolesSheetOpen}>
         <SheetContent className="sm:max-w-md py-0 px-4">
-          <SheetHeader className="space-y-1">
-            <SheetTitle className="flex items-center gap-2">
-              Roles de Usuario
-            </SheetTitle>
+          <SheetHeader className="space-y-1 mt-6">
+            <SheetTitle>Gestionar rol</SheetTitle>
             <SheetDescription>
-              Gestiona los roles de <strong>{selectedUser?.first_name} {selectedUser?.last_name}</strong> en el módulo de Fonoteca.
+              Rol principal de <strong>{activeUser?.name}</strong>. Cada rol incluye los permisos de los inferiores, por eso solo se asigna uno.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6 space-y-6">
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Permisos del Módulo</h4>
-              <div className="flex flex-wrap gap-2">
-                {initialPermissions.length > 0 ? (
-                  initialPermissions.map((perm) => (
-                    <Badge key={perm.id} variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                      {perm.action}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-[10px] text-muted-foreground italic">No hay acciones definidas para este módulo.</span>
-                )}
-              </div>
-            </div>
+          <fieldset className="mt-6 grid gap-3">
+            <legend className="sr-only">Rol principal</legend>
+            {ROLE_HIERARCHY.filter((code) => allowedRoles.includes(code)).map((code) => {
+              const current = effectiveRole(assignedRoleCodes(activeUser)) === code
+              return (
+                <label
+                  key={code}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
+                    pendingRole === code ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-900/10" : "hover:bg-muted/40"
+                  )}
+                >
+                  <input type="radio" name="user-role" className="mt-1" checked={pendingRole === code} onChange={() => setPendingRole(code)} />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      {ROLE_INFO[code].name}
+                      {current && <Badge className="h-4 border-none bg-emerald-500 px-1 text-[8px] font-bold uppercase">Actual</Badge>}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{ROLE_INFO[code].description}</span>
+                  </span>
+                </label>
+              )
+            })}
+          </fieldset>
 
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Asignación de Roles</h4>
-              <div className="grid gap-4">
-                {initialRoles.map((role) => {
-                  const userRoles = selectedUser ? getUserRoles(selectedUser.id) : []
-                  const isAssigned = userRoles.some(ur => ur.id === role.id)
-                  const isLoading = selectedUser ? loadingRoles[`${selectedUser.id}-${role.id}`] : false
-                  return (
-                    <label
-                      key={role.id}
-                      htmlFor={`role-${role.id}`}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-none border transition-all cursor-pointer group",
-                        isAssigned
-                          ? "bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/30"
-                          : "bg-background border-border hover:border-emerald-200 hover:bg-emerald-50/20"
-                      )}
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm group-hover:text-emerald-700 transition-colors">
-                            {role.name}
-                          </span>
-                          {isAssigned && (
-                            <Badge className="h-4 text-[8px] bg-emerald-500 hover:bg-emerald-600 border-none px-1 uppercase font-bold tracking-tighter">
-                              Asignado
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground max-w-[200px]">
-                          {role.description || "Sin descripción disponible para este rol."}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                        <Checkbox
-                          id={`role-${role.id}`}
-                          checked={isAssigned}
-                          disabled={isLoading}
-                          onCheckedChange={() => selectedUser && handleToggleRole(selectedUser.id, role.id, isAssigned)}
-                          className={cn(
-                            "h-5 w-5 border-2 transition-transform group-hover:scale-110",
-                            isAssigned && "bg-emerald-500 border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-white"
-                          )}
-                        />
-                      </div>
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="rounded-lg bg-muted/40 p-3 border border-muted-foreground/10">
-              <div className="flex items-start gap-2.5">
-                <div className="space-y-1">
-                  <p className="text-[11px] font-semibold">Nota sobre permisos</p>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Al asignar un rol, el usuario recibirá automáticamente los permisos asociados a ese rol para las acciones dentro de este módulo. Los roles globales como "Admin" otorgan acceso total.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <SheetFooter className="absolute bottom-0 left-0 right-0 p-6 border-t bg-background">
-            <Button className="w-full h-10 shadow-sm" onClick={() => setIsSheetOpen(false)}>
-              Cerrar Gestión
+          <SheetFooter className="absolute bottom-0 left-0 right-0 flex-row gap-2 border-t bg-background p-6">
+            <Button variant="ghost" className="flex-1" onClick={() => setIsRolesSheetOpen(false)}>Cancelar</Button>
+            <Button
+              className="flex-1"
+              disabled={!pendingRole || pendingRole === effectiveRole(assignedRoleCodes(activeUser)) && redundantRoles(assignedRoleCodes(activeUser)).length === 0}
+              onClick={() => setIsRoleConfirmOpen(true)}
+            >
+              Revisar cambio
             </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={isRoleConfirmOpen} onOpenChange={(open) => { if (!isChangingRole) setIsRoleConfirmOpen(open) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar cambio de rol</AlertDialogTitle>
+            <AlertDialogDescription>
+              El rol de <strong>{activeUser?.name}</strong> pasará de{" "}
+              <strong>{effectiveRoleLabel(assignedRoleCodes(activeUser))}</strong> a{" "}
+              <strong>{pendingRole ? ROLE_INFO[pendingRole].name : ""}</strong>.{" "}
+              {pendingRole && effectiveRole(assignedRoleCodes(activeUser)) && ROLE_HIERARCHY.indexOf(pendingRole) < ROLE_HIERARCHY.indexOf(effectiveRole(assignedRoleCodes(activeUser))!)
+                ? "La persona perderá permisos de inmediato. "
+                : "La persona obtendrá permisos adicionales. "}
+              El cambio quedará registrado en la auditoría con su nombre y la fecha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isChangingRole}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={(event) => { event.preventDefault(); void handleConfirmRoleChange() }} disabled={isChangingRole}>
+              {isChangingRole && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar cambio
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* GENERATED PASSWORD DIALOG */}
+      <Dialog open={!!generatedPassword} onOpenChange={(open) => {
+        if (!open) setGeneratedPassword(null)
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contraseña temporal generada</DialogTitle>
+            <DialogDescription>
+              Guarde esta contraseña temporal en un lugar seguro.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="bg-muted p-4 rounded-md text-center">
+              <span className="text-sm text-muted-foreground block mb-2">{generatedPassword?.email}</span>
+              <span className="text-2xl font-mono tracking-widest font-bold">{generatedPassword?.password}</span>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (generatedPassword) {
+                  const content = `Correo: ${generatedPassword.email}\nContraseña: ${generatedPassword.password}`
+                  const blob = new Blob([content], { type: "text/plain" })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = `credenciales-${generatedPassword.email}.txt`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }
+              }}
+              className="flex-1"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Descargar .txt
+            </Button>
+            <Button
+              onClick={() => {
+                if (generatedPassword) {
+                  navigator.clipboard.writeText(generatedPassword.password)
+                  showToast.success("Copiada", "Contraseña copiada al portapapeles")
+                }
+              }}
+              className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,10 +1,9 @@
 "use server"
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { InstitutionInput, institutionSchema } from "@/lib/validations/fonoteca";
 import { Institution } from "@/types/fonoteca";
+import { getCrudPage, getCrudItem, mutateCrud, deactivateCrud, multipleDeleteCrud, getAllCrud } from "@/lib/backend/crud";
 
 export async function getInstitutions({
   page = 1,
@@ -15,113 +14,94 @@ export async function getInstitutions({
   limit?: number;
   search?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from("institutions")
-    .select("*", { count: "exact" });
-
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,code.ilike.%${search}%`);
-  }
-
-  const { data, count, error } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
+  try {
+    const result = await getCrudPage<Institution>("institutions", { page, limit, search });
+    return { data: result.data, count: result.meta.totalItems };
+  } catch (error) {
     console.error("error fetching institutions:", error);
-    return { data: [] as Institution[], count: 0, error: error.message };
+    return { data: [] as Institution[], count: 0, error: error instanceof Error ? error.message : "Error al cargar instituciones" };
   }
+}
 
-  return {
-    data: data as Institution[],
-    count: count || 0,
-  };
+export async function getAllInstitutions({
+  search = "",
+}: {
+  search?: string;
+} = {}) {
+  try {
+    const data = await getAllCrud<Institution>("institutions", { search });
+    return { data };
+  } catch (error) {
+    return { data: [] as Institution[], error: error instanceof Error ? error.message : "Error" };
+  }
 }
 
 export async function getInstitution(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("institutions")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await getCrudItem<Institution>("institutions", id);
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo cargar la institución" };
   }
-
-  return { data: data as Institution };
 }
 
 export async function createInstitution(input: InstitutionInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = institutionSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("institutions")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<Institution>("institutions", "POST", parsed.data);
+    revalidatePath("/dashboard/geography/institutions");
+    return { success: true, data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al crear la institución" };
   }
-
-  revalidatePath("/dashboard/geography/institutions");
-  return { success: true, data: data as Institution };
 }
 
 export async function updateInstitution(id: string, input: InstitutionInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = institutionSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("institutions")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<Institution>("institutions", "PATCH", parsed.data, id);
+    revalidatePath("/dashboard/geography/institutions");
+    revalidatePath(`/dashboard/geography/institutions/${id}/edit`);
+    return { success: true, data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al actualizar la institución" };
   }
-
-  revalidatePath("/dashboard/geography/institutions");
-  revalidatePath(`/dashboard/geography/institutions/${id}/edit`);
-  return { success: true, data: data as Institution };
 }
 
 export async function deleteInstitution(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("institutions")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
+  try {
+    await mutateCrud("institutions", "DELETE", undefined, id);
+    revalidatePath("/dashboard/geography/institutions");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar la institución" };
   }
+}
 
-  revalidatePath("/dashboard/geography/institutions");
-  return { success: true };
+export async function deactivateInstitution(id: string) {
+  try {
+    await deactivateCrud("institutions", id);
+    revalidatePath("/dashboard/geography/institutions");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al desactivar la institución" };
+  }
+}
+
+export async function multipleDeleteInstitutions(ids: string[]) {
+  try {
+    await multipleDeleteCrud("institutions", ids);
+    revalidatePath("/dashboard/geography/institutions");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar las instituciones" };
+  }
 }

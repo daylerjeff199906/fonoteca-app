@@ -1,112 +1,63 @@
-"use server"
+"use server";
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { Collection } from "@/types/fonoteca";
 import { CollectionInput } from "@/lib/validations/fonoteca";
-
+import { getCrudPage, getCrudItem, mutateCrud, deactivateCrud, multipleDeleteCrud, getAllCrud } from "@/lib/backend/crud";
 
 export async function getCollections(filters?: { institution_id?: string; limit?: number }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-  
-  let query = supabase
-    .from("collections")
-    .select("*, institution:institutions(*)")
-    .neq("record_status", "deleted")
-    .order("created_at", { ascending: false });
+  try {
+    const params: Record<string, string | number | undefined> = {};
+    if (filters?.institution_id) params.institution_id = filters.institution_id;
+    if (filters?.limit) params.limit = filters.limit;
 
-  if (filters?.institution_id) {
-    query = query.eq("institution_id", filters.institution_id);
-  }
-
-  if (filters?.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
+    const data = await getAllCrud<Collection>("collections", params);
+    return { data, error: null };
+  } catch (error) {
     console.error("Error fetching collections:", error);
-    return { data: [], error: error.message };
+    return { data: [], error: error instanceof Error ? error.message : "Error al cargar colecciones" };
   }
-
-  return { data: data as Collection[], error: null };
 }
 
 export async function getCollection(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-  
-  const { data, error } = await supabase
-    .from("collections")
-    .select("*, institution:institutions(*)")
-    .eq("id", id)
-    .single();
-
-  if (error) {
+  try {
+    const data = await getCrudItem<Collection>("collections", id);
+    return { data, error: null };
+  } catch (error) {
     console.error("Error fetching collection:", error);
-    return { data: null, error: error.message };
+    return { data: null, error: error instanceof Error ? error.message : "No se pudo cargar la colección" };
   }
-
-  return { data: data as Collection, error: null };
 }
 
 export async function createCollection(data: CollectionInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-  
-  const { data: newCollection, error } = await supabase
-    .from("collections")
-    .insert([data])
-    .select()
-    .single();
-
-  if (error) {
+  try {
+    const newCollection = await mutateCrud<Collection>("collections", "POST", data);
+    revalidatePath("/dashboard/occurrences");
+    return { success: true, data: newCollection };
+  } catch (error) {
     console.error("Error creating collection:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : "Error al crear la colección" };
   }
-
-  revalidatePath("/dashboard/occurrences");
-  return { success: true, data: newCollection as Collection };
 }
 
 export async function updateCollection(id: string, data: Partial<CollectionInput>) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-  
-  const { data: updatedRecord, error } = await supabase
-    .from("collections")
-    .update(data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
+  try {
+    const updatedRecord = await mutateCrud<Collection>("collections", "PATCH", data, id);
+    revalidatePath("/dashboard/occurrences");
+    return { success: true, data: updatedRecord };
+  } catch (error) {
     console.error("Error updating collection:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : "Error al actualizar la colección" };
   }
-
-  revalidatePath("/dashboard/occurrences");
-  return { success: true, data: updatedRecord as Collection };
 }
 
-
 export async function deleteCollection(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-  
-  const { error } = await supabase
-    .from("collections")
-    .update({ record_status: "deleted" })
-    .eq("id", id);
-
-  if (error) {
+  try {
+    await mutateCrud("collections", "DELETE", undefined, id);
+    revalidatePath("/dashboard/occurrences");
+    return { success: true };
+  } catch (error) {
     console.error("Error deleting collection:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : "Error al eliminar la colección" };
   }
-
-  revalidatePath("/dashboard/occurrences");
-  return { success: true };
 }

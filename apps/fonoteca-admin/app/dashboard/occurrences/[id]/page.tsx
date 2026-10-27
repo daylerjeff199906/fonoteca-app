@@ -18,14 +18,14 @@ export default async function OccurrenceDetailPage({
 
   if (error || !occurrence) {
     return (
-      <LayoutWrapper sectionTitle="Detalle de Ocurrencia">
+      <LayoutWrapper>
         <div className="p-4 text-red-500">Error: No se encontró la ocurrencia.</div>
       </LayoutWrapper>
     );
   }
 
   return (
-    <LayoutWrapper sectionTitle={`Detalle: ${occurrence.occurrenceID}`}>
+    <LayoutWrapper sectionTitle={`Detalle de la ocurrencia ${occurrence.occurrenceID}`}>
       <div className="flex items-center justify-between">
         <Link href="/dashboard/occurrences" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2")}>
           <ArrowLeft className="h-4 w-4" /> Volver
@@ -42,7 +42,7 @@ export default async function OccurrenceDetailPage({
           <p><span className="font-bold text-muted-foreground mr-2">ID Ocurrencia:</span>{occurrence.occurrenceID}</p>
           <p><span className="font-bold text-muted-foreground mr-2">Taxonomía:</span>
             <span className="opacity-80">
-              {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.kingdom} / {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.phylum} / {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.name} / {occurrence.taxon?.genus?.family?.order_obj?.name} / {occurrence.taxon?.genus?.family?.name} / {occurrence.taxon?.genus?.name}
+              {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.kingdom} / {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.phylum} / {occurrence.taxon?.genus?.family?.order_obj?.class_obj?.name} / {occurrence.taxon?.genus?.family?.order_obj?.name} / {occurrence.taxon?.genus?.family?.name} / <i>{occurrence.taxon?.genus?.name}</i>
             </span>
           </p>
           <p><span className="font-bold text-muted-foreground mr-2">Taxón:</span><span className="italic font-semibold text-primary">{occurrence.taxon?.scientificName || "Desconocido"}</span></p>

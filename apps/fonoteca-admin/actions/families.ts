@@ -1,127 +1,51 @@
 "use server"
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { FamilyInput, familySchema } from "@/lib/validations/fonoteca";
 import { Family } from "@/types/fonoteca";
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
+import { getTaxonomyItem, getTaxonomyPage, mutateTaxonomy } from "@/lib/backend/taxonomy";
 
 export async function getFamiliesPaginated({
   page = 1,
   limit = 10,
   search = "",
+  order_id = "",
 }: {
   page?: number;
   limit?: number;
   search?: string;
+  order_id?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from("families")
-    .select("*, order_obj:orders(*, class_obj:classes(*))", { count: "exact" });
-
-  if (search) {
-    query = query.ilike("name", `%${search}%`);
-  }
-
-  const { data, count, error } = await query
-    .order("name", { ascending: true })
-    .range(from, to);
-
-  if (error) {
-    console.error("error fetching families:", error);
-    return { data: [] as Family[], count: 0, error: error.message };
-  }
-
-  return {
-    data: (data as any) as Family[],
-    count: count || 0,
-  };
+  try { const result = await getTaxonomyPage<Family>("families", { page, limit, search, parentId: order_id }); return { data: result.data, count: result.meta.totalItems }; }
+  catch (error) { return { data: [] as Family[], count: 0, error: error instanceof Error ? error.message : "No se pudieron cargar las familias." }; }
 }
 
 export async function getFamily(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("families")
-    .select("*, order_obj:orders(*, class_obj:classes(*))")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { data: (data as any) as Family };
+  try { return { data: await getTaxonomyItem<Family>("families", id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo cargar la familia." }; }
 }
 
 export async function createFamily(input: FamilyInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = familySchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
-  }
-
-  const { data, error } = await supabase
-    .from("families")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
   }
 
   revalidatePath("/dashboard/taxa/families");
-  return { success: true, data: (data as any) as Family };
+  try { return { success: true, data: await mutateTaxonomy<Family>("families", "POST", parsed.data) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo crear la familia." }; }
 }
 
 export async function updateFamily(id: string, input: FamilyInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = familySchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
-  }
-
-  const { data, error } = await supabase
-    .from("families")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
   }
 
   revalidatePath("/dashboard/taxa/families");
   revalidatePath(`/dashboard/taxa/families/${id}`);
-  return { success: true, data: (data as any) as Family };
+  try { return { success: true, data: await mutateTaxonomy<Family>("families", "PATCH", parsed.data, id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo actualizar la familia." }; }
 }
 
 export async function deleteFamily(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("families")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
   revalidatePath("/dashboard/taxa/families");
-  return { success: true };
+  try { await mutateTaxonomy("families", "DELETE", undefined, id); return { success: true }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo eliminar la familia." }; }
 }

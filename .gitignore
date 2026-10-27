@@ -36,3 +36,6 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Informes con datos personales (inventario de usuarios)
+apps/fonoteca-admin/reports/

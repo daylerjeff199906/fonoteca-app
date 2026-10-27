@@ -1,10 +1,9 @@
 "use server"
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { OrderInput, orderSchema } from "@/lib/validations/fonoteca";
 import { Order } from "@/types/fonoteca";
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
+import { getAllTaxonomy, getTaxonomyItem, getTaxonomyPage, mutateTaxonomy } from "@/lib/backend/taxonomy";
 
 export async function getOrdersPaginated({
   page = 1,
@@ -17,132 +16,40 @@ export async function getOrdersPaginated({
   search?: string;
   class_id?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from("orders")
-    .select("*, class_obj:classes(*)", { count: "exact" });
-
-  if (search) {
-    query = query.ilike("name", `%${search}%`);
-  }
-
-  if (class_id) {
-    query = query.eq("class_id", class_id);
-  }
-
-  const { data, count, error } = await query
-    .order("name", { ascending: true })
-    .range(from, to);
-
-  if (error) {
-    console.error("error fetching orders:", error);
-    return { data: [] as Order[], count: 0, error: error.message };
-  }
-
-  return {
-    data: (data as any) as Order[],
-    count: count || 0,
-  };
+  try { const result = await getTaxonomyPage<Order>("orders", { page, limit, search, parentId: class_id }); return { data: result.data, count: result.meta.totalItems }; }
+  catch (error) { return { data: [] as Order[], count: 0, error: error instanceof Error ? error.message : "No se pudieron cargar los órdenes." }; }
 }
 
 export async function getAllOrders() {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, class_obj:classes(*)")
-    .order("name");
-
-  if (error) {
-    return { data: [], error: error.message };
-  }
-
-  return { data: data || [] };
+  try { return { data: await getAllTaxonomy<Order>("orders") }; }
+  catch (error) { return { data: [], error: error instanceof Error ? error.message : "No se pudieron cargar los órdenes." }; }
 }
 
 export async function getOrder(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, class_obj:classes(*)")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { data: (data as any) as Order };
+  try { return { data: await getTaxonomyItem<Order>("orders", id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo cargar el orden." }; }
 }
 
 export async function createOrder(input: OrderInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = orderSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("orders")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
   revalidatePath("/dashboard/taxa/orders");
-  return { success: true, data: (data as any) as Order };
+  try { return { success: true, data: await mutateTaxonomy<Order>("orders", "POST", parsed.data) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo crear el orden." }; }
 }
 
 export async function updateOrder(id: string, input: OrderInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = orderSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("orders")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
   revalidatePath("/dashboard/taxa/orders");
-  return { success: true, data: (data as any) as Order };
+  try { return { success: true, data: await mutateTaxonomy<Order>("orders", "PATCH", parsed.data, id) }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo actualizar el orden." }; }
 }
 
 export async function deleteOrder(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("orders")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
   revalidatePath("/dashboard/taxa/orders");
-  return { success: true };
+  try { await mutateTaxonomy("orders", "DELETE", undefined, id); return { success: true }; } catch (error) { return { error: error instanceof Error ? error.message : "No se pudo eliminar el orden." }; }
 }

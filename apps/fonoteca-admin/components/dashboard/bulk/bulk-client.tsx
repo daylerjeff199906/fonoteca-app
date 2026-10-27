@@ -1,5 +1,6 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -250,7 +251,7 @@ export function BulkClient() {
   return (
     <div className="space-y-10 pb-20">
       <PageHeader
-        title="Operaciones Masivas"
+        title={routeLabel("/dashboard/bulk")}
         description="Gestione grandes volúmenes de datos con plantillas profesionales."
       />
 
@@ -338,7 +339,7 @@ export function BulkClient() {
                   <Upload className="h-8 w-8" />
                 </div>
                 <span className="text-sm font-bold tracking-tight">
-                  {isDragging ? "¡Suéltalo ahora!" : "Arrastra tu archivo aquí"}
+                  {isDragging ? "Suelte el archivo ahora" : "Arrastre su archivo aquí"}
                 </span>
                 <p className="text-[11px] text-muted-foreground mt-2 font-medium">
                   o haga click para buscar en su equipo

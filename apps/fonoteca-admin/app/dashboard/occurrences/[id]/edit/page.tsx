@@ -11,7 +11,7 @@ export default async function EditOccurrencePage({
   const { id } = await params;
 
   return (
-    <LayoutWrapper sectionTitle="Editar Ocurrencia">
+    <LayoutWrapper>
       <div className="w-full space-y-4">
         <OccurrenceForm id={id} redirectUrl="/dashboard/occurrences/[id]" />
         <MultimediaSection occurrenceId={id} />

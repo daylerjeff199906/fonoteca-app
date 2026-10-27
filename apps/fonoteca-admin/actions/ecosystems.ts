@@ -1,10 +1,9 @@
 "use server"
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { EcosystemInput, ecosystemSchema } from "@/lib/validations/fonoteca";
 import { Ecosystem } from "@/types/fonoteca";
+import { getCrudPage, getCrudItem, mutateCrud, deactivateCrud, multipleDeleteCrud, getAllCrud } from "@/lib/backend/crud";
 
 export async function getEcosystems({
   page = 1,
@@ -17,117 +16,102 @@ export async function getEcosystems({
   search?: string;
   region_id?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  let query = supabase
-    .from("ecosystems")
-    .select("*, region:natural_regions(*)", { count: "exact" });
-
-  if (search) {
-    query = query.ilike("name", `%${search}%`);
-  }
-
-  if (region_id) {
-    query = query.eq("region_id", region_id);
-  }
-
-  const { data, count, error } = await query
-    .order("name", { ascending: true })
-    .range(from, to);
-
-  if (error) {
+  try {
+    const params: Record<string, string | number | undefined> = { page, limit, search };
+    if (region_id) params.region_id = region_id;
+    
+    const result = await getCrudPage<Ecosystem>("ecosystems", params);
+    return { data: result.data, count: result.meta.totalItems };
+  } catch (error) {
     console.error("error fetching ecosystems:", error);
-    return { data: [] as Ecosystem[], count: 0, error: error.message };
+    return { data: [] as Ecosystem[], count: 0, error: error instanceof Error ? error.message : "Error al cargar hábitats" };
   }
+}
 
-  return {
-    data: (data as any) as Ecosystem[],
-    count: count || 0,
-  };
+export async function getAllEcosystems({
+  search = "",
+  region_id = "",
+}: {
+  search?: string;
+  region_id?: string;
+} = {}) {
+  try {
+    const params: Record<string, string | number | undefined> = { search };
+    if (region_id) params.region_id = region_id;
+    
+    const data = await getAllCrud<Ecosystem>("ecosystems", params);
+    return { data };
+  } catch (error) {
+    return { data: [] as Ecosystem[], error: error instanceof Error ? error.message : "Error" };
+  }
 }
 
 export async function getEcosystem(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { data, error } = await supabase
-    .from("ecosystems")
-    .select("*, region:natural_regions(*)")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await getCrudItem<Ecosystem>("ecosystems", id);
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo cargar el hábitat" };
   }
-
-  return { data: (data as any) as Ecosystem };
 }
 
 export async function createEcosystem(input: EcosystemInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = ecosystemSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("ecosystems")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<Ecosystem>("ecosystems", "POST", parsed.data);
+    revalidatePath("/dashboard/geography/ecosystems");
+    revalidatePath("/dashboard/occurrences/create");
+    return { success: true, data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al crear el hábitat" };
   }
-
-  revalidatePath("/dashboard/geography/ecosystems");
-  revalidatePath("/dashboard/occurrences/create");
-  return { success: true, data: (data as any) as Ecosystem };
 }
 
 export async function updateEcosystem(id: string, input: EcosystemInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = ecosystemSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { data, error } = await supabase
-    .from("ecosystems")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<Ecosystem>("ecosystems", "PATCH", parsed.data, id);
+    revalidatePath("/dashboard/geography/ecosystems");
+    return { success: true, data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al actualizar el hábitat" };
   }
-
-  revalidatePath("/dashboard/geography/ecosystems");
-  return { success: true, data: (data as any) as Ecosystem };
 }
 
 export async function deleteEcosystem(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  const { error } = await supabase
-    .from("ecosystems")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
+  try {
+    await mutateCrud("ecosystems", "DELETE", undefined, id);
+    revalidatePath("/dashboard/geography/ecosystems");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar el hábitat" };
   }
+}
 
-  revalidatePath("/dashboard/geography/ecosystems");
-  return { success: true };
+export async function deactivateEcosystem(id: string) {
+  try {
+    await deactivateCrud("ecosystems", id);
+    revalidatePath("/dashboard/geography/ecosystems");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al desactivar el hábitat" };
+  }
+}
+
+export async function multipleDeleteEcosystems(ids: string[]) {
+  try {
+    await multipleDeleteCrud("ecosystems", ids);
+    revalidatePath("/dashboard/geography/ecosystems");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar los hábitats" };
+  }
 }

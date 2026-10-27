@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, SparklesIcon, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon, UserIcon } from "lucide-react"
 import { signout } from "@/actions/auth"
+import Link from "next/link"
 
 interface NavUserProps {
   user?: {
@@ -91,7 +92,7 @@ export function NavUser({ user }: NavUserProps) {
                   <Avatar>
                     <AvatarImage src={userData.avatar || ''} alt={userData.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                       {userData.avatar ? getInitials(userData.name) : <UserIcon className="size-4" />}
+                      {userData.avatar ? getInitials(userData.name) : <UserIcon className="size-4" />}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -104,23 +105,10 @@ export function NavUser({ user }: NavUserProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <SparklesIcon />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheckIcon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
+                <Link href="/dashboard/profile" className="cursor-pointer w-full flex items-center">
+                  <UserIcon className="mr-2 size-4" />
+                  Mi Perfil
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

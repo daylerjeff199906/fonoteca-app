@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 
 export const metadata: Metadata = {
-  title: "Fonoteca Admin - Platform",
+  title: "Fonoteca - Panel administrativo",
   description: "Panel administrativo para la fonoteca de especies",
 };
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)}>
+    <html lang="es" className={cn("font-sans", inter.variable)}>
       <body
         className={`${inter.variable} antialiased`}
       >

@@ -20,7 +20,7 @@ export function DeleteButtonWithConfirm({
   id,
   onConfirm,
   itemName = "elemento",
-  requiredText = "delete",
+  requiredText = "eliminar",
 }: {
   id: string;
   onConfirm: (id: string) => Promise<{ success?: boolean; error?: string }>;

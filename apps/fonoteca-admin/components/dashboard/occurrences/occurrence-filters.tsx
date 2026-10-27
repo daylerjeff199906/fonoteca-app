@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Taxon } from "@/types/fonoteca";
 import { Label } from "@/components/ui/label";
+import { ScientificName } from "@/components/ui/scientific-name";
 
 export function OccurrenceFilters({ taxa }: { taxa: Taxon[] }) {
   const router = useRouter();
@@ -46,46 +47,13 @@ export function OccurrenceFilters({ taxa }: { taxa: Taxon[] }) {
             <SelectItem value="all">Todos los Taxones</SelectItem>
             {taxa.map((t) => (
               <SelectItem key={t.id} value={t.id}>
-                {t.scientificName}
+                <ScientificName>{t.scientificName}</ScientificName>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="image" className="text-xs font-semibold uppercase text-muted-foreground">Imagen</Label>
-        <Select
-          value={searchParams.get("hasImage") || "all"}
-          onValueChange={(v) => updateParams("hasImage", v)}
-        >
-          <SelectTrigger id="image" className="h-9 w-[140px]">
-            <SelectValue placeholder="Imágenes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="yes">Con Imagen</SelectItem>
-            <SelectItem value="no">Sin Imagen</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="audio" className="text-xs font-semibold uppercase text-muted-foreground">Audio</Label>
-        <Select
-          value={searchParams.get("hasAudio") || "all"}
-          onValueChange={(v) => updateParams("hasAudio", v)}
-        >
-          <SelectTrigger id="audio" className="h-9 w-[140px]">
-            <SelectValue placeholder="Audios" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="yes">Con Audio</SelectItem>
-            <SelectItem value="no">Sin Audio</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   );
 }

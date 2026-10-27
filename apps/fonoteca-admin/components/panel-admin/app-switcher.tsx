@@ -33,7 +33,7 @@ export function AppSwitcher({ teams }: AppSwitcherProps) {
         }
       >
         <LayoutGridIcon className="size-5 text-muted-foreground" />
-        <span className="sr-only">Switch Apps</span>
+        <span className="sr-only">Cambiar de aplicación</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-64 rounded-xl p-2 border-[#ffffff]/10"

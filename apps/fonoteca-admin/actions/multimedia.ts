@@ -1,306 +1,248 @@
-"use server"
+"use server";
 
-import { createFonotecaServer } from "@/utils/supabase/fonoteca/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { MultimediaInput, multimediaSchema } from "@/lib/validations/fonoteca";
 import { Multimedia } from "@/types/fonoteca";
-import { 
-  DeleteObjectCommand, 
-  ListObjectsV2Command, 
-  DeleteObjectsCommand, 
-  PutObjectCommand 
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
+import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
+import { assertMediaWrite } from "@/lib/backend/media-access";
+import { getMediaFile, MediaServiceError } from "@/lib/media-service";
+
+export type MultimediaPreview = {
+  multimediaId: string;
+  url: string;
+  status?: string;
+  contentType?: string;
+};
+
+/** Datos mínimos de un multimedia para resolver su vista previa. */
+type PreviewableMultimedia = Pick<Multimedia, "id" | "file_id" | "identifier" | "type"> & {
+  /** Compatibilidad con relaciones aún entregadas por la API en camelCase. */
+  fileId?: string | null;
+  thumbnail_url?: string | null;
+  processing_status?: Multimedia["processing_status"];
+  processingStatus?: Multimedia["processing_status"];
+};
+
+/**
+ * Miniaturas de las imágenes. Las URLs de MinIO son públicas y permanentes y las fija el backend cuando termina
+ * el procesamiento, así que solo se consulta el estado de los archivos que aún no tienen miniatura.
+ */
+export async function getMultimediaPreviews(items: PreviewableMultimedia[]) {
+  const imageItems = items
+    .map((item) => ({ ...item, resolvedFileId: item.file_id ?? item.fileId }))
+    .filter((item) => item.type === "Still")
+    .slice(0, 50);
+  const results = await Promise.allSettled(imageItems.map(async (item): Promise<MultimediaPreview> => {
+    // Registros históricos sin archivo gestionado: se conserva su URL.
+    if (!item.resolvedFileId) return { multimediaId: item.id, url: item.identifier, status: "legacy" };
+    if (item.thumbnail_url && (item.processing_status ?? item.processingStatus) === "completed") {
+      return { multimediaId: item.id, url: item.thumbnail_url, status: "completed" };
+    }
+
+    let file: Awaited<ReturnType<typeof getMediaFile>>;
+    try {
+      file = await getMediaFile(item.resolvedFileId);
+    } catch (error) {
+      // 404: el archivo no está registrado en el backend (multimedia previa a la migración).
+      if (error instanceof MediaServiceError && error.status === 404 && item.identifier) {
+        return { multimediaId: item.id, url: item.identifier, status: "legacy" };
+      }
+      throw error;
+    }
+    if (file.status === "failed") throw new Error("No se pudo procesar el archivo multimedia.");
+    const url = file.assets?.thumbnail_url ?? file.assets?.display_url ?? "";
+    return { multimediaId: item.id, url, status: file.status === "completed" && url ? "completed" : "processing" };
+  }));
+  const data = results.flatMap((result) => result.status === "fulfilled" && result.value.url ? [result.value] : []);
+  const pending = results.some((result) => result.status === "fulfilled" && result.value.status === "processing");
+  const errors = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+  return { data, pending, error: errors[0]?.reason instanceof Error ? errors[0].reason.message : undefined };
+}
+
+function toBackendMultimedia(input: Record<string, any>) {
+  const { occurrence_id, event_id, file_id, file_key, file_metadata, processing_job_id, processing_status, processed_key, creator_id, created_by_id, guano_metadata, order_index, parent_multimedia_id, record_status, is_public, duration_seconds, file_size_bytes, vocalization_type, background_species, ...rest } = input;
+  return {
+    ...rest,
+    ...(occurrence_id !== undefined ? { occurrenceId: occurrence_id } : {}),
+    ...(event_id !== undefined ? { eventId: event_id } : {}),
+    ...(file_id !== undefined ? { fileId: file_id } : {}),
+    ...(file_key !== undefined ? { fileKey: file_key } : {}),
+    ...(file_metadata !== undefined ? { fileMetadata: file_metadata } : {}),
+    ...(processing_job_id !== undefined ? { processingJobId: processing_job_id } : {}),
+    ...(processing_status !== undefined ? { processingStatus: processing_status } : {}),
+    ...(processed_key !== undefined ? { processedKey: processed_key } : {}),
+    ...(creator_id !== undefined ? { creatorId: creator_id } : {}),
+    ...(created_by_id !== undefined ? { createdById: created_by_id } : {}),
+    ...(guano_metadata !== undefined ? { guanoMetadata: guano_metadata } : {}),
+    ...(order_index !== undefined ? { orderIndex: order_index } : {}),
+    ...(parent_multimedia_id !== undefined ? { parentMultimediaId: parent_multimedia_id } : {}),
+    ...(record_status !== undefined ? { recordStatus: record_status } : {}),
+    ...(is_public !== undefined ? { isPublic: is_public } : {}),
+    ...(duration_seconds !== undefined ? { durationSeconds: duration_seconds } : {}),
+    ...(file_size_bytes !== undefined ? { fileSizeBytes: file_size_bytes } : {}),
+    ...(vocalization_type !== undefined ? { vocalizationType: vocalization_type } : {}),
+    ...(background_species !== undefined ? { backgroundSpecies: background_species } : {}),
+  };
+}
+
+function fromBackendMultimedia(item: any) {
+  return {
+    ...item,
+    occurrence_id: item.occurrence_id ?? item.occurrenceId ?? null,
+    event_id: item.event_id ?? item.eventId ?? null,
+    file_id: item.file_id ?? item.fileId ?? null,
+    file_key: item.file_key ?? item.fileKey ?? null,
+    file_metadata: item.file_metadata ?? item.fileMetadata ?? null,
+    processing_job_id: item.processing_job_id ?? item.processingJobId ?? null,
+    processing_status: item.processing_status ?? item.processingStatus ?? null,
+    processed_key: item.processed_key ?? item.processedKey ?? null,
+    thumbnail_url: item.thumbnail_url ?? item.thumbnailUrl ?? null,
+    display_url: item.display_url ?? item.displayUrl ?? null,
+    audio_url: item.audio_url ?? item.audioUrl ?? null,
+    creator_id: item.creator_id ?? item.creatorId ?? null,
+    created_by_id: item.created_by_id ?? item.createdById ?? null,
+    guano_metadata: item.guano_metadata ?? item.guanoMetadata ?? {},
+    order_index: item.order_index ?? item.orderIndex ?? 0,
+    parent_multimedia_id: item.parent_multimedia_id ?? item.parentMultimediaId ?? null,
+    record_status: item.record_status ?? item.recordStatus ?? "draft",
+    is_public: item.is_public ?? item.isPublic ?? true,
+    duration_seconds: item.duration_seconds ?? item.durationSeconds ?? null,
+    file_size_bytes: item.file_size_bytes ?? item.fileSizeBytes ?? null,
+  };
+}
 
 export async function getMultimediaList({
   page = 1,
   limit = 10,
   occurrence_id = "",
   type = "",
+  search = "",
 }: {
   page?: number;
   limit?: number;
   occurrence_id?: string;
   type?: string;
+  search?: string;
 }) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    const params: Record<string, string | number | undefined> = { page, limit };
+    if (occurrence_id) params.occurrenceId = occurrence_id;
+    if (type) params.type = type;
+    if (search) params.search = search;
 
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
+    const result = await getCrudPage<any>("multimedia", params);
+    const formattedData = (result.data || []).map((rawItem: any) => {
+      const item = fromBackendMultimedia(rawItem);
+      return {
+        ...item,
+        occurrence: item.occurrences ? {
+          ...item.occurrences,
+          taxon: item.occurrences.taxa
+        } : item.occurrence
+      }
+    }) as Multimedia[];
 
-  let query = supabase
-    .from("multimedia")
-    .select("*, occurrences(*, taxa(*))", { count: "exact" });
-
-  if (occurrence_id) {
-    query = query.eq("occurrence_id", occurrence_id);
-  }
-
-  if (type) {
-    query = query.eq("type", type);
-  }
-
-  const { data, count, error } = await query
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
+    return {
+      data: formattedData,
+      count: result.meta?.totalItems ?? formattedData.length,
+    };
+  } catch (error) {
     console.error("error fetching multimedia:", error);
-    return { data: [] as Multimedia[], count: 0, error: error.message };
+    return { data: [] as Multimedia[], count: 0, error: error instanceof Error ? error.message : "Error al cargar multimedia" };
   }
-
-  const formattedData = (data || []).map((item: any) => ({
-    ...item,
-    occurrence: item.occurrences ? {
-      ...item.occurrences,
-      taxon: item.occurrences.taxa
-    } : undefined
-  })) as Multimedia[];
-
-  return {
-    data: formattedData,
-    count: count || 0,
-  };
 }
 
 export async function getMultimedia(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    const data = await getCrudItem<any>("multimedia", id);
+    const normalized = fromBackendMultimedia(data);
+    const formattedData = {
+      ...normalized,
+      occurrence: data?.occurrences ? {
+        ...data.occurrences,
+        taxon: data.occurrences.taxa
+      } : normalized?.occurrence
+    } as Multimedia;
 
-  const { data, error } = await supabase
-    .from("multimedia")
-    .select("*, occurrences(*, taxa(*))")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    return { error: error.message };
+    return { data: formattedData };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo cargar multimedia" };
   }
-
-  const formattedData = {
-    ...data,
-    occurrence: data.occurrences ? {
-      ...data.occurrences,
-      taxon: data.occurrences.taxa
-    } : undefined
-  } as Multimedia;
-
-  return { data: formattedData };
 }
 
 export async function createMultimedia(input: MultimediaInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  // Get current user for audit
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    input.created_by_id = user.id;
-  }
-
   const parsed = multimediaSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const errorMsg = Object.values(parsed.error.flatten().fieldErrors).flat().join(", ");
+    return { error: errorMsg || "Datos de multimedia inválidos" };
   }
 
-  const { data, error } = await supabase
-    .from("multimedia")
-    .insert([parsed.data])
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    // La relación se persiste en la API de dominio, no en el servicio de archivos.
+    // Si la ocurrencia pertenece a un evento, guardamos ambos vínculos de forma consistente.
+    let payload = parsed.data;
+    if (payload.occurrence_id && !payload.event_id) {
+      const occurrence = await getCrudItem<{ event_id?: string | null; eventId?: string | null }>("occurrences", payload.occurrence_id);
+      payload = { ...payload, event_id: occurrence.event_id ?? occurrence.eventId ?? null };
+    }
+    const data = await mutateCrud<any>("multimedia", "POST", toBackendMultimedia(payload));
+    revalidatePath("/dashboard/multimedia");
+    if (payload.occurrence_id) revalidatePath(`/dashboard/occurrences/${payload.occurrence_id}`);
+    if (payload.event_id) revalidatePath(`/dashboard/monitoring/register/events/${payload.event_id}/occurrences`);
+    return { success: true, data: fromBackendMultimedia(data) as Multimedia };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al crear multimedia" };
   }
-
-  revalidatePath("/dashboard/multimedia");
-  return { success: true, data: (data as any) as Multimedia };
 }
 
 export async function updateMultimedia(id: string, input: MultimediaInput) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
   const parsed = multimediaSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    const errorMsg = Object.values(parsed.error.flatten().fieldErrors).flat().join(", ");
+    return { error: errorMsg || "Datos de multimedia inválidos" };
   }
 
-  const { data, error } = await supabase
-    .from("multimedia")
-    .update(parsed.data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: error.message };
+  try {
+    const data = await mutateCrud<any>("multimedia", "PATCH", toBackendMultimedia(parsed.data), id);
+    revalidatePath("/dashboard/multimedia");
+    revalidatePath(`/dashboard/multimedia/${id}`);
+    return { success: true, data: fromBackendMultimedia(data) as Multimedia };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al actualizar multimedia" };
   }
-
-  revalidatePath("/dashboard/multimedia");
-  revalidatePath(`/dashboard/multimedia/${id}`);
-  return { success: true, data: (data as any) as Multimedia };
 }
 
 export async function deleteMultimedia(id: string) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
+  try {
+    await assertMediaWrite();
+    // El backend borra el registro, sus hijos y los archivos que ningún otro multimedia usa; si el almacenamiento
+    // falla conserva el registro para poder reintentar.
+    await mutateCrud("multimedia", "DELETE", undefined, id);
 
-  // 1. Fetch item to get identifier (URL) 
-  const { data: item } = await supabase
-    .from("multimedia")
-    .select("identifier")
-    .eq("id", id)
-    .single();
-
-  // 2. Delete from database
-  const { error } = await supabase
-    .from("multimedia")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { error: error.message };
+    revalidatePath("/dashboard/multimedia");
+    return { success: true };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al eliminar multimedia" };
   }
+}
 
-  // 3. Delete from R2 bucket if url belongs to R2
-  if (item && item.identifier) {
-    try {
-      if (item.identifier.startsWith(R2_PUBLIC_URL)) {
-        const path = item.identifier.replace(`${R2_PUBLIC_URL}/`, "");
-        const command = new DeleteObjectCommand({
-          Bucket: R2_BUCKET_NAME,
-          Key: path,
-        });
-        await r2Client.send(command);
-      }
-    } catch (r2Err) {
-      console.error("Failed to delete from R2:", r2Err);
-      // We don't block the UI because DB was already successfully cleaned.
-    }
-  }
-
-  revalidatePath("/dashboard/multimedia");
+export async function deleteR2Folder(_prefix: string) {
+  // Deprecated folder cleanup stub for Files API
   return { success: true };
 }
 
-/**
- * Deletes all objects in an R2 bucket under a specific prefix.
- * Useful for "deleting a folder" in R2.
- */
-export async function deleteR2Folder(prefix: string) {
-  try {
-    const listCommand = new ListObjectsV2Command({
-      Bucket: R2_BUCKET_NAME,
-      Prefix: prefix.endsWith('/') ? prefix : `${prefix}/`,
-    });
-
-    const listResp = await r2Client.send(listCommand);
-
-    if (listResp.Contents && listResp.Contents.length > 0) {
-      const deleteCommand = new DeleteObjectsCommand({
-        Bucket: R2_BUCKET_NAME,
-        Delete: {
-          Objects: listResp.Contents.map((obj) => ({ Key: obj.Key })),
-          Quiet: true,
-        },
-      });
-
-      await r2Client.send(deleteCommand);
-    }
-    return { success: true };
-  } catch (err: any) {
-    console.error(`Failed to delete R2 folder ${prefix}:`, err);
-    return { error: err.message };
-  }
-}
-
-/**
- * Generates a presigned URL for direct upload from the client to R2.
- * This allows monitoring upload progress on the client side.
- */
-export async function getPresignedUrl(path: string, contentType: string) {
-  try {
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: path,
-      ContentType: contentType,
-    });
-
-    // Valid for 15 minutes. 
-    // AWS SDK should handle the signing correctly, but let's be explicitly matching
-    const url = await getSignedUrl(r2Client, command, { 
-      expiresIn: 900,
-      signableHeaders: new Set(["content-type"])
-    });
-    
-    return { success: true, url };
-  } catch (err: any) {
-    console.error("Error generating presigned URL:", err);
-    return { error: err.message };
-  }
+export async function getPresignedUrl(_path: string, _contentType: string) {
+  return { success: false, error: "Obsolete endpoint. Use Files API upload endpoint." };
 }
 
 export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_index: number }[]) {
-  const cookieStore = await cookies();
-  const supabase = await createFonotecaServer(cookieStore);
-
-  for (const update of updates) {
-    await supabase
-      .from("multimedia")
-      .update({ order_index: update.order_index })
-      .eq("id", update.id);
-  }
-
-  revalidatePath("/dashboard/multimedia");
-  return { success: true };
-}
-
-
-export async function uploadToR2(formData: FormData) {
-  const file = formData.get("file") as File;
-  const path = formData.get("path") as string; // occurrences/occurrenceId/filename.ext
-
-  if (!file) return { error: "No file provided" };
-  
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: path,
-      Body: buffer,
-      ContentType: file.type || "application/octet-stream",
-    });
-
-    await r2Client.send(command);
-
-    const publicUrl = `${R2_PUBLIC_URL}/${path}`;
-    return { success: true, url: publicUrl };
-  } catch (err: any) {
-    console.error("R2 Upload error:", err);
-    return { error: err.message || "Failed to upload to R2" };
-  }
-}
-export async function deleteFileFromR2(url: string) {
-  if (!url || !url.startsWith(R2_PUBLIC_URL)) {
-    return { success: false, error: "Invalid URL or not an R2 file" };
-  }
-
-  try {
-    const path = url.replace(`${R2_PUBLIC_URL}/`, "");
-    const command = new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: path,
-    });
-    await r2Client.send(command);
+    for (const update of updates) {
+      await mutateCrud("multimedia", "PATCH", { orderIndex: update.order_index }, update.id);
+    }
+    revalidatePath("/dashboard/multimedia");
     return { success: true };
-  } catch (err: any) {
-    console.error("R2 Delete error:", err);
-    return { error: err.message || "Failed to delete from R2" };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Error al actualizar índices" };
   }
 }

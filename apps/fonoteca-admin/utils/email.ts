@@ -21,12 +21,16 @@ export async function sendRequestConfirmationEmail({
   requesterName,
   institution,
   rationale,
+  requestId,
+  createdAt,
   items,
 }: {
   recipientEmail: string;
   requesterName: string;
   institution: string;
   rationale: string;
+  requestId?: string;
+  createdAt?: string;
   items: Array<{
     title: string;
     scientificName?: string;

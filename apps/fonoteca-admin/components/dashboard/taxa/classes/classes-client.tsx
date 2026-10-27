@@ -1,5 +1,7 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState } from "react";
 import { Class } from "@/types/fonoteca";
 import { Button } from "@/components/ui/button";
@@ -37,7 +39,7 @@ export function ClassesClient({ data, count }: { data: Class[]; count: number })
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Clases Taxonómicas" 
+        title={routeLabel("/dashboard/taxa/classes")} 
         description="Gestiona las clases registradas en el catálogo"
       />
 
@@ -49,7 +51,7 @@ export function ClassesClient({ data, count }: { data: Class[]; count: number })
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card overflow-hidden">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -61,11 +63,7 @@ export function ClassesClient({ data, count }: { data: Class[]; count: number })
           </TableHeader>
           <TableBody>
             {data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                  No se encontraron clases.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={4} title="No se encontraron clases." description="Ajuste la búsqueda o los filtros."  />
             ) : (
               data.map((item) => (
                 <TableRow key={item.id}>
@@ -90,9 +88,9 @@ export function ClassesClient({ data, count }: { data: Class[]; count: number })
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
-      <PaginationButtons totalCount={count} />
+      <PaginationButtons totalCount={count} itemLabel="Clases" />
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
         <SheetContent className="overflow-y-auto min-w-[35vw] p-6">

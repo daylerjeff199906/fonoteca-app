@@ -3,7 +3,7 @@ import { EcosystemForm } from "@/components/dashboard/geography/ecosystems/ecosy
 
 export default function CreateEcosystemPage() {
   return (
-    <LayoutWrapper sectionTitle="Geografía">
+    <LayoutWrapper>
       <EcosystemForm />
     </LayoutWrapper>
   );

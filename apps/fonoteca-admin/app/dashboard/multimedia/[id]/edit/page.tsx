@@ -9,7 +9,7 @@ export default async function EditMultimediaPage({
   const { id } = await params;
 
   return (
-    <LayoutWrapper sectionTitle="Editar Multimedia">
+    <LayoutWrapper>
       <MultimediaForm id={id} />
     </LayoutWrapper>
   );

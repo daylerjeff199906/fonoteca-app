@@ -5,15 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { classSchema, ClassInput } from "@/lib/validations/fonoteca";
 import { createClass, updateClass } from "@/actions/classes";
-import { uploadToR2, deleteFileFromR2 } from "@/actions/multimedia";
+import { uploadFile } from "@/lib/file-service.client";
+import { fileIdFromMediaUrl } from "@/lib/media-url";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { toast } from "react-toastify";
+import { getBackendMessage, showToast } from "@/lib/toast";
 import { FormFooter } from "@/components/panel-admin/form-footer";
 import { ImageIcon, Upload, Link as LinkIcon, X, Loader2, Info, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TAXON_KINGDOM, TAXON_PHYLUM } from "@/types/fonoteca";
+import { expectedPhylumForClass } from "@/lib/taxonomy-hierarchy";
 
 export function ClassForm({
   id,
@@ -31,7 +33,7 @@ export function ClassForm({
     resolver: zodResolver(classSchema) as any,
     defaultValues: defaultValues || {
       kingdom: TAXON_KINGDOM.ANIMALIA,
-      phylum: TAXON_PHYLUM.CHORDATA,
+      phylum: "",
       name: "",
       label_name: "",
       icon: "",
@@ -40,6 +42,13 @@ export function ClassForm({
   });
 
   const imageUrl = watch("image_url");
+  const className = watch("name");
+
+  // Al escribir una clase conocida, el filo se completa con el que le corresponde.
+  useEffect(() => {
+    const expected = expectedPhylumForClass(className);
+    if (expected) setValue("phylum", expected);
+  }, [className, setValue]);
 
   useEffect(() => {
     if (defaultValues) {
@@ -56,34 +65,39 @@ export function ClassForm({
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
       const className = watch("name") || "unnamed";
-      const sanitizedName = className.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      const path = `classes/${sanitizedName}_${Date.now()}.${file.name.split('.').pop()}`;
-      formData.append("path", path);
+      const uploadedFile = await uploadFile({
+        file,
+        duplicatePolicy: "reuse",
+        processImage: true,
+        // La imagen se guarda en la clase por URL, no en un multimedia: el backend no debe borrarla por huérfana.
+        resourceType: "classes",
+        pending: false,
+        metadata: {
+          class_name: className,
+          source: "class_form",
+        },
+      });
+      const uploadedUrl = uploadedFile.assets?.original_url ?? uploadedFile.url;
 
-      const resp = await uploadToR2(formData);
-      if (resp.success && resp.url) {
-        setValue("image_url", resp.url);
-        
+      if (uploadedUrl) {
+        setValue("image_url", uploadedUrl);
+
         // If we are editing, update the DB immediately
         if (id) {
           const currentData = watch();
-          const updateResp = await updateClass(id, { ...currentData, image_url: resp.url });
+          const updateResp = await updateClass(id, { ...currentData, image_url: uploadedUrl });
           if (updateResp.success) {
-            toast.success("Imagen subida y base de datos actualizada");
+            showToast.success("Imagen actualizada", "La imagen y los datos de la clase se guardaron correctamente.");
           } else {
-            toast.warn("Imagen subida pero falló la actualización de la DB");
+            showToast.warning("Imagen subida", getBackendMessage(updateResp.error, "No se pudo actualizar los datos de la clase."));
           }
         } else {
-          toast.success("Imagen subida correctamente");
+          showToast.success("Imagen subida", "La imagen se adjuntará al guardar la clase.");
         }
-      } else {
-        toast.error("Error al subir imagen: " + resp.error);
       }
     } catch (err) {
-      toast.error("Error en la subida");
+      showToast.error("No se pudo subir la imagen", "Ocurrió un error inesperado durante la subida.");
     } finally {
       setUploading(false);
     }
@@ -92,33 +106,28 @@ export function ClassForm({
   const removeImage = async () => {
     if (!imageUrl) return;
 
-    const isR2 = imageUrl.includes("r2.cloudflarestorage.com") || imageUrl.includes("pub-"); // Basic check for R2
+    const confirmDelete = confirm("¿Está seguro de eliminar esta imagen del servidor permanentemente?");
+    if (!confirmDelete) return;
 
-    if (isR2) {
-      const confirmDelete = confirm("¿Estás seguro de eliminar esta imagen del servidor permanentemente?");
-      if (!confirmDelete) return;
-
-      setUploading(true);
-      const resp = await deleteFileFromR2(imageUrl);
-      setUploading(false);
-
-      if (!resp.success && resp.error) {
-        toast.error("Error al eliminar del servidor: " + resp.error);
-        // We continue anyway to clear the field if the user wants
+    setUploading(true);
+    try {
+      const fileId = fileIdFromMediaUrl(imageUrl);
+      if (fileId) {
+        const response = await fetch(`/api/files/${fileId}`, { method: "DELETE" });
+        if (!response.ok) console.error("No se pudo eliminar el archivo de la imagen:", response.status);
       }
+    } catch (err) {
+      console.error("Error removing image file:", err);
+    } finally {
+      setUploading(false);
     }
 
     setValue("image_url", "");
 
-    // If we are editing, we should ideally update the DB immediately if the user wants that behavior
     if (id) {
       const currentData = watch();
-      const { success } = await updateClass(id, { ...currentData, image_url: null });
-      if (success) {
-        toast.info("Imagen eliminada y registro actualizado");
-      }
-    } else {
-      toast.info("Imagen quitada del formulario");
+      await updateClass(id, { ...currentData, image_url: "" });
+      showToast.success("Imagen removida", "Se ha quitado la imagen de la clase.");
     }
   };
 
@@ -131,11 +140,11 @@ export function ClassForm({
     }
 
     if (resp.success) {
-      toast.success(id ? "Clase actualizada" : "Clase registrada");
+      showToast.response(resp, id ? "Clase actualizada" : "Clase registrada", id ? "Los cambios se guardaron correctamente." : "La clase fue registrada correctamente.");
       reset();
       if (onSuccess) onSuccess();
     } else {
-      toast.error("Error al guardar la clase");
+      showToast.response(resp, "", "");
     }
   };
 
@@ -254,7 +263,7 @@ export function ClassForm({
                           type="file" 
                           className="absolute inset-0 opacity-0 cursor-pointer" 
                           onChange={handleFileUpload}
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp"
                           disabled={uploading}
                         />
                       </>

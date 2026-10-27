@@ -2,12 +2,13 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trees, Music, MapPin, Database, ChevronRight, PlusCircle, FolderOpen, List } from "lucide-react";
 import Link from "next/link";
+import { ScientificName } from "@/components/ui/scientific-name";
 
 export function DashboardKpiCards({ kpi }: { kpi: any }) {
   const cards = [
     { title: "Especies", value: kpi.species, icon: Trees, color: "text-green-600", bg: "bg-green-50/50 dark:bg-green-950/20" },
     { title: "Ocurrencias", value: kpi.occurrences, icon: MapPin, color: "text-blue-600", bg: "bg-blue-50/50 dark:bg-blue-950/20" },
-    { title: "Archivos Multimedia", value: kpi.multimedia, icon: Database, color: "text-purple-600", bg: "bg-purple-50/50 dark:bg-purple-950/20" },
+    { title: "Archivos multimedia", value: kpi.multimedia, icon: Database, color: "text-purple-600", bg: "bg-purple-50/50 dark:bg-purple-950/20" },
     { title: "Voces / Audios", value: kpi.sounds, icon: Music, color: "text-amber-600", bg: "bg-amber-50/50 dark:bg-amber-950/20" },
   ];
 
@@ -77,7 +78,7 @@ export function RecentOccurrences({ list }: { list: any[] }) {
             <div key={i} className="p-4 hover:bg-muted/20 transition-colors flex items-center justify-between">
               <div className="space-y-0.5">
                 <p className="text-sm font-semibold tracking-tight">
-                  {occ.taxa?.scientificName || "Especie desconocida"}
+                  {occ.taxa?.scientificName ? <ScientificName>{occ.taxa.scientificName}</ScientificName> : "Especie desconocida"}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="bg-muted px-1.5 py-0.5 rounded text-[10px]">{occ.basisOfRecord}</span>

@@ -1,5 +1,8 @@
 "use client"
 
+import { routeLabel } from "@/config/route-labels";
+import { taxonRankLabel } from "@/config/glossary";
+import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
 import { useState, useEffect } from "react";
 import { Taxon } from "@/types/fonoteca";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -36,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "react-toastify";
+import { showToast } from "@/lib/toast";
 import { Trash2, Copy } from "lucide-react";
 
 export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
@@ -138,7 +141,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
       }
 
       if (dataToExport.length === 0) {
-        toast.info("No hay datos para exportar");
+        showToast.info("Sin datos para exportar", "No hay registros que coincidan con los filtros actuales.");
         return;
       }
 
@@ -156,10 +159,10 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
         downloadFile(content, `${name}.csv`, "text/csv");
       }
 
-      if (mode !== "single") toast.success("Exportación completada");
+      if (mode !== "single") showToast.success("Exportación completada", `${dataToExport.length} registro(s) fueron exportados.`);
     } catch (error) {
       console.error(error);
-      toast.error("Error al exportar");
+      showToast.error("No se pudo exportar", error instanceof Error ? error.message : "No se pudieron preparar los datos para la exportación.");
     } finally {
       setIsExporting(false);
     }
@@ -182,19 +185,18 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`¿Estás seguro de eliminar ${selectedIds.length} taxones?`)) return;
+    if (!confirm(`¿Está seguro de eliminar ${selectedIds.length} taxones?`)) return;
 
-    toast.loading(`Eliminando ${selectedIds.length} taxones...`);
+    showToast.info("Eliminando registros", `Se eliminarán ${selectedIds.length} taxones.`);
     try {
-      const deletePromises = selectedIds.map(id => deleteTaxon(id));
-      await Promise.all(deletePromises);
-      toast.dismiss();
-      toast.success("Eliminados correctamente");
+      const results = await Promise.all(selectedIds.map(id => deleteTaxon(id)));
+      const failed = results.find(result => !result.success);
+      if (failed) return showToast.error("No se pudieron eliminar todos los taxa", failed.error || "El backend rechazó una o más eliminaciones.");
+      showToast.success("Taxa eliminados", `${selectedIds.length} registro(s) fueron eliminados correctamente.`);
       setSelectedIds([]);
       router.refresh();
     } catch (err) {
-      toast.dismiss();
-      toast.error("Error en la eliminación por lotes");
+      showToast.error("No se pudo completar la eliminación", err instanceof Error ? err.message : "Ocurrió un error inesperado.");
     }
   };
 
@@ -250,7 +252,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Catálogo de Taxones"
+        title={routeLabel("/dashboard/taxa")}
         description="Gestión de familias, géneros y especies."
         action={{
           label: "Registrar Taxón",
@@ -508,7 +510,7 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
         </SheetContent>
       </Sheet>
 
-      <div className="rounded-md border">
+      <DataTableCard>
         <Table>
           <TableHeader>
             <TableRow>
@@ -529,77 +531,58 @@ export function TaxaClient({ data, count }: { data: Taxon[]; count: number }) {
           </TableHeader>
           <TableBody>
             {data.length > 0 ? (
-              data.map((taxon) => (
-                <TableRow key={taxon.id} className={cn(selectedIds.includes(taxon.id) && "bg-primary/5")}>
-                  <TableCell className="px-4">
-                    <Checkbox
-                      checked={selectedIds.includes(taxon.id)}
-                      onCheckedChange={() => toggleItem(taxon.id)}
-                      aria-label={`Seleccionar ${taxon.scientificName}`}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
-                  <TableCell>{taxon.genus?.family?.order_obj?.class_obj?.kingdom || "Animalia"}</TableCell>
-                  <TableCell>{taxon.genus?.family?.name || "-"}</TableCell>
-                  <TableCell>{taxon.genus?.name || "-"}</TableCell>
-                  <TableCell>{taxon.taxonRank}</TableCell>
-                  <TableCell>
+              data.map((taxon) => {
+                const genusObj = genera.find((g) => g.id === (taxon.genus_id || taxon.parent?.id || (taxon.genus as any)?.id));
+                const genusName = taxon.parent?.name || taxon.genus?.name || genusObj?.name || "-";
+                const familyName =
+                  taxon.genus?.family?.name ||
+                  genusObj?.parent?.name ||
+                  genusObj?.family?.name ||
+                  families.find((f) => f.id === (genusObj?.family_id || (genusObj as any)?.familyId))?.name ||
+                  "-";
+                const kingdomName =
+                  taxon.genus?.family?.order_obj?.class_obj?.kingdom ||
+                  (genusObj as any)?.kingdom ||
+                  "Animalia";
 
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(taxon.id)} title="Editar">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-
-                      <DeleteButtonWithConfirm
-                        id={taxon.id}
-                        onConfirm={deleteTaxon}
-                        itemName="taxón"
+                return (
+                  <TableRow key={taxon.id} className={cn(selectedIds.includes(taxon.id) && "bg-primary/5")}>
+                    <TableCell className="px-4">
+                      <Checkbox
+                        checked={selectedIds.includes(taxon.id)}
+                        onCheckedChange={() => toggleItem(taxon.id)}
+                        aria-label={`Seleccionar ${taxon.scientificName}`}
                       />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                    <TableCell className="font-medium italic">{taxon.scientificName}</TableCell>
+                    <TableCell>{kingdomName}</TableCell>
+                    <TableCell>{familyName}</TableCell>
+                    <TableCell className={genusName === "-" ? undefined : "italic"}>{genusName}</TableCell>
+                    <TableCell>{taxonRankLabel(taxon.taxonRank)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(taxon.id)} title="Editar">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <DeleteButtonWithConfirm
+                          id={taxon.id}
+                          onConfirm={deleteTaxon}
+                          itemName="taxón"
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  No se encontraron resultados.
-                </TableCell>
-              </TableRow>
+              <TableEmptyRow colSpan={7} title="No se encontraron resultados." description="Ajuste la búsqueda o los filtros."  />
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableCard>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {!isShowingAll ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 px-3 gap-2 text-xs"
-              onClick={toggleShowAll}
-            >
-              <LayoutList className="h-4 w-4" />
-              Ver todos
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-9 px-3 gap-2 text-xs"
-              onClick={toggleShowAll}
-            >
-              <LayoutList className="h-4 w-4" />
-              Paginar vista
-            </Button>
-          )}
-          {isShowingAll && (
-            <span className="text-xs text-muted-foreground italic">
-              Mostrando {data.length} de {count} registros
-            </span>
-          )}
-        </div>
-        {!isShowingAll && <PaginationButtons totalCount={count} pageSize={10} />}
+         <PaginationButtons totalCount={count} itemLabel="Especies" />
       </div>
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>

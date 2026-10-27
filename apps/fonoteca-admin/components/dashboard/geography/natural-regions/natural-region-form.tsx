@@ -97,41 +97,39 @@ export function NaturalRegionForm({ id, onSuccess, onCancel, footerVariant = "fi
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 w-full">
-      <FormSection title="Detalles de la Región Natural" icon={Globe}>
-        <div className="grid grid-cols-1 gap-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Nombre de la Región *</label>
-            <Input
-              {...register("name")}
-              placeholder="p. ej. Selva Baja, Yungas, etc."
-              className="h-10 bg-background/50 focus-visible:ring-primary/20"
-            />
-            {errors.name && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.name.message}</p>}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
-              <ImageIcon className="h-3 w-3" /> URL del Logo / Icono
-            </label>
-            <Input
-              {...register("logo_url")}
-              placeholder="https://..."
-              className="h-10 bg-background/50 focus-visible:ring-primary/20"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
-              <FileText className="h-3 w-3" /> Descripción
-            </label>
-            <Textarea
-              {...register("description")}
-              placeholder="Breve descripción de las características de la región..."
-              className="min-h-[120px] bg-background/50 focus-visible:ring-primary/20"
-            />
-          </div>
+      <div className="grid grid-cols-1 gap-6 px-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">Nombre de la Región *</label>
+          <Input
+            {...register("name")}
+            placeholder="p. ej. Selva Baja, Yungas, etc."
+            className="h-10 bg-background/50 focus-visible:ring-primary/20"
+          />
+          {errors.name && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.name.message}</p>}
         </div>
-      </FormSection>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+            <ImageIcon className="h-3 w-3" /> URL del Logo / Icono
+          </label>
+          <Input
+            {...register("logo_url")}
+            placeholder="https://..."
+            className="h-10 bg-background/50 focus-visible:ring-primary/20"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+            <FileText className="h-3 w-3" /> Descripción
+          </label>
+          <Textarea
+            {...register("description")}
+            placeholder="Breve descripción de las características de la región..."
+            className="min-h-[120px] bg-background/50 focus-visible:ring-primary/20"
+          />
+        </div>
+      </div>
 
       <FormFooter variant={footerVariant}>
         {onCancel ? (

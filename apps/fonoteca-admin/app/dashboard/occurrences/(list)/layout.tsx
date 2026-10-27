@@ -1,3 +1,4 @@
+import { routeLabel } from "@/config/route-labels";
 import { BulkUploadSheet } from "@/components/dashboard/occurrences/bulk-upload-sheet"
 import { LayoutWrapper } from "@/components/panel-admin/layout-wrapper"
 import { PageHeader } from "@/components/panel-admin/page-header"
@@ -17,10 +18,9 @@ export default async function ProfileLayout({
 
     return (
         <LayoutWrapper
-            sectionTitle="Informacion de ocurrencias"
         >
             <PageHeader
-                title="Ocurrencias"
+                title={routeLabel("/dashboard/occurrences")}
                 description="Gestión de monitoreo de especies avistadas."
             >
                 <BulkUploadSheet />

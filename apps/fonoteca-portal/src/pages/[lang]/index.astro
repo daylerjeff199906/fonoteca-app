@@ -30,7 +30,7 @@ const { species: allSpecies } = await getAllSpecies();
 // Shuffle species so "Especies de la colección" shows a random subset
 const randomSpecies = [...allSpecies].sort(() => 0.5 - Math.random());
 
-// Fetch real stats from Supabase
+// Estadísticas reales obtenidas del backend público
 import { getRealStats, getSpeciesByClass } from "../../data/stats";
 const realStats = await getRealStats();
 const speciesByClassData = await getSpeciesByClass();

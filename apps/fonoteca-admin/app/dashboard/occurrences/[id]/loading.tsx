@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <LayoutWrapper sectionTitle="Cargando Detalle...">
+    <LayoutWrapper>
       <div className="flex items-center justify-between">
         <Skeleton className="h-9 w-24 rounded-xl" />
         <Skeleton className="h-9 w-24 rounded-xl" />

@@ -41,7 +41,8 @@ const FilterCombobox: React.FC<{
     lang: string;
     disabled?: boolean;
     allLabel?: string;
-}> = ({ title, items, value, onChange, lang, disabled, allLabel }) => {
+    italic?: boolean;
+}> = ({ title, items, value, onChange, lang, disabled, allLabel, italic }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
@@ -80,7 +81,7 @@ const FilterCombobox: React.FC<{
                     "w-full flex items-center justify-between bg-white dark:bg-[#0c141d] border rounded-lg py-2 px-3 text-xs transition-all",
                     isOpen ? "border-accent-green ring-1 ring-accent-green/20" : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
                 )}>
-                    <span className={cn("truncate", value === 'All' ? "text-gray-400" : "text-[#0c141d] dark:text-gray-100 font-medium")}>
+                    <span className={cn("truncate", value === 'All' ? "text-gray-400" : "text-[#0c141d] dark:text-gray-100 font-medium", italic && value !== 'All' && "italic")}>
                         {value === 'All' ? defaultAll : value}
                     </span>
                     <Search className="w-3.5 h-3.5 text-gray-400" />
@@ -122,6 +123,7 @@ const FilterCombobox: React.FC<{
                                         }}
                                         className={cn(
                                             "w-full text-left px-3 py-2 rounded-lg text-[11px] transition-all",
+                                            italic && item !== 'All' && "italic",
                                             value === item
                                                 ? "bg-accent-green/10 text-accent-green "
                                                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -154,7 +156,7 @@ const SidebarSection: React.FC<{ title: string; children: React.ReactNode }> = (
     </div>
 );
 
-// Removed QueryProvider - using direct state management with Supabase
+// Estado local; los datos provienen del backend público.
 
 export const SpeciesExplorer: React.FC<SpeciesExplorerProps> = (props) => {
     return (
@@ -405,7 +407,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                             )}
                             {selectedGenus !== 'All' && (
                                 <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[10px] rounded-md border border-accent-green/20 flex items-center gap-1">
-                                    <span>{selectedGenus}</span>
+                                    <span className="italic">{selectedGenus}</span>
                                     <X className="w-2.5 h-2.5 cursor-pointer hover:text-red-500" onClick={() => setSelectedGenus('All')} />
                                 </div>
                             )}
@@ -457,6 +459,7 @@ const SpeciesExplorerContent: React.FC<SpeciesExplorerProps> = ({ initialData, l
                             />
                             <FilterCombobox
                                 title="Género"
+                                italic
                                 items={availableGenera}
                                 value={selectedGenus}
                                 onChange={setSelectedGenus}

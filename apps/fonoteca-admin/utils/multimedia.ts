@@ -15,3 +15,15 @@ export const getDriveEmbedUrl = (url: string) => {
   }
   return null;
 };
+
+export const getOptimizedMediaUrl = (url: string, isAudio: boolean = false): string => {
+  if (!url) return "";
+  const driveThumb = getDriveThumbnailUrl(url);
+  if (driveThumb && !isAudio) return driveThumb;
+
+  // Las URLs de Files API pueden estar prefirmadas. Alterar el path, el
+  // nombre o los parámetros invalida la firma; la variante debe venir ya
+  // resuelta desde la respuesta de carga o desde la API de multimedia.
+  void isAudio;
+  return url;
+};
