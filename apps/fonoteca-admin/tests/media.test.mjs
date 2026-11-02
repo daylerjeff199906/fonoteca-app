@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MB, sniffMediaKind, validateMediaBytes, validateMediaMeta } from "../lib/media-rules.ts";
 import { canWriteMedia } from "../lib/media-permissions.ts";
 import { fileIdFromMediaUrl } from "../lib/media-url.ts";
+import { audioSrc, detailSrc, isAwaitingDerivative, thumbnailSrc } from "../lib/media-state.ts";
 
 const read = (path) => readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), "utf8");
 const bytes = (...values) => Uint8Array.from([...values, ...new Array(16).fill(0)].slice(0, 16));
@@ -125,4 +126,39 @@ test("el listado ofrece búsqueda, filtro de tipo y vista previa", () => {
   assert.match(table, /<audio /);
   assert.match(table, /<Dialog /);
   assert.match(table, /media\.creator/);
+});
+
+test("los módulos del servicio de archivos antiguo ya no existen", () => {
+  for (const file of ["lib/file-service.client.ts", "lib/file-service.schemas.ts", "lib/r2.ts"]) {
+    assert.equal(existsSync(fileURLToPath(new URL(`../${file}`, import.meta.url))), false, file);
+  }
+});
+
+const image = { id: "m1", type: "Still", identifier: "https://s3/original/foto.jpg", file_id: "f1" };
+
+test("el listado usa la miniatura y nunca el original de un archivo gestionado", () => {
+  assert.equal(thumbnailSrc(image), null);
+  assert.equal(isAwaitingDerivative(image), true);
+  const ready = { ...image, thumbnail_url: "https://s3/variants/thumbnail.webp", display_url: "https://s3/variants/display.webp" };
+  assert.equal(thumbnailSrc(ready), "https://s3/variants/thumbnail.webp");
+  assert.equal(isAwaitingDerivative(ready), false);
+});
+
+test("la vista de detalle usa la versión de pantalla y, si falta, el original", () => {
+  assert.equal(detailSrc(image), "https://s3/original/foto.jpg");
+  assert.equal(detailSrc({ ...image, display_url: "https://s3/variants/display.webp" }), "https://s3/variants/display.webp");
+});
+
+test("un registro histórico sin archivo gestionado conserva su URL y no espera derivados", () => {
+  const legacy = { id: "m2", type: "Still", identifier: "https://r2/foto.jpg" };
+  assert.equal(thumbnailSrc(legacy), "https://r2/foto.jpg");
+  assert.equal(isAwaitingDerivative(legacy), false);
+});
+
+test("el audio usa la versión procesada y mientras tanto el original; un fallo deja de esperar", () => {
+  const sound = { id: "m3", type: "Sound", identifier: "https://s3/original/a.wav", file_id: "f3" };
+  assert.equal(audioSrc(sound), "https://s3/original/a.wav");
+  assert.equal(isAwaitingDerivative(sound), true);
+  assert.equal(audioSrc({ ...sound, audio_url: "https://s3/variants/processed.ogg" }), "https://s3/variants/processed.ogg");
+  assert.equal(isAwaitingDerivative({ ...sound, processing_status: "failed" }), false);
 });

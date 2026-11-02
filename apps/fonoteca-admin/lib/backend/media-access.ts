@@ -6,8 +6,8 @@ import { canWriteMedia } from "@/lib/media-permissions";
 import { validateMediaBytes, validateMediaMeta } from "@/lib/media-rules";
 
 /**
- * Protege las rutas y acciones que usan el token del servicio de archivos: sin esta
- * comprobación cualquier visitante podría subir o borrar archivos con ese token.
+ * Protege las rutas y acciones de multimedia: sin esta comprobación cualquier
+ * visitante podría subir o borrar archivos a través del panel.
  * Devuelve la respuesta de error, o null si el usuario puede continuar.
  */
 export async function requireMediaWrite(): Promise<NextResponse | null> {

@@ -1,8 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteMediaFile, MediaServiceError } from "@/lib/media-service";
+import { deleteMediaFile, getMediaFile, MediaServiceError } from "@/lib/media-service";
 import { requireMediaWrite } from "@/lib/backend/media-access";
+import { getCurrentUser } from "@/lib/backend/auth";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Estado del archivo (procesamiento y URLs de sus derivados). El panel lo consulta hasta que termina. */
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ fileId: string }> },
+) {
+  if (!(await getCurrentUser())) {
+    return NextResponse.json({ detail: "Debe iniciar sesión para consultar archivos." }, { status: 401 });
+  }
+
+  try {
+    const { fileId } = await params;
+    if (!UUID.test(fileId)) return NextResponse.json({ detail: "Se requiere el UUID del archivo." }, { status: 400 });
+    return NextResponse.json(await getMediaFile(fileId), { headers: { "Cache-Control": "no-store" } });
+  } catch (error: any) {
+    return NextResponse.json(
+      { detail: error.message || "Error al consultar el archivo" },
+      { status: error instanceof MediaServiceError ? error.status : 500 },
+    );
+  }
+}
 
 export async function DELETE(
   _request: NextRequest,

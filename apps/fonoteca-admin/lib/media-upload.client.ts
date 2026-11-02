@@ -1,8 +1,9 @@
 import {
-  fileServiceResponseSchema,
+  mediaFileSchema,
   uploadInputSchema,
   type UploadedFile,
-} from "@/lib/file-service.schemas";
+} from "@/lib/media-file.schemas";
+import type { MediaFileState } from "@/lib/media-state";
 
 function errorMessage(payload: unknown, fallback: string) {
   if (payload && typeof payload === "object") {
@@ -13,15 +14,13 @@ function errorMessage(payload: unknown, fallback: string) {
 }
 
 /**
- * El navegador solo habla con el proxy interno. El token del servicio nunca
- * llega al cliente ni se mezcla con los datos que se guardan en el backend.
+ * El navegador solo habla con el proxy interno del panel, que reenvía la subida al
+ * backend con la sesión del usuario.
  */
 export async function uploadFile(input: unknown): Promise<UploadedFile> {
   const data = uploadInputSchema.parse(input);
   const form = new FormData();
   form.append("file", data.file);
-  form.append("process_image", String(data.processImage));
-  form.append("process_audio", String(data.processAudio));
   form.append("duplicate_policy", data.duplicatePolicy);
   form.append("pending", String(data.pending));
   if (data.resourceType) form.append("resource_type", data.resourceType);
@@ -33,7 +32,15 @@ export async function uploadFile(input: unknown): Promise<UploadedFile> {
     throw new Error(errorMessage(payload, "No se pudo subir el archivo"));
   }
 
-  return fileServiceResponseSchema.parse(payload);
+  return mediaFileSchema.parse(payload);
+}
+
+/** Estado de un archivo ya subido: procesamiento y URLs públicas de sus derivados. */
+export async function fetchMediaFileState(fileId: string): Promise<MediaFileState> {
+  const response = await fetch(`/api/files/${encodeURIComponent(fileId)}`, { cache: "no-store" });
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(errorMessage(payload, "No se pudo consultar el archivo"));
+  return payload as MediaFileState;
 }
 
 /**
@@ -48,8 +55,6 @@ export function uploadFileWithProgress(
   const data = uploadInputSchema.parse(input);
   const form = new FormData();
   form.append("file", data.file);
-  form.append("process_image", String(data.processImage));
-  form.append("process_audio", String(data.processAudio));
   form.append("duplicate_policy", data.duplicatePolicy);
   form.append("pending", String(data.pending));
   if (data.resourceType) form.append("resource_type", data.resourceType);
@@ -74,9 +79,9 @@ export function uploadFileWithProgress(
       }
       try {
         onProgress(100);
-        resolve(fileServiceResponseSchema.parse(payload));
+        resolve(mediaFileSchema.parse(payload));
       } catch {
-        reject(new Error("El servicio de archivos devolvió una respuesta inesperada."));
+        reject(new Error("El servidor devolvió una respuesta inesperada al subir el archivo."));
       }
     };
     signal?.addEventListener("abort", () => xhr.abort());

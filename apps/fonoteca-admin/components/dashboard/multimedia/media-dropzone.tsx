@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { AlertCircle, CheckCircle2, FileAudio, ImageIcon, Loader2, RefreshCw, UploadCloud, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { uploadFileWithProgress } from "@/lib/file-service.client"
-import type { UploadedFile } from "@/lib/file-service.schemas"
+import { uploadFileWithProgress } from "@/lib/media-upload.client"
+import type { UploadedFile } from "@/lib/media-file.schemas"
 import { ALLOWED_FORMATS_TEXT, MEDIA_ACCEPT, validateMediaBytes, validateMediaMeta, type MediaKind } from "@/lib/media-rules"
 import { cn } from "@/lib/utils"
 
@@ -17,7 +17,7 @@ export interface UploadedMedia {
 interface MediaDropzoneProps {
   onUploaded: (media: UploadedMedia) => void
   onRemoved: (media: UploadedMedia) => void
-  /** Metadatos que acompañan el archivo en el servicio de archivos. */
+  /** Metadatos que se guardan junto al archivo. */
   metadata?: Record<string, unknown>
   disabled?: boolean
   /** Notifica si hay una carga en curso (para bloquear el envío del formulario). */
@@ -29,6 +29,24 @@ type State =
   | { status: "uploading"; file: File; progress: number }
   | { status: "done"; media: UploadedMedia }
   | { status: "error"; file?: File; message: string }
+
+/** Vista previa con el archivo local: aparece al terminar la carga, sin esperar a que el backend genere derivados. */
+function LocalPreview({ file, kind }: { file: File; kind: MediaKind }) {
+  const [url, setUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file)
+    setUrl(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [file])
+
+  if (!url) return null
+  return kind === "image" ? (
+    <img src={url} alt={`Vista previa de ${file.name}`} className="max-h-64 w-full rounded-md border bg-muted/30 object-contain" />
+  ) : (
+    <audio controls preload="metadata" src={url} className="w-full" aria-label={`Reproductor de ${file.name}`} />
+  )
+}
 
 const formatSize = (bytes: number) =>
   bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
@@ -60,8 +78,6 @@ export function MediaDropzone({ onUploaded, onRemoved, metadata, disabled, onBus
           {
             file,
             duplicatePolicy: "reuse",
-            processImage: meta.kind === "image",
-            processAudio: meta.kind === "audio",
             metadata: { source: "multimedia_form", ...metadata },
           },
           (progress) => setState((current) => (current.status === "uploading" ? { ...current, progress } : current)),
@@ -147,7 +163,7 @@ export function MediaDropzone({ onUploaded, onRemoved, metadata, disabled, onBus
             <p className="truncate text-sm font-medium">{state.status === "uploading" ? state.file.name : state.media.file.name}</p>
             <p className="text-xs text-muted-foreground">
               {formatSize(state.status === "uploading" ? state.file.size : state.media.file.size)}
-              {state.status === "done" && (state.media.uploaded.duplicate ? " · Ya existía en el servicio; se reutilizará" : " · Carga completa")}
+              {state.status === "done" && (state.media.uploaded.duplicate ? " · Ya existía; se reutilizará" : " · Carga completa")}
             </p>
             {state.status === "uploading" && (
               <div
@@ -174,6 +190,8 @@ export function MediaDropzone({ onUploaded, onRemoved, metadata, disabled, onBus
           </Button>
         </div>
       )}
+
+      {state.status === "done" && <LocalPreview file={state.media.file} kind={state.media.kind} />}
 
       {state.status === "error" && (
         <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">

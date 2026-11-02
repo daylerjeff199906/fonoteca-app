@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { classSchema, ClassInput } from "@/lib/validations/fonoteca";
 import { createClass, updateClass } from "@/actions/classes";
-import { uploadFile } from "@/lib/file-service.client";
+import { uploadFile } from "@/lib/media-upload.client";
 import { fileIdFromMediaUrl } from "@/lib/media-url";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,6 @@ export function ClassForm({
       const uploadedFile = await uploadFile({
         file,
         duplicatePolicy: "reuse",
-        processImage: true,
         // La imagen se guarda en la clase por URL, no en un multimedia: el backend no debe borrarla por huérfana.
         resourceType: "classes",
         pending: false,

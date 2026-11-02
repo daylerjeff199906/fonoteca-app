@@ -1,7 +1,7 @@
-import { getMultimediaList, getMultimediaPreviews } from "@/actions/multimedia";
+import { getMultimediaList } from "@/actions/multimedia";
 import { PaginationButtons } from "@/components/dashboard/pagination-buttons";
 import { MultimediaFilters } from "@/components/dashboard/multimedia/multimedia-filters";
-import { MultimediaTable, type MultimediaRow } from "@/components/dashboard/multimedia/multimedia-table";
+import { MultimediaTable } from "@/components/dashboard/multimedia/multimedia-table";
 import { Plus } from "lucide-react";
 import { getCurrentUser } from "@/lib/backend/auth";
 import { canWriteMedia } from "@/lib/media-permissions";
@@ -33,12 +33,6 @@ export default async function MultimediaPage({
     return <div className="p-4 text-red-500">{error}</div>;
   }
 
-  // Las imágenes sin miniatura guardada piden una al servicio de archivos (URL fresca, nunca persistida).
-  const needPreview = multimedia.filter((item) => item.type === "Still" && !item.thumbnail_url);
-  const previews = needPreview.length ? await getMultimediaPreviews(needPreview).catch(() => ({ data: [] })) : { data: [] };
-  const previewById = new Map(previews.data.map((preview) => [preview.multimediaId, preview.url]));
-  const rows: MultimediaRow[] = multimedia.map((item) => ({ ...item, previewUrl: previewById.get(item.id) ?? null }));
-
   return (
     <LayoutWrapper>
       <div className="space-y-4">
@@ -54,7 +48,7 @@ export default async function MultimediaPage({
 
         <MultimediaFilters />
 
-        <MultimediaTable items={rows} canWrite={canWrite} hasFilters={Boolean(search || typeParam)} />
+        <MultimediaTable items={multimedia} canWrite={canWrite} hasFilters={Boolean(search || typeParam)} />
 
         <PaginationButtons totalCount={count} itemLabel="Archivos" />
       </div>

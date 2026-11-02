@@ -14,12 +14,11 @@ import { MediaImage } from "@/components/dashboard/media-image"
 import { DeleteButtonWithConfirm } from "@/components/dashboard/delete-button-with-confirm"
 import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table"
 import { deleteMultimedia } from "@/actions/multimedia"
+import { useLiveMedia } from "@/hooks/use-live-media"
+import { audioSrc, detailSrc, isAwaitingDerivative, thumbnailSrc } from "@/lib/media-state"
 import { mediaTypeLabel, recordStatusLabel } from "@/config/glossary"
 
-export type MultimediaRow = Multimedia & {
-  /** Miniatura resuelta en el servidor cuando el registro no trae `thumbnail_url`. */
-  previewUrl?: string | null
-}
+export type MultimediaRow = Multimedia
 
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" }) : "-"
@@ -35,7 +34,7 @@ function PreviewCell({ media }: { media: MultimediaRow }) {
   const label = media.title || media.originalFilename || "archivo multimedia"
 
   if (media.type === "Sound") {
-    const src = media.audio_url || media.identifier
+    const src = audioSrc(media)
     if (!playing) {
       return (
         <Button
@@ -63,7 +62,8 @@ function PreviewCell({ media }: { media: MultimediaRow }) {
   }
 
   if (media.type === "Still") {
-    const thumb = media.thumbnail_url || media.previewUrl || media.identifier
+    // El listado usa solo la miniatura; el original y la versión de pantalla son para la vista ampliada.
+    const thumb = thumbnailSrc(media)
     return (
       <>
         <button
@@ -72,7 +72,7 @@ function PreviewCell({ media }: { media: MultimediaRow }) {
           className="block rounded-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           aria-label={`Ampliar imagen ${label}`}
         >
-          <MediaImage src={thumb} alt={label} className="object-cover" containerClassName="h-14 w-14 rounded-md border" />
+          <MediaImage src={thumb} alt={label} processing={isAwaitingDerivative(media)} className="object-cover" containerClassName="h-14 w-14 rounded-md border" />
         </button>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-4xl">
@@ -80,7 +80,7 @@ function PreviewCell({ media }: { media: MultimediaRow }) {
               <DialogTitle>{label}</DialogTitle>
             </DialogHeader>
             <MediaImage
-              src={media.display_url || media.identifier}
+              src={detailSrc(media)}
               alt={label}
               className="object-contain"
               containerClassName="max-h-[70vh] min-h-64 w-full rounded-md"
@@ -104,6 +104,8 @@ export function MultimediaTable({
   hasFilters: boolean
 }) {
   const columns = canWrite ? 8 : 7
+  // Las imágenes recién subidas pueden estar procesándose: la miniatura aparece sola al terminar.
+  const rows = useLiveMedia(items)
 
   return (
     <DataTableCard>
@@ -121,8 +123,8 @@ export function MultimediaTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.length > 0 ? (
-            items.map((media) => (
+          {rows.length > 0 ? (
+            rows.map((media) => (
               <TableRow key={media.id}>
                 <TableCell>
                   <PreviewCell media={media} />

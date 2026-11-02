@@ -1,7 +1,7 @@
 import "server-only";
 
 import { fetchWithSession } from "@/lib/backend/auth";
-import type { UploadedFile } from "@/lib/file-service.schemas";
+import type { MediaFileState } from "@/lib/media-state";
 
 /**
  * Cliente del módulo de multimedia del backend. El backend valida, guarda y procesa los archivos; el panel solo
@@ -12,12 +12,6 @@ export class MediaServiceError extends Error {
     super(message);
     this.name = "MediaServiceError";
   }
-}
-
-export interface MediaFileState extends UploadedFile {
-  status: "queued" | "processing" | "completed" | "failed";
-  error_code?: string | null;
-  duration_seconds?: number;
 }
 
 function mediaUrl(path: string) {

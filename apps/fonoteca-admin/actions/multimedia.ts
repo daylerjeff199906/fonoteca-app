@@ -5,59 +5,6 @@ import { MultimediaInput, multimediaSchema } from "@/lib/validations/fonoteca";
 import { Multimedia } from "@/types/fonoteca";
 import { getCrudPage, getCrudItem, mutateCrud } from "@/lib/backend/crud";
 import { assertMediaWrite } from "@/lib/backend/media-access";
-import { getMediaFile, MediaServiceError } from "@/lib/media-service";
-
-export type MultimediaPreview = {
-  multimediaId: string;
-  url: string;
-  status?: string;
-  contentType?: string;
-};
-
-/** Datos mínimos de un multimedia para resolver su vista previa. */
-type PreviewableMultimedia = Pick<Multimedia, "id" | "file_id" | "identifier" | "type"> & {
-  /** Compatibilidad con relaciones aún entregadas por la API en camelCase. */
-  fileId?: string | null;
-  thumbnail_url?: string | null;
-  processing_status?: Multimedia["processing_status"];
-  processingStatus?: Multimedia["processing_status"];
-};
-
-/**
- * Miniaturas de las imágenes. Las URLs de MinIO son públicas y permanentes y las fija el backend cuando termina
- * el procesamiento, así que solo se consulta el estado de los archivos que aún no tienen miniatura.
- */
-export async function getMultimediaPreviews(items: PreviewableMultimedia[]) {
-  const imageItems = items
-    .map((item) => ({ ...item, resolvedFileId: item.file_id ?? item.fileId }))
-    .filter((item) => item.type === "Still")
-    .slice(0, 50);
-  const results = await Promise.allSettled(imageItems.map(async (item): Promise<MultimediaPreview> => {
-    // Registros históricos sin archivo gestionado: se conserva su URL.
-    if (!item.resolvedFileId) return { multimediaId: item.id, url: item.identifier, status: "legacy" };
-    if (item.thumbnail_url && (item.processing_status ?? item.processingStatus) === "completed") {
-      return { multimediaId: item.id, url: item.thumbnail_url, status: "completed" };
-    }
-
-    let file: Awaited<ReturnType<typeof getMediaFile>>;
-    try {
-      file = await getMediaFile(item.resolvedFileId);
-    } catch (error) {
-      // 404: el archivo no está registrado en el backend (multimedia previa a la migración).
-      if (error instanceof MediaServiceError && error.status === 404 && item.identifier) {
-        return { multimediaId: item.id, url: item.identifier, status: "legacy" };
-      }
-      throw error;
-    }
-    if (file.status === "failed") throw new Error("No se pudo procesar el archivo multimedia.");
-    const url = file.assets?.thumbnail_url ?? file.assets?.display_url ?? "";
-    return { multimediaId: item.id, url, status: file.status === "completed" && url ? "completed" : "processing" };
-  }));
-  const data = results.flatMap((result) => result.status === "fulfilled" && result.value.url ? [result.value] : []);
-  const pending = results.some((result) => result.status === "fulfilled" && result.value.status === "processing");
-  const errors = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
-  return { data, pending, error: errors[0]?.reason instanceof Error ? errors[0].reason.message : undefined };
-}
 
 function toBackendMultimedia(input: Record<string, any>) {
   const { occurrence_id, event_id, file_id, file_key, file_metadata, processing_job_id, processing_status, processed_key, creator_id, created_by_id, guano_metadata, order_index, parent_multimedia_id, record_status, is_public, duration_seconds, file_size_bytes, vocalization_type, background_species, ...rest } = input;
@@ -178,7 +125,6 @@ export async function createMultimedia(input: MultimediaInput) {
   }
 
   try {
-    // La relación se persiste en la API de dominio, no en el servicio de archivos.
     // Si la ocurrencia pertenece a un evento, guardamos ambos vínculos de forma consistente.
     let payload = parsed.data;
     if (payload.occurrence_id && !payload.event_id) {
@@ -224,15 +170,6 @@ export async function deleteMultimedia(id: string) {
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Error al eliminar multimedia" };
   }
-}
-
-export async function deleteR2Folder(_prefix: string) {
-  // Deprecated folder cleanup stub for Files API
-  return { success: true };
-}
-
-export async function getPresignedUrl(_path: string, _contentType: string) {
-  return { success: false, error: "Obsolete endpoint. Use Files API upload endpoint." };
 }
 
 export async function bulkUpdateMultimediaIndexes(updates: { id: string; order_index: number }[]) {

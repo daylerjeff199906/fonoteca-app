@@ -4,8 +4,6 @@ import { z } from "zod";
 export const uploadInputSchema = z.object({
   file: z.instanceof(File),
   metadata: z.record(z.string(), z.unknown()).default({}),
-  processImage: z.boolean().default(false),
-  processAudio: z.boolean().default(false),
   duplicatePolicy: z.enum(["reuse", "reject", "new_copy"]).default("reuse"),
   /** Carpeta lógica del archivo en el almacenamiento, por ejemplo "classes". */
   resourceType: z.string().optional(),
@@ -37,7 +35,7 @@ export const fileProcessingJobSchema = z.object({
   kind: z.string(),
 });
 
-export const fileServiceResponseSchema = z.object({
+export const mediaFileSchema = z.object({
   id: z.string().uuid(),
   project_id: z.string(),
   filename: z.string(),
@@ -53,4 +51,4 @@ export const fileServiceResponseSchema = z.object({
   jobs: z.array(fileProcessingJobSchema).optional(),
 });
 
-export type UploadedFile = z.infer<typeof fileServiceResponseSchema>;
+export type UploadedFile = z.infer<typeof mediaFileSchema>;

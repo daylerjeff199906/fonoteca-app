@@ -1,13 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Trash2, GripVertical, FileAudio, FileImage, Loader2, Link, FolderOpen, Pencil, Music, MoreVertical, X, Info, Settings2, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
-import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, getMultimediaPreviews, updateMultimedia } from "@/actions/multimedia";
-import { uploadFile } from "@/lib/file-service.client";
+import { bulkUpdateMultimediaIndexes, createMultimedia, deleteMultimedia, getMultimediaList, updateMultimedia } from "@/actions/multimedia";
+import { uploadFile } from "@/lib/media-upload.client";
 import { Multimedia, MEDIA_TYPE, MEDIA_TAG, MediaType } from "@/types/fonoteca";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MediaImage } from "@/components/dashboard/media-image";
+import { useLiveMedia } from "@/hooks/use-live-media";
+import { isAwaitingDerivative, thumbnailSrc } from "@/lib/media-state";
 import { showToast } from "@/lib/toast";
 import axios from "axios";
 import { cn } from "@/lib/utils";
@@ -119,7 +121,9 @@ const sanitizeFilename = (name: string) => {
 };
 
 export function MultimediaSection({ occurrenceId, location }: { occurrenceId: string, location?: string }) {
-  const [items, setItems] = useState<Multimedia[]>([]);
+  const [loadedItems, setItems] = useState<Multimedia[]>([]);
+  // Los derivados que el backend aún genera (miniatura, OGG) se completan solos al terminar.
+  const items = useLiveMedia(loadedItems);
   const [uploading, setUploading] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<Multimedia | null>(null);
 
@@ -139,7 +143,11 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   const [itemToDelete, setItemToDelete] = useState<{ id: string, isChild: boolean } | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
-  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  // Las tarjetas y tiras muestran la miniatura; el visor usa la versión de pantalla o el original.
+  const previewUrls = useMemo(
+    () => Object.fromEntries(items.flatMap((item) => { const src = thumbnailSrc(item); return src ? [[item.id, src]] : []; })) as Record<string, string>,
+    [items],
+  );
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -214,19 +222,8 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
   }, [debouncedCreatorSearch]);
 
   const loadMultimedia = async () => {
-    setInitialLoading(true);
     const resp = await getMultimediaList({ occurrence_id: occurrenceId, limit: 100 });
-    const sorted = (resp.data || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-    setItems(sorted);
-    const previews = await getMultimediaPreviews(sorted);
-    setPreviewUrls(Object.fromEntries(previews.data.map((preview) => [preview.multimediaId, preview.url])) as Record<string, string>);
-    if (previews.error) {
-      console.warn("No se pudieron obtener previews optimizados:", previews.error);
-      showToast.warning("Miniaturas no disponibles", previews.error);
-    }
-    if (previews.pending) {
-      setTimeout(() => void loadMultimedia(), 3000);
-    }
+    setItems((resp.data || []).sort((a, b) => (a.order_index || 0) - (b.order_index || 0)));
     setInitialLoading(false);
   };
 
@@ -297,8 +294,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
         const uploadedFile = await uploadFile({
           file,
           duplicatePolicy: "reuse",
-          processImage: file.type.startsWith("image/"),
-          processAudio: file.type.startsWith("audio/"),
           metadata: {
             occurrence_id: occurrenceId,
             source: "occurrence_multimedia_batch",
@@ -554,7 +549,6 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       const uploadedFile = await uploadFile({
         file,
         duplicatePolicy: "reuse",
-        processImage: true,
         metadata: {
           occurrence_id: occurrenceId,
           tag: "spectrogram",
@@ -823,7 +817,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                   </div>
                   <div className="w-full sm:w-auto">
                     <audio
-                      src={previewUrls[item.id] || getAudioUrl(item.identifier)}
+                      src={item.audio_url || getAudioUrl(item.identifier)}
                       controls
                       className="h-8 w-full sm:w-[180px] scale-90"
                       onPlay={(e) => {
@@ -872,7 +866,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                         alt={sp.title || "Espectrograma"}
                         className="object-cover"
                         containerClassName="h-full w-full"
-                        processing={!previewUrls[sp.id] && ((sp as any).processing_status ?? (sp as any).processingStatus) !== "completed" && Boolean((sp as any).processing_status ?? (sp as any).processingStatus)}
+                        processing={isAwaitingDerivative(sp)}
                       />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
                         <Info className="h-3 w-3 text-white" />
@@ -1049,7 +1043,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
                   alt={item.title || "Imagen"}
                   className="object-cover transition-transform duration-500 group-hover/img:scale-110"
                   containerClassName="h-full w-full"
-                  processing={!previewUrls[item.id] && ((item as any).processing_status ?? (item as any).processingStatus) !== "completed" && Boolean((item as any).processing_status ?? (item as any).processingStatus)}
+                  processing={isAwaitingDerivative(item)}
                 />
                 {/* Tag Overlay Bottom Left */}
                 <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
@@ -1936,8 +1930,7 @@ export function MultimediaSection({ occurrenceId, location }: { occurrenceId: st
       {/* --- Premium Multimedia Viewer --- */}
       <MultimediaViewer
         isOpen={sliderOpen}
-        items={sliderItems}
-        previewUrls={previewUrls}
+        items={sliderItems.map((shown) => items.find((item) => item.id === shown.id) ?? shown)}
         initialIndex={sliderIndex}
         onClose={() => setSliderOpen(false)}
         location={location}

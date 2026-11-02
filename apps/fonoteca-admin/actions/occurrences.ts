@@ -51,7 +51,7 @@ function formatOccurrence(item: any): Occurrence {
     ecosystem: item.ecosystems || item.ecosystem,
     // La API principal puede devolver el campo en camelCase dentro de la
     // relación. Normalizamos aquí para que las vistas puedan pedir la
-    // miniatura al File Service usando siempre `file_id`.
+    // miniatura usando siempre `file_id`.
     multimedia: (item.multimedia || []).map((media: any) => ({
       ...media,
       file_id: media.file_id ?? media.fileId ?? null,

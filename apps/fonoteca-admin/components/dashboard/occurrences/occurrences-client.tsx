@@ -2,7 +2,7 @@
 
 import { recordStatusLabel } from "@/config/glossary";
 import { DataTableCard, TableEmptyRow } from "@/components/panel-admin/data-table";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Occurrence, Taxon } from "@/types/fonoteca";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SearchInput } from "@/components/dashboard/search-input";
@@ -40,7 +40,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { showToast } from "@/lib/toast";
-import { getMultimediaPreviews } from "@/actions/multimedia";
+import { useLiveMedia } from "@/hooks/use-live-media";
+import { isAwaitingDerivative, thumbnailSrc } from "@/lib/media-state";
 import { MediaImage } from "@/components/dashboard/media-image";
 import { BASIS_OF_RECORD_LABELS } from "@/types/fonoteca";
 
@@ -58,28 +59,14 @@ export function OccurrencesClient({
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [, setIsExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setSelectedIds([]); // Reset selection on page/filter change
   }, [data, searchParams]);
 
-  useEffect(() => {
-    let cancelled = false;
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    const loadPreviews = async () => {
-      const multimedia = data.flatMap((occurrence) => occurrence.multimedia ?? []);
-      const previews = await getMultimediaPreviews(multimedia);
-      if (cancelled) return;
-      setPreviewUrls(Object.fromEntries(previews.data.map((preview) => [preview.multimediaId, preview.url])) as Record<string, string>);
-      if (previews.pending) retry = setTimeout(() => void loadPreviews(), 3000);
-    };
-    void loadPreviews();
-    return () => {
-      cancelled = true;
-      if (retry) clearTimeout(retry);
-    };
-  }, [data]);
+  // La miniatura de cada ocurrencia se completa sola cuando el backend termina de procesar la imagen.
+  const liveMultimedia = useLiveMedia(useMemo(() => data.flatMap((occurrence) => occurrence.multimedia ?? []), [data]));
+  const liveById = useMemo(() => new Map(liveMultimedia.map((media) => [media.id, media])), [liveMultimedia]);
 
   const currentLimit = searchParams.get("limit") || "10";
   const isShowingAll = currentLimit === "1000";
@@ -412,9 +399,9 @@ export function OccurrencesClient({
           <TableBody>
             {data.length > 0 ? (
               data.map((oc) => {
-                const stillImage = oc.multimedia?.find(m => m.type === 'Still');
+                const stillImage = oc.multimedia?.map((m) => liveById.get(m.id) ?? m).find(m => m.type === 'Still');
                 const hasSound = oc.multimedia?.some(m => m.type === 'Sound');
-                const thumbUrl = stillImage ? previewUrls[stillImage.id] : undefined;
+                const thumbUrl = stillImage ? thumbnailSrc(stillImage) : undefined;
 
                 return (
                   <TableRow key={oc.id} className={cn(selectedIds.includes(oc.id) && "bg-primary/5")}>
@@ -436,7 +423,7 @@ export function OccurrencesClient({
                           alt={stillImage?.title || "Miniatura de ocurrencia"}
                           className="object-cover"
                           containerClassName="h-8 w-8 rounded-md border shrink-0 shadow-sm"
-                          processing={Boolean(stillImage && !thumbUrl)}
+                          processing={Boolean(stillImage && isAwaitingDerivative(stillImage))}
                         />
                         {hasSound && (
                           <div className="p-1.5 rounded-full bg-blue-50 text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors shadow-sm">
