@@ -23,6 +23,7 @@ Descubrimientos durante la implementación:
 - El `project_id` real de las claves es **`fonoteca-app`** (no `fonoteca`). El bucket tenía solo 11 archivos originales.
 - El adaptador de PostgreSQL de Prisma 7 desplaza las fechas de JavaScript según la zona horaria del servidor. Las fechas de la cola las pone el reloj de la base de datos.
 - `POST /multimedia` con `file_size_bytes` guardaba el registro y luego respondía 500 (no se puede serializar un `BigInt`). Corregido.
+- El mismo `BigInt` rompía `GET /occurrences/:id` (500) en cuanto una ocurrencia tenía un multimedia con tamaño, porque el multimedia anidado no pasa por el presentador. Corregido para toda la API en `src/core/bigint-json.ts` (backend `15855e8`).
 - `audio-requests` también pedía al File Service la URL del original; ahora la arma con la clave guardada.
 - La imagen de una clase se guardaba como URL y su botón de borrar nunca coincidía con ella. Ahora se borra por el id que contiene la URL, y esas subidas no se consideran huérfanas.
 
@@ -34,6 +35,27 @@ Descubrimientos durante la implementación:
 4. Desplegar el admin y quitar `FILE_SERVICE_URL` y `FILE_SERVICE_TOKEN` de su entorno.
 5. Comprobar que el límite de cuerpo del proxy inverso supera `MEDIA_MAX_AUDIO_MB` (40 MB).
 6. Observar jobs en `failed` y tiempos durante 1–2 semanas; apagar el File Service (API, workers, RabbitMQ y su base) y rotar las credenciales de MinIO que compartía.
+
+### Despliegue en QA: qué comprobar
+
+Si la subida da `404` en `POST /api/files/upload` del panel de QA, el panel desplegado es anterior a esta rama: aún reenvía al File Service antiguo y devuelve su código. Se reconoce porque sin sesión `POST /api/files/upload` responde 500 "Content-Type was not multipart…" (el actual responde 401), `DELETE /api/files/<uuid>` dice "…para eliminarlo" y `GET /api/files/<uuid>` responde 405.
+
+Orden: primero el backend (con el commit `15855e8`), después el panel (con `4ee0d34`). Comprobaciones sin sesión, tras cada despliegue:
+
+| Petición | Esperado |
+|---|---|
+| `POST <api>/api/v1/media/files` | 401 (la ruta existe; un 404 indica backend antiguo) |
+| `POST <panel>/api/files/upload` | 401 "Debe iniciar sesión…" |
+| `GET <panel>/api/files/<uuid>` | 401 (un 405 indica panel antiguo) |
+
+Con sesión, subir una imagen: debe responder 201 y la miniatura aparecer sola en pocos segundos. Si responde 503 "Media storage is not configured", faltan las variables `S3_*` del backend.
+
+Notas operativas:
+
+- El panel necesita `BACKEND_API_URL=https://<api>/api/v1`. `FILE_SERVICE_URL` y `FILE_SERVICE_TOKEN` ya no se usan.
+- Un build nuevo del panel no basta con reiniciar el proceso: hay que reconstruir la imagen o el `next build`.
+- Con Docker Compose, `up -d --build` puede dejar el contenedor anterior en marcha; usar `up -d --force-recreate --no-build api` después de construir.
+- El contenedor ejecuta `prisma migrate deploy` directamente (sin `pnpm`), con `CHECKPOINT_DISABLE=1`, para arrancar en segundos aunque no haya salida a internet.
 
 ### Pendiente o conocido
 
