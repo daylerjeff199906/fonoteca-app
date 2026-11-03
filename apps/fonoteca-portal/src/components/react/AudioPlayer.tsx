@@ -4,7 +4,7 @@ import Spectrogram from 'wavesurfer.js/dist/plugins/spectrogram.esm.js';
 import Timeline from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js';
 import Regions from 'wavesurfer.js/dist/plugins/regions.esm.js';
-import { X, Music, ChevronLeft, ChevronRight, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { X, Music, ChevronLeft, ChevronRight, Maximize2, Minimize2, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
 
 interface AudioPlayerProps {
     audioUrl: string;
@@ -59,6 +59,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     const [duration, setDuration] = useState('0:00');
     const [currentTime, setCurrentTime] = useState('0:00');
     const [isReady, setIsReady] = useState(false);
+    // Descarga del audio -> decodificación -> dibujo del espectrograma: cada etapa puede tardar con archivos largos.
+    const [loadStage, setLoadStage] = useState<'loading' | 'spectrogram' | 'ready' | 'error'>('loading');
+    const [loadPercent, setLoadPercent] = useState(0);
+    const [retryKey, setRetryKey] = useState(0);
     const [zoom, setZoom] = useState(1);
     const [volume, setVolume] = useState(0.8);
 
@@ -189,6 +193,23 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
         wavesurferRef.current = ws;
 
+        setIsReady(false);
+        setLoadStage('loading');
+        setLoadPercent(0);
+        ws.on('loading', (percent) => setLoadPercent(percent));
+        // El audio ya está descargado y decodificado: falta que el plugin dibuje el espectrograma.
+        ws.on('decode', () => setLoadStage('spectrogram'));
+        wsSpectrogram.on('ready', () => setLoadStage('ready'));
+        // Respaldo: si el plugin no avisara, el indicador no debe tapar el espectrograma indefinidamente.
+        let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+        ws.on('ready', () => {
+            fallbackTimer = setTimeout(() => setLoadStage((stage) => (stage === 'spectrogram' ? 'ready' : stage)), 15000);
+        });
+        ws.on('error', (error) => {
+            console.error('AudioPlayer: no se pudo cargar el audio', audioUrl, error);
+            setLoadStage('error');
+        });
+
         ws.load(audioUrl);
 
         ws.on('ready', () => {
@@ -212,9 +233,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         });
 
         return () => {
+            if (fallbackTimer) clearTimeout(fallbackTimer);
             ws.destroy();
         };
-    }, [audioUrl, colorMapType]);
+    }, [audioUrl, colorMapType, retryKey]);
 
     // Handle container resize when window size changes
     useEffect(() => {
@@ -633,6 +655,52 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
                             {/* CENTER: Spectrogram Canvas */}
                             <div ref={spectrogramRef} className="flex-grow h-full relative overflow-hidden bg-black [&>div]:h-full [&>div>div]:h-full [&_canvas]:block [&_canvas]:h-full [&_canvas]:w-full" />
+
+                            {/* Indicador mientras se carga el audio y se genera el espectrograma */}
+                            {loadStage !== 'ready' && (
+                                <div
+                                    role={loadStage === 'error' ? 'alert' : 'status'}
+                                    aria-live="polite"
+                                    className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/85 px-6 text-center"
+                                >
+                                    {loadStage === 'error' ? (
+                                        <>
+                                            <AlertCircle className="w-8 h-8 text-red-400" />
+                                            <p className="text-sm text-white/80">
+                                                {lang === 'es' ? 'No se pudo cargar el audio.' : 'The audio could not be loaded.'}
+                                            </p>
+                                            <button
+                                                onClick={() => setRetryKey((key) => key + 1)}
+                                                className="px-3 py-1.5 rounded bg-accent-green hover:bg-accent-green-hover text-black text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                                            >
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                {lang === 'es' ? 'Reintentar' : 'Retry'}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Loader2 className="w-8 h-8 text-accent-green animate-spin" />
+                                            <p className="text-sm text-white/80">
+                                                {loadStage === 'loading'
+                                                    ? (lang === 'es' ? `Cargando audio… ${Math.round(loadPercent)} %` : `Loading audio… ${Math.round(loadPercent)} %`)
+                                                    : (lang === 'es' ? 'Generando espectrograma…' : 'Rendering spectrogram…')}
+                                            </p>
+                                            <div
+                                                role="progressbar"
+                                                aria-valuemin={0}
+                                                aria-valuemax={100}
+                                                aria-valuenow={loadStage === 'loading' ? Math.round(loadPercent) : 100}
+                                                className="h-1 w-48 overflow-hidden rounded-full bg-white/10"
+                                            >
+                                                <div
+                                                    className={`h-full bg-accent-green transition-[width] ${loadStage === 'spectrogram' ? 'animate-pulse' : ''}`}
+                                                    style={{ width: `${loadStage === 'loading' ? loadPercent : 100}%` }}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
 
                             {/* RIGHT: Beautiful Amplitude Gradient scale legend */}
                             <div className="w-16 flex-shrink-0 flex flex-row items-stretch py-0.5 border-l border-gray-900 pl-2 font-mono text-[9px] text-gray-500 select-none relative z-10 bg-black">

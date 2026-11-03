@@ -1,12 +1,52 @@
 "use client"
 
 import { Multimedia, MEDIA_TYPE } from "@/types/fonoteca";
-import { X, ChevronLeft, ChevronRight, MapPin, Eye, EyeOff, User, Tag, Info, Calendar, FileText } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, MapPin, Eye, EyeOff, User, Tag, Info, Calendar, FileText, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { audioSrc, detailSrc, isAwaitingDerivative, thumbnailSrc } from "@/lib/media-state";
 import { MediaImage } from "@/components/dashboard/media-image";
+
+/** Reproductor del visor: avisa mientras el audio se descarga o el backend aún genera la versión optimizada. */
+function ViewerAudio({ item }: { item: Multimedia }) {
+  const src = audioSrc(item);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const optimizing = isAwaitingDerivative(item);
+
+  useEffect(() => {
+    setState("loading");
+  }, [src]);
+
+  return (
+    <div className="w-full max-w-4xl px-4 flex flex-col items-center gap-6">
+      <div className={cn(
+        "h-40 w-40 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20",
+        state === "loading" && "animate-pulse",
+      )}>
+        {state === "error" ? <AlertCircle className="h-16 w-16 text-red-400" /> : <FileText className="h-16 w-16 text-primary" />}
+      </div>
+      <div role="status" aria-live="polite" className="min-h-10 flex flex-col items-center gap-1 text-center text-xs text-white/70">
+        {state === "loading" && (
+          <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-primary" /> Cargando audio…</span>
+        )}
+        {state === "error" && <span className="text-red-400">No se pudo cargar el audio. Inténtelo de nuevo en unos segundos.</span>}
+        {optimizing && state !== "error" && (
+          <span className="text-white/50">Se está generando la versión optimizada; mientras tanto se reproduce el original.</span>
+        )}
+      </div>
+      <audio
+        src={src}
+        controls
+        preload="auto"
+        className="w-full max-w-2xl"
+        onLoadStart={() => setState("loading")}
+        onCanPlay={() => setState("ready")}
+        onError={() => setState("error")}
+      />
+    </div>
+  );
+}
 
 interface MultimediaViewerProps {
   items: Multimedia[];
@@ -71,12 +111,7 @@ export function MultimediaViewer({ items, initialIndex, isOpen, onClose, locatio
               processing={isAwaitingDerivative(currentItem)}
             />
           ) : (
-            <div className="w-full max-w-4xl px-4 flex flex-col items-center gap-6">
-               <div className="h-40 w-40 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 animate-pulse">
-                  <FileText className="h-16 w-16 text-primary" />
-               </div>
-               <audio src={audioSrc(currentItem)} controls className="w-full max-w-2xl" />
-            </div>
+            <ViewerAudio key={currentItem.id} item={currentItem} />
           )}
 
           {/* Navigation Arrows Overlay */}
