@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MEDIA_TYPE, MEDIA_TAG } from "@/types/fonoteca";
+import { validateClassHierarchy } from "@/lib/taxonomy-hierarchy";
 
 // Helper tool to handle numeric fields from HTML inputs that send empty strings.
 const numberOrNull = z.preprocess(
@@ -11,11 +12,15 @@ const numberOrNull = z.preprocess(
 export const classSchema = z.object({
   id: z.string().uuid().optional(),
   kingdom: z.string().default("Animalia"),
-  phylum: z.string().default("Chordata").nullable().optional(),
-  name: z.string().min(1, "Class name is required"),
+  // Sin valor por defecto: asumir Chordata clasificaba mal las clases de otros filos (p. ej. Insecta).
+  phylum: z.string().optional().nullable(),
+  name: z.string().min(1, "El nombre de la clase es obligatorio"),
   label_name: z.string().optional().nullable(),
   icon: z.string().optional().nullable(),
   image_url: z.string().optional().nullable(),
+}).superRefine((value, ctx) => {
+  const reason = validateClassHierarchy(value);
+  if (reason) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["phylum"], message: reason });
 });
 
 export type ClassInput = z.infer<typeof classSchema>;
@@ -23,8 +28,8 @@ export type ClassInput = z.infer<typeof classSchema>;
 // --- Orders ---
 export const orderSchema = z.object({
   id: z.string().uuid().optional(),
-  class_id: z.string().uuid("Invalid Class ID"),
-  name: z.string().min(1, "Order name is required"),
+  class_id: z.string().uuid("La clase seleccionada no es válida"),
+  name: z.string().min(1, "El nombre del orden es obligatorio"),
 });
 
 export type OrderInput = z.infer<typeof orderSchema>;
@@ -32,8 +37,8 @@ export type OrderInput = z.infer<typeof orderSchema>;
 // --- Families ---
 export const familySchema = z.object({
   id: z.string().uuid().optional(),
-  order_id: z.string().uuid("Invalid Order ID"),
-  name: z.string().min(1, "Family name is required"),
+  order_id: z.string().uuid("El orden seleccionado no es válido"),
+  name: z.string().min(1, "El nombre de la familia es obligatorio"),
 });
 
 export type FamilyInput = z.infer<typeof familySchema>;
@@ -41,8 +46,8 @@ export type FamilyInput = z.infer<typeof familySchema>;
 // --- Genera ---
 export const genusSchema = z.object({
   id: z.string().uuid().optional(),
-  family_id: z.string().uuid("Invalid Family ID"),
-  name: z.string().min(1, "Genus name is required"),
+  family_id: z.string().uuid("La familia seleccionada no es válida"),
+  name: z.string().min(1, "El nombre del género es obligatorio"),
 });
 
 export type GenusInput = z.infer<typeof genusSchema>;
@@ -51,7 +56,7 @@ export type GenusInput = z.infer<typeof genusSchema>;
 export const taxonSchema = z.object({
   id: z.string().uuid().optional(),
   taxonID: z.string().optional().nullable(),
-  scientificName: z.string().min(1, "Scientific Name is required"),
+  scientificName: z.string().min(1, "El nombre científico es obligatorio"),
   acceptedNameUsage: z.string().optional().nullable(),
   specificEpithet: z.string().optional().nullable(),
   infraspecificEpithet: z.string().optional().nullable(),
@@ -59,7 +64,7 @@ export const taxonSchema = z.object({
   scientificNameAuthorship: z.string().optional().nullable(),
   vernacularName: z.string().optional().nullable(),
   nomenclaturalCode: z.string(),
-  genus_id: z.string().uuid("Invalid Genus ID").optional().nullable(),
+  genus_id: z.string().uuid("El género seleccionado no es válido").optional().nullable(),
 });
 
 export type TaxonInput = z.infer<typeof taxonSchema>;
@@ -68,11 +73,11 @@ export type TaxonInput = z.infer<typeof taxonSchema>;
 export const locationSchema = z.object({
   id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   locationID: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
-  locality: z.string().min(1, "Locality is required"),
+  locality: z.string().min(1, "La localidad es obligatoria"),
   decimalLatitude: numberOrNull,
   decimalLongitude: numberOrNull,
   coordinateUncertaintyInMeters: numberOrNull,
-  ubigeo_district_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().length(6, "Invalid District ID").nullable().optional()),
+  ubigeo_district_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().length(6, "El distrito seleccionado no es válido").nullable().optional()),
   country: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
   stateProvince: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
   geodeticDatum: z.preprocess((v) => (v === "" || v === undefined ? "WGS84" : v), z.string().nullable().optional()),
@@ -86,10 +91,10 @@ export type LocationInput = z.infer<typeof locationSchema>;
 // --- Events ---
 export const eventSchema = z.object({
   id: z.string().uuid().optional(),
-  eventID: z.string().min(1, "Event ID is required"),
-  location_id: z.string().uuid("Invalid Location ID"),
-  created_by_id: z.string().uuid("Invalid Creator ID"),
-  eventDate: z.string().min(1, "Event Date is required"), // YYYY-MM-DD
+  eventID: z.string().min(1, "El código del evento es obligatorio"),
+  location_id: z.string().uuid("La ubicación seleccionada no es válida"),
+  created_by_id: z.string().uuid("El responsable seleccionado no es válido"),
+  eventDate: z.string().min(1, "La fecha del evento es obligatoria"), // YYYY-MM-DD
   eventTime: z.string().optional().nullable(), // HH:MM:SS
   samplingProtocol: z.string().optional().nullable(),
   make: z.string().optional().nullable(),
@@ -103,16 +108,16 @@ export type EventInput = z.infer<typeof eventSchema>;
 // --- Occurrences ---
 export const occurrenceSchema = z.object({
   id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
-  occurrenceID: z.string().min(1, "Occurrence ID is required"),
+  occurrenceID: z.string().min(1, "El código de la ocurrencia es obligatorio"),
   event_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   location_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
-  taxon_id: z.string().uuid("Invalid Taxon ID"),
+  taxon_id: z.string().uuid("El taxón seleccionado no es válido"),
   basisOfRecord: z.string().default("MachineObservation"),
   collection_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid("Colección inválida").nullable().optional()),
   institution_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid("Institución inválida").nullable().optional()),
   catalogNumber: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
 
-  recordedBy: z.string().min(1, "Recorded By is required"),
+  recordedBy: z.string().min(1, "El campo «Registrado por» es obligatorio"),
   recorded_by_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
   identifiedBy: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable().optional()),
   identified_by_id: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().uuid().nullable().optional()),
@@ -154,8 +159,8 @@ export const multimediaSchema = z.object({
   id: z.string().uuid().optional(),
   event_id: z.string().uuid().optional().nullable(),
   occurrence_id: z.string().uuid().optional().nullable(),
-  identifier: z.string().min(1, "Identifier is required"),
-  // Referencias inmutables del servicio de archivos. `identifier` conserva la
+  identifier: z.string().min(1, "El identificador es obligatorio"),
+  // Referencias al archivo gestionado por el backend. `identifier` conserva la
   // URL de visualización, mientras que file_id se usa exclusivamente al borrar.
   file_id: z.string().uuid().optional().nullable(),
   file_key: z.string().optional().nullable(),
@@ -163,12 +168,17 @@ export const multimediaSchema = z.object({
   processing_job_id: z.string().uuid().optional().nullable(),
   processing_status: z.enum(["queued", "processing", "completed", "failed", "deleted"]).optional().nullable(),
   processed_key: z.string().optional().nullable(),
+  thumbnail_url: z.string().url().optional().nullable(),
+  display_url: z.string().url().optional().nullable(),
+  audio_url: z.string().url().optional().nullable(),
+  waveform_url: z.string().url().optional().nullable(),
+  spectrogram_url: z.string().url().optional().nullable(),
   originalFilename: z.string().optional().nullable(),
   type: z.enum([MEDIA_TYPE.SOUND, MEDIA_TYPE.STILL, MEDIA_TYPE.VIDEO, MEDIA_TYPE.TEXT]).default(MEDIA_TYPE.SOUND),
   format: z.string().default("audio/wav"),
   title: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  creator: z.string().min(1, "Creator is required"),
+  creator: z.string().min(1, "El autor es obligatorio"),
   creator_id: z.string().uuid().optional().nullable(),
   created_by_id: z.string().uuid().optional().nullable(),
   rightsHolder: z.string().default("Instituto de Investigaciones de la AmazonIA Peruana (IIAP)"),
