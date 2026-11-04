@@ -13,6 +13,9 @@ export interface DbMultimedia {
     duration_seconds: number | null;
     file_size_bytes: number | null;
     parent_multimedia_id: string | null;
+    thumbnail_url?: string | null;
+    display_url?: string | null;
+    audio_url?: string | null;
     is_public?: boolean;
 }
 
@@ -126,6 +129,8 @@ export interface Multimedia {
     id: string;
     identifier: string;
     url: string; // Formatted URL for display
+    thumbnailUrl: string | null;
+    displayUrl: string | null;
     type: string;
     format: string;
     title: string | null;
@@ -320,11 +325,13 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
         const isAudio = (m: DbMultimedia): boolean => !!(m.type === 'Sound' || m.format?.includes('audio'));
 
         const createMultimedia = (m: DbMultimedia): Multimedia => {
-            const url = formatMediaUrl(m.identifier, isAudio(m));
+            const url = isAudio(m) ? (m.audio_url || formatMediaUrl(m.identifier, true)) : m.identifier;
             return {
                 id: m.id,
                 identifier: m.identifier,
                 url: url,
+                thumbnailUrl: m.thumbnail_url ?? null,
+                displayUrl: m.display_url ?? null,
                 type: m.type,
                 format: m.format,
                 title: m.title,
@@ -377,8 +384,8 @@ export async function getAllSpecies(options: SpeciesFilterOptions = {}): Promise
         const cat = classToCategory[class_name] || "Amphibians";
         const commonName = taxon?.vernacularName || "Sin Nombre";
 
-        const spectroUrl = spectrogramsList.length > 0 ? spectrogramsList[0].url : null;
-        const photoUrl = photos.length > 0 ? photos[0].url : null;
+        const spectroUrl = spectrogramsList.length > 0 ? (spectrogramsList[0].thumbnailUrl || spectrogramsList[0].url) : null;
+        const photoUrl = photos.length > 0 ? (photos[0].thumbnailUrl || photos[0].url) : null;
         const fallbackUrl = '/images/logo-mini.webp';
 
         const imageToDisplay = onlyWithAudio
@@ -483,11 +490,13 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
     const isAudio = (m: DbMultimedia): boolean => !!(m.type === 'Sound' || m.format?.includes('audio'));
 
     const createMultimedia = (m: DbMultimedia): Multimedia => {
-        const url = formatMediaUrl(m.identifier, isAudio(m));
+        const url = isAudio(m) ? (m.audio_url || formatMediaUrl(m.identifier, true)) : m.identifier;
         return {
             id: m.id,
             identifier: m.identifier,
             url: url,
+            thumbnailUrl: m.thumbnail_url ?? null,
+            displayUrl: m.display_url ?? null,
             type: m.type,
             format: m.format,
             title: m.title,
@@ -540,8 +549,8 @@ export async function getSpeciesById(id: string): Promise<Species | undefined> {
     const cat = classToCategory[class_name] || "Amphibians";
     const commonName = taxon?.vernacularName || "Sin Nombre";
 
-    const spectroUrl = spectrogramsList.length > 0 ? spectrogramsList[0].url : null;
-    const photoUrl = photos.length > 0 ? photos[0].url : null;
+    const spectroUrl = spectrogramsList.length > 0 ? (spectrogramsList[0].thumbnailUrl || spectrogramsList[0].url) : null;
+    const photoUrl = photos.length > 0 ? (photos[0].thumbnailUrl || photos[0].url) : null;
     const fallbackUrl = '/images/logo-mini.webp';
 
     const imageToDisplay = photoUrl || spectroUrl || fallbackUrl;
